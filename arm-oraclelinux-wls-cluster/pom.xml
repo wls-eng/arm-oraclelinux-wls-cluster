@@ -26,7 +26,11 @@
 
     <groupId>com.oracle.weblogic.azure</groupId>
     <artifactId>arm-oraclelinux-wls-cluster</artifactId>
+<<<<<<< HEAD
     <version>1.0.6</version>
+=======
+    <version>1.0.3</version>
+>>>>>>> modified:   README.md
     
     <parent>
         <groupId>com.oracle.weblogic.azure.parent</groupId>

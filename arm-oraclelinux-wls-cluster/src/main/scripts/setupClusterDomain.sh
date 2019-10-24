@@ -493,6 +493,11 @@ function create_adminSetup()
     create_admin_model
     sudo chown -R $username:$groupname $DOMAIN_PATH
     runuser -l oracle -c "export JAVA_HOME=$JDK_PATH/jdk1.8.0_131 ; $DOMAIN_PATH/weblogic-deploy/bin/createDomain.sh -oracle_home $INSTALL_PATH/Oracle/Middleware/Oracle_Home -domain_parent $DOMAIN_PATH  -domain_type WLS -model_file $DOMAIN_PATH/admin-domain.yaml"
+<<<<<<< HEAD
+=======
+    cd $DOMAIN_PATH/$wlsDomainName
+    wget -q POSTGRESQL_JDBC_DRIVER_URL
+>>>>>>> modified:   README.md
     if [[ $? != 0 ]]; then
        echo "Error : Admin setup failed"
        exit 1
@@ -634,6 +639,8 @@ function create_managedSetup(){
     echo "Completed managed server model files"
     sudo chown -R $username:$groupname $DOMAIN_PATH
     runuser -l oracle -c "export JAVA_HOME=$JDK_PATH/jdk1.8.0_131 ; $DOMAIN_PATH/weblogic-deploy/bin/createDomain.sh -oracle_home $INSTALL_PATH/Oracle/Middleware/Oracle_Home -domain_parent $DOMAIN_PATH  -domain_type WLS -model_file $DOMAIN_PATH/managed-domain.yaml" 
+    cd $DOMAIN_PATH/$wlsDomainName
+    wget -q POSTGRESQL_JDBC_DRIVER_URL
     if [[ $? != 0 ]]; then
        echo "Error : Managed setup failed"
        exit 1
@@ -759,7 +766,10 @@ export nmHost=`hostname`
 export nmPort=5556
 export WEBLOGIC_DEPLOY_TOOL=https://github.com/oracle/weblogic-deploy-tooling/releases/download/weblogic-deploy-tooling-1.1.1/weblogic-deploy.zip
 export POSTGRESQL_JDBC_DRIVER_URL=https://jdbc.postgresql.org/download/postgresql-42.2.8.jar
+<<<<<<< HEAD
 export MSSQL_JDBC_DRIVER_URL=https://repo.maven.apache.org/maven2/com/microsoft/sqlserver/mssql-jdbc/7.4.1.jre8/mssql-jdbc-7.4.1.jre8.jar
+=======
+>>>>>>> modified:   README.md
 
 addOracleGroupAndUser
 
