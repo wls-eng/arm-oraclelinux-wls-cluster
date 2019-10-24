@@ -320,7 +320,7 @@
 			"apiVersion": "2017-12-01",
 			"location": "[parameters('location')]",
 			"copy": {
-				"name": "virtualMachineiExtensionLoop",
+				"name": "virtualMachineExtensionLoop",
 				"count": "[parameters('numberOfInstances')]"
 			},
 			"dependsOn": [
