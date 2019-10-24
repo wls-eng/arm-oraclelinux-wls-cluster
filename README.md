@@ -94,3 +94,9 @@ If you are new to template deployment, see:
 Please see [the base project for this effort](https://github.com/edburns/arm-oraclelinux-wls#considerations-for-cicd).
 
 [Azure Resource Manager documentation](https://docs.microsoft.com/azure/azure-resource-manager/)
+
+## Updating the Versions
+
+```
+mvn versions:set -DnewVersion=1.0.1 -DoldVersion=* -DgroupId=com.oracle.weblogic.azure -DartifactId=*
+```

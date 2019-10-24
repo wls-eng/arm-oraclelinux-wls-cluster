@@ -463,7 +463,7 @@ EOF
 function create_adminSetup()
 {
     echo "Creating Admin Setup"
-    echo "Creating domain path /u01/domains"
+    echo "Creating domain path ${DOMAIN_PATH}"
     echo "Downloading weblogic-deploy-tool"
     cd $DOMAIN_PATH
     wget -q $WEBLOGIC_DEPLOY_TOOL  
@@ -474,7 +474,9 @@ function create_adminSetup()
     sudo unzip -o weblogic-deploy.zip -d $DOMAIN_PATH
     create_admin_model
     sudo chown -R $username:$groupname $DOMAIN_PATH
-    runuser -l oracle -c "export JAVA_HOME=$JDK_PATH/jdk1.8.0_131 ; $DOMAIN_PATH/weblogic-deploy/bin/createDomain.sh -oracle_home $INSTALL_PATH/Oracle/Middleware/Oracle_Home -domain_parent $DOMAIN_PATH  -domain_type WLS -model_file $DOMAIN_PATH/admin-domain.yaml" 
+    runuser -l oracle -c "export JAVA_HOME=$JDK_PATH/jdk1.8.0_131 ; $DOMAIN_PATH/weblogic-deploy/bin/createDomain.sh -oracle_home $INSTALL_PATH/Oracle/Middleware/Oracle_Home -domain_parent $DOMAIN_PATH  -domain_type WLS -model_file $DOMAIN_PATH/admin-domain.yaml"
+    cd $DOMAIN_PATH/$wlsDomainName
+    wget -q POSTGRESQL_JDBC_DRIVER_URL
     if [[ $? != 0 ]]; then
        echo "Error : Admin setup failed"
        exit 1
@@ -615,6 +617,8 @@ function create_managedSetup(){
     echo "Completed managed server model files"
     sudo chown -R $username:$groupname $DOMAIN_PATH
     runuser -l oracle -c "export JAVA_HOME=$JDK_PATH/jdk1.8.0_131 ; $DOMAIN_PATH/weblogic-deploy/bin/createDomain.sh -oracle_home $INSTALL_PATH/Oracle/Middleware/Oracle_Home -domain_parent $DOMAIN_PATH  -domain_type WLS -model_file $DOMAIN_PATH/managed-domain.yaml" 
+    cd $DOMAIN_PATH/$wlsDomainName
+    wget -q POSTGRESQL_JDBC_DRIVER_URL
     if [[ $? != 0 ]]; then
        echo "Error : Managed setup failed"
        exit 1
@@ -738,6 +742,7 @@ export WLS_VER="12.2.1.3.0"
 export nmHost=`hostname`
 export nmPort=5556
 export WEBLOGIC_DEPLOY_TOOL=https://github.com/oracle/weblogic-deploy-tooling/releases/download/weblogic-deploy-tooling-1.1.1/weblogic-deploy.zip
+export POSTGRESQL_JDBC_DRIVER_URL=https://jdbc.postgresql.org/download/postgresql-42.2.8.jar
 
 addOracleGroupAndUser
 
