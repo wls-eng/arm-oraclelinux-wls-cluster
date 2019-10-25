@@ -124,6 +124,7 @@ function downloadJDK()
 #Download 3rd Party JDBC drivers
 function download3rdPartyJdbcDrivers()
 {
+<<<<<<< HEAD
     cd $DOMAIN_PATH/$wlsDomainName/lib
     echo "Fetching 3rd Party JDBC Drivers"
     wget $POSTGRESQL_JDBC_DRIVER_URL
@@ -134,6 +135,13 @@ function download3rdPartyJdbcDrivers()
     wget $MSSQL_JDBC_DRIVER_URL
     if [[ $? != 0 ]]; then
        echo "Error : rc: $? Unable to fetch 3rd party JDBC driver $MSSQL_JDBC_DRIVER_URL"
+=======
+    cd $DOMAIN_PATH/$wlsDomainName
+    echo "Fetching 3rd Party JDBC Drivers"
+    wget $POSTGRESQL_JDBC_DRIVER_URL
+    if [[ $? != 0 ]]; then
+       echo "Error : rc: $? Unable to fetch 3rd party JDBC drivers"
+>>>>>>> Increment version.  Fix bug in script that prevented deployment.
        exit 1
     fi
 
@@ -494,10 +502,13 @@ function create_adminSetup()
     sudo chown -R $username:$groupname $DOMAIN_PATH
     runuser -l oracle -c "export JAVA_HOME=$JDK_PATH/jdk1.8.0_131 ; $DOMAIN_PATH/weblogic-deploy/bin/createDomain.sh -oracle_home $INSTALL_PATH/Oracle/Middleware/Oracle_Home -domain_parent $DOMAIN_PATH  -domain_type WLS -model_file $DOMAIN_PATH/admin-domain.yaml"
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     cd $DOMAIN_PATH/$wlsDomainName
     wget -q POSTGRESQL_JDBC_DRIVER_URL
 >>>>>>> modified:   README.md
+=======
+>>>>>>> Increment version.  Fix bug in script that prevented deployment.
     if [[ $? != 0 ]]; then
        echo "Error : Admin setup failed"
        exit 1
@@ -639,8 +650,6 @@ function create_managedSetup(){
     echo "Completed managed server model files"
     sudo chown -R $username:$groupname $DOMAIN_PATH
     runuser -l oracle -c "export JAVA_HOME=$JDK_PATH/jdk1.8.0_131 ; $DOMAIN_PATH/weblogic-deploy/bin/createDomain.sh -oracle_home $INSTALL_PATH/Oracle/Middleware/Oracle_Home -domain_parent $DOMAIN_PATH  -domain_type WLS -model_file $DOMAIN_PATH/managed-domain.yaml" 
-    cd $DOMAIN_PATH/$wlsDomainName
-    wget -q POSTGRESQL_JDBC_DRIVER_URL
     if [[ $? != 0 ]]; then
        echo "Error : Managed setup failed"
        exit 1
