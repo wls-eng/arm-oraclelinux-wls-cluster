@@ -121,6 +121,24 @@ function downloadJDK()
    done
 }
 
+#Download 3rd Party JDBC drivers
+function download3rdPartyJdbcDrivers()
+{
+    cd $DOMAIN_PATH/$wlsDomainName/lib
+    echo "Fetching 3rd Party JDBC Drivers"
+    wget $POSTGRESQL_JDBC_DRIVER_URL
+    if [[ $? != 0 ]]; then
+       echo "Error : rc: $? Unable to fetch 3rd party JDBC driver $POSTGRESQL_JDBC_DRIVER_URL"
+       exit 1
+    fi
+    wget $MSSQL_JDBC_DRIVER_URL
+    if [[ $? != 0 ]]; then
+       echo "Error : rc: $? Unable to fetch 3rd party JDBC driver $MSSQL_JDBC_DRIVER_URL"
+       exit 1
+    fi
+
+}
+
 #Setup JDK required for WLS installation
 function setupJDK()
 {
@@ -475,12 +493,11 @@ function create_adminSetup()
     create_admin_model
     sudo chown -R $username:$groupname $DOMAIN_PATH
     runuser -l oracle -c "export JAVA_HOME=$JDK_PATH/jdk1.8.0_131 ; $DOMAIN_PATH/weblogic-deploy/bin/createDomain.sh -oracle_home $INSTALL_PATH/Oracle/Middleware/Oracle_Home -domain_parent $DOMAIN_PATH  -domain_type WLS -model_file $DOMAIN_PATH/admin-domain.yaml"
-    cd $DOMAIN_PATH/$wlsDomainName
-    wget -q POSTGRESQL_JDBC_DRIVER_URL
     if [[ $? != 0 ]]; then
        echo "Error : Admin setup failed"
        exit 1
     fi
+    download3rdPartyJdbcDrivers
 }
 
 #Function to setup admin boot properties
@@ -623,6 +640,7 @@ function create_managedSetup(){
        echo "Error : Managed setup failed"
        exit 1
     fi
+    download3rdPartyJdbcDrivers
     wait_for_admin
     echo "Adding machine to managed server $wlsServerName"
     runuser -l oracle -c "export JAVA_HOME=$JDK_PATH/jdk1.8.0_131 ; $INSTALL_PATH/Oracle/Middleware/Oracle_Home/oracle_common/common/bin/wlst.sh $DOMAIN_PATH/add-machine.py"
@@ -743,6 +761,7 @@ export nmHost=`hostname`
 export nmPort=5556
 export WEBLOGIC_DEPLOY_TOOL=https://github.com/oracle/weblogic-deploy-tooling/releases/download/weblogic-deploy-tooling-1.1.1/weblogic-deploy.zip
 export POSTGRESQL_JDBC_DRIVER_URL=https://jdbc.postgresql.org/download/postgresql-42.2.8.jar
+export MSSQL_JDBC_DRIVER_URL=https://repo.maven.apache.org/maven2/com/microsoft/sqlserver/mssql-jdbc/7.4.1.jre8/mssql-jdbc-7.4.1.jre8.jar
 
 addOracleGroupAndUser
 
