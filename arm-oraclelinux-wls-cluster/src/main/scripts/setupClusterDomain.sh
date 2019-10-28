@@ -124,8 +124,6 @@ function downloadJDK()
 #Download 3rd Party JDBC drivers
 function download3rdPartyJdbcDrivers()
 {
-<<<<<<< HEAD
-<<<<<<< HEAD
     cd $DOMAIN_PATH/$wlsDomainName/lib
     echo "Fetching 3rd Party JDBC Drivers"
     wget $POSTGRESQL_JDBC_DRIVER_URL
@@ -136,19 +134,7 @@ function download3rdPartyJdbcDrivers()
     wget $MSSQL_JDBC_DRIVER_URL
     if [[ $? != 0 ]]; then
        echo "Error : rc: $? Unable to fetch 3rd party JDBC driver $MSSQL_JDBC_DRIVER_URL"
-=======
-    cd $DOMAIN_PATH/$wlsDomainName
-=======
-    cd $DOMAIN_PATH/$wlsDomainName/lib
->>>>>>> Increment version.  Fix bug in script to put the driver in the right directory.
-    echo "Fetching 3rd Party JDBC Drivers"
-    wget $POSTGRESQL_JDBC_DRIVER_URL
-    if [[ $? != 0 ]]; then
-       echo "Error : rc: $? Unable to fetch 3rd party JDBC drivers"
->>>>>>> Increment version.  Fix bug in script that prevented deployment.
-       exit 1
     fi
-
 }
 
 #Setup JDK required for WLS installation
@@ -780,9 +766,13 @@ export nmPort=5556
 export WEBLOGIC_DEPLOY_TOOL=https://github.com/oracle/weblogic-deploy-tooling/releases/download/weblogic-deploy-tooling-1.1.1/weblogic-deploy.zip
 export POSTGRESQL_JDBC_DRIVER_URL=https://jdbc.postgresql.org/download/postgresql-42.2.8.jar
 <<<<<<< HEAD
+<<<<<<< HEAD
 export MSSQL_JDBC_DRIVER_URL=https://repo.maven.apache.org/maven2/com/microsoft/sqlserver/mssql-jdbc/7.4.1.jre8/mssql-jdbc-7.4.1.jre8.jar
 =======
 >>>>>>> modified:   README.md
+=======
+export MSSQL_JDBC_DRIVER_URL=https://repo.maven.apache.org/maven2/com/microsoft/sqlserver/mssql-jdbc/7.4.1.jre8/mssql-jdbc-7.4.1.jre8.jar
+>>>>>>> Increment version.  Add MSSQL driver.
 
 addOracleGroupAndUser
 

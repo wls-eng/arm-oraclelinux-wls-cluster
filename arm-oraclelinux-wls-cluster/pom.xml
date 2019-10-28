@@ -29,6 +29,7 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     <version>1.0.6</version>
 =======
     <version>1.0.3</version>
@@ -39,6 +40,9 @@
 =======
     <version>1.0.5</version>
 >>>>>>> Increment version.  Fix bug in script to put the driver in the right directory.
+=======
+    <version>1.0.6</version>
+>>>>>>> Increment version.  Add MSSQL driver.
     
     <parent>
         <groupId>com.oracle.weblogic.azure.parent</groupId>
