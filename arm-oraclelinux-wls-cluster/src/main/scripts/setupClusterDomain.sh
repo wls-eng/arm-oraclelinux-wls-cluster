@@ -128,7 +128,12 @@ function download3rdPartyJdbcDrivers()
     echo "Fetching 3rd Party JDBC Drivers"
     wget $POSTGRESQL_JDBC_DRIVER_URL
     if [[ $? != 0 ]]; then
-       echo "Error : rc: $? Unable to fetch 3rd party JDBC drivers"
+       echo "Error : rc: $? Unable to fetch 3rd party JDBC driver $POSTGRESQL_JDBC_DRIVER_URL"
+       exit 1
+    fi
+    wget $MSSQL_JDBC_DRIVER_URL
+    if [[ $? != 0 ]]; then
+       echo "Error : rc: $? Unable to fetch 3rd party JDBC driver $MSSQL_JDBC_DRIVER_URL"
        exit 1
     fi
 
@@ -754,6 +759,7 @@ export nmHost=`hostname`
 export nmPort=5556
 export WEBLOGIC_DEPLOY_TOOL=https://github.com/oracle/weblogic-deploy-tooling/releases/download/weblogic-deploy-tooling-1.1.1/weblogic-deploy.zip
 export POSTGRESQL_JDBC_DRIVER_URL=https://jdbc.postgresql.org/download/postgresql-42.2.8.jar
+export MSSQL_JDBC_DRIVER_URL=https://repo.maven.apache.org/maven2/com/microsoft/sqlserver/mssql-jdbc/7.4.1.jre8/mssql-jdbc-7.4.1.jre8.jar
 
 addOracleGroupAndUser
 
