@@ -124,7 +124,7 @@ function downloadJDK()
 #Download 3rd Party JDBC drivers
 function download3rdPartyJdbcDrivers()
 {
-    cd $DOMAIN_PATH/$wlsDomainName
+    cd $DOMAIN_PATH/$wlsDomainName/lib
     echo "Fetching 3rd Party JDBC Drivers"
     wget $POSTGRESQL_JDBC_DRIVER_URL
     if [[ $? != 0 ]]; then
