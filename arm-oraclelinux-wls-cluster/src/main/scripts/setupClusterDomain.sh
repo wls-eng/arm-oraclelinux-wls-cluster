@@ -125,6 +125,7 @@ function downloadJDK()
 function download3rdPartyJdbcDrivers()
 {
 <<<<<<< HEAD
+<<<<<<< HEAD
     cd $DOMAIN_PATH/$wlsDomainName/lib
     echo "Fetching 3rd Party JDBC Drivers"
     wget $POSTGRESQL_JDBC_DRIVER_URL
@@ -137,6 +138,9 @@ function download3rdPartyJdbcDrivers()
        echo "Error : rc: $? Unable to fetch 3rd party JDBC driver $MSSQL_JDBC_DRIVER_URL"
 =======
     cd $DOMAIN_PATH/$wlsDomainName
+=======
+    cd $DOMAIN_PATH/$wlsDomainName/lib
+>>>>>>> Increment version.  Fix bug in script to put the driver in the right directory.
     echo "Fetching 3rd Party JDBC Drivers"
     wget $POSTGRESQL_JDBC_DRIVER_URL
     if [[ $? != 0 ]]; then

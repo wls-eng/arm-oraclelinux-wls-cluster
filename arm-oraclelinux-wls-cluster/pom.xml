@@ -28,6 +28,7 @@
     <artifactId>arm-oraclelinux-wls-cluster</artifactId>
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     <version>1.0.6</version>
 =======
     <version>1.0.3</version>
@@ -35,6 +36,9 @@
 =======
     <version>1.0.4</version>
 >>>>>>> Increment version.  Fix bug in script that prevented deployment.
+=======
+    <version>1.0.5</version>
+>>>>>>> Increment version.  Fix bug in script to put the driver in the right directory.
     
     <parent>
         <groupId>com.oracle.weblogic.azure.parent</groupId>
