@@ -27,23 +27,7 @@
     <groupId>com.oracle.weblogic.azure</groupId>
     <artifactId>arm-oraclelinux-wls-cluster-root</artifactId>
     <packaging>pom</packaging>
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
     <version>1.0.6</version>
-=======
-    <version>1.0.3</version>
->>>>>>> modified:   README.md
-=======
-    <version>1.0.4</version>
->>>>>>> Increment version.  Fix bug in script that prevented deployment.
-=======
-    <version>1.0.5</version>
->>>>>>> Increment version.  Fix bug in script to put the driver in the right directory.
-=======
-    <version>1.0.6</version>
->>>>>>> Increment version.  Add MSSQL driver.
     <name>${project.artifactId}</name>
     <description>
         

@@ -134,7 +134,13 @@ function download3rdPartyJdbcDrivers()
     wget $MSSQL_JDBC_DRIVER_URL
     if [[ $? != 0 ]]; then
        echo "Error : rc: $? Unable to fetch 3rd party JDBC driver $MSSQL_JDBC_DRIVER_URL"
+<<<<<<< HEAD
     fi
+=======
+       exit 1
+    fi
+
+>>>>>>> 9fe13398aa1e21601ced725cca19635ceb24c882
 }
 
 #Setup JDK required for WLS installation
@@ -491,14 +497,6 @@ function create_adminSetup()
     create_admin_model
     sudo chown -R $username:$groupname $DOMAIN_PATH
     runuser -l oracle -c "export JAVA_HOME=$JDK_PATH/jdk1.8.0_131 ; $DOMAIN_PATH/weblogic-deploy/bin/createDomain.sh -oracle_home $INSTALL_PATH/Oracle/Middleware/Oracle_Home -domain_parent $DOMAIN_PATH  -domain_type WLS -model_file $DOMAIN_PATH/admin-domain.yaml"
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-    cd $DOMAIN_PATH/$wlsDomainName
-    wget -q POSTGRESQL_JDBC_DRIVER_URL
->>>>>>> modified:   README.md
-=======
->>>>>>> Increment version.  Fix bug in script that prevented deployment.
     if [[ $? != 0 ]]; then
        echo "Error : Admin setup failed"
        exit 1
@@ -640,6 +638,8 @@ function create_managedSetup(){
     echo "Completed managed server model files"
     sudo chown -R $username:$groupname $DOMAIN_PATH
     runuser -l oracle -c "export JAVA_HOME=$JDK_PATH/jdk1.8.0_131 ; $DOMAIN_PATH/weblogic-deploy/bin/createDomain.sh -oracle_home $INSTALL_PATH/Oracle/Middleware/Oracle_Home -domain_parent $DOMAIN_PATH  -domain_type WLS -model_file $DOMAIN_PATH/managed-domain.yaml" 
+    cd $DOMAIN_PATH/$wlsDomainName
+    wget -q POSTGRESQL_JDBC_DRIVER_URL
     if [[ $? != 0 ]]; then
        echo "Error : Managed setup failed"
        exit 1
@@ -767,12 +767,16 @@ export WEBLOGIC_DEPLOY_TOOL=https://github.com/oracle/weblogic-deploy-tooling/re
 export POSTGRESQL_JDBC_DRIVER_URL=https://jdbc.postgresql.org/download/postgresql-42.2.8.jar
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 export MSSQL_JDBC_DRIVER_URL=https://repo.maven.apache.org/maven2/com/microsoft/sqlserver/mssql-jdbc/7.4.1.jre8/mssql-jdbc-7.4.1.jre8.jar
 =======
 >>>>>>> modified:   README.md
 =======
 export MSSQL_JDBC_DRIVER_URL=https://repo.maven.apache.org/maven2/com/microsoft/sqlserver/mssql-jdbc/7.4.1.jre8/mssql-jdbc-7.4.1.jre8.jar
 >>>>>>> Increment version.  Add MSSQL driver.
+=======
+export MSSQL_JDBC_DRIVER_URL=https://repo.maven.apache.org/maven2/com/microsoft/sqlserver/mssql-jdbc/7.4.1.jre8/mssql-jdbc-7.4.1.jre8.jar
+>>>>>>> 9fe13398aa1e21601ced725cca19635ceb24c882
 
 addOracleGroupAndUser
 
