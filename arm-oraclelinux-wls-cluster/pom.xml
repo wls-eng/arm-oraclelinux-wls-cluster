@@ -26,7 +26,7 @@
 
     <groupId>com.oracle.weblogic.azure</groupId>
     <artifactId>arm-oraclelinux-wls-cluster</artifactId>
-    <version>1.0.18</version>
+    <version>1.0.19</version>
     
     <parent>
         <groupId>com.microsoft.azure.iaas</groupId>
@@ -40,7 +40,7 @@
 
     <properties>
         <template.validation.tests.directory>${basedir}/../../azure-quickstart-templates/test/arm-ttk</template.validation.tests.directory>
-        <tracking.pid>pid-b00813e7-8cdf-5f97-9d76-2590c3a27261</tracking.pid>
+        <tracking.pid>pid-7d133b69-4d02-500e-8ccf-2b57011830c2</tracking.pid>
     </properties>
     
     <description>
