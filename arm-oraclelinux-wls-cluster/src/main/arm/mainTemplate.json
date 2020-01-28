@@ -155,7 +155,7 @@
 		"publicIPAddressType": "Dynamic",
 		"vmSize": "[parameters('vmSizeSelect')]",
 		"virtualNetworkName": "[concat(parameters('wlsDomainName'),'_VNET')]",
-                "oradownScript": "oradown.sh",
+		"oradownScript": "oradown.sh",
 		"ScriptFileName": "setupClusterDomain.sh",
 		"linuxConfiguration": {
 			"disablePasswordAuthentication": true,
@@ -180,7 +180,8 @@
 				"template": {
 					"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
 					"contentVersion": "1.0.0.0",
-					"resources": []
+					"resources": [
+					]
 				}
 			}
 		},
@@ -193,7 +194,8 @@
 				"name": "[variables('storageAccountType')]"
 			},
 			"kind": "Storage",
-			"properties": {}
+			"properties": {
+			}
 		},
 		{
 			"type": "Microsoft.Network/publicIPAddresses",
@@ -207,7 +209,7 @@
 			"properties": {
 				"publicIPAllocationMethod": "[variables('publicIPAddressType')]",
 				"dnsSettings": {
-				        "domainNameLabel": "[concat(toLower(parameters('dnsLabelPrefix')),copyindex(),'-',take(replace(parameters('guidValue'),'-',''),10),'-',toLower(parameters('wlsDomainName')))]"
+					"domainNameLabel": "[concat(toLower(parameters('dnsLabelPrefix')),copyindex(),'-',take(replace(parameters('guidValue'),'-',''),10),'-',toLower(parameters('wlsDomainName')))]"
 				}
 			}
 		},
