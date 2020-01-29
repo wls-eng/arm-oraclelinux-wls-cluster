@@ -208,7 +208,7 @@
                         "label": "Ports and port ranges to expose (N or N-N, comma separated)",
                         "type": "Microsoft.Common.TextBox",
                         "toolTip": "Ports and port ranges to expose (N or N-N, comma separated)",
-                        "defaultValue": "80,443,7001,7002,8000-8100",
+                        "defaultValue": "80,443,7001-9000",
                         "visible": true,
                         "constraints": {
                             "required": true,

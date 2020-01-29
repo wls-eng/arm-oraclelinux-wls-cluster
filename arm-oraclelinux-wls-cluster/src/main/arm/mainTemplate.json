@@ -63,7 +63,7 @@
 		},
 		"portsToExpose": {
 			"type": "string",
-			"defaultValue": "80,443,7001,7002,8000-8100",
+			"defaultValue": "80,443,7001-9000",
 			"metadata": {
 				"description": "Ports and port ranges to expose"
 			}
@@ -178,7 +178,7 @@
 		"subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
 		"networkSecurityGroupName": "[concat(parameters('dnsLabelPrefix'), '-nsg')]",
 		"networkSecurityGroupRef": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]",
-		"appGatewayPortrange": ",65200-65535"
+		"requiredPortrange": ",65200-65535,5556"
 	},
 	"resources": [
 		{
@@ -212,7 +212,7 @@
 							"access": "Allow",
 							"priority": 320,
 							"direction": "Inbound",
-							"destinationPortRanges": "[split(concat(parameters('portsToExpose'),variables('appGatewayPortrange')), ',')]"
+							"destinationPortRanges": "[split(concat(parameters('portsToExpose'),variables('requiredPortrange')), ',')]"
 						}
 					}
 				]
