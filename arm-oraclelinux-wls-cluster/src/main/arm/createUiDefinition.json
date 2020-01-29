@@ -93,7 +93,7 @@
                         "name": "acceptOTNLicenseAgreement",
                         "label": "Accept OTN License Agreement",
                         "type": "Microsoft.Common.TextBox",
-                        "tooltip": "A value of N indicates you do not accept the OTN License Agreement.  In that case the deployment will fail.",
+                        "toolTip": "A value of N indicates you do not accept the OTN License Agreement.  In that case the deployment will fail.",
                         "defaultValue": "Y",
                         "visible": true,
                         "constraints": {
@@ -193,6 +193,30 @@
                         "visible": true
                     }
                 ]
+            },
+            {
+                "name": "Network",
+                "label": "Network",
+                "subLabel": {
+                    "preValidation": "Parameters to customzie network settings",
+                    "postValidation": "Done"
+                },
+                "bladeTitle": "Network",
+                "elements": [
+                    {
+                        "name": "portsToExpose",
+                        "label": "Ports and port ranges to expose (N or N-N, comma separated)",
+                        "type": "Microsoft.Common.TextBox",
+                        "toolTip": "Ports and port ranges to expose (N or N-N, comma separated)",
+                        "defaultValue": "80,443,7001,7002,8000-8100",
+                        "visible": true,
+                        "constraints": {
+                            "required": true,
+                            "regex": "^((([0-9]+-[0-9]+)|([0-9]+))[,]?)+[^,]$",
+                            "validationMessage": "Only numbers, hyphen separated ranges of numbers, separated by commas"
+                        }
+                    }
+                ]
             }
         ],
         "outputs": {
@@ -204,6 +228,7 @@
             "numberOfInstances": "[int(basics('numberOfInstances'))]",
             "otnAccountPassword": "[steps('Credentials').otnAccountPassword]",
             "otnAccountUsername": "[steps('Credentials').otnAccountUsername]",
+            "portsToExpose": "[steps('Network').portsToExpose]",
             "vmSizeSelect": "[steps('VirtualMachineConfig').vmSizeSelect]",
             "wlsDomainName": "[basics('wlsDomainName')]",
             "wlsPassword": "[steps('Credentials').wlsPassword]",

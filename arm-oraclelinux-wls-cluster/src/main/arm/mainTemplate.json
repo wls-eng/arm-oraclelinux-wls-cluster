@@ -61,6 +61,13 @@
 				"description": "Password for your Oracle Technology Network account"
 			}
 		},
+		"portsToExpose": {
+			"type": "string",
+			"defaultValue": "80,443,7001,7002,8000-8100",
+			"metadata": {
+				"description": "Ports and port ranges to expose"
+			}
+		},
 		"wlsDomainName": {
 			"type": "string",
 			"metadata": {
@@ -168,7 +175,10 @@
 				]
 			}
 		},
-		"subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]"
+		"subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
+		"networkSecurityGroupName": "[concat(parameters('dnsLabelPrefix'), '-nsg')]",
+		"networkSecurityGroupRef": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]",
+		"appGatewayPortrange": ",65200-65535"
 	},
 	"resources": [
 		{
@@ -183,6 +193,29 @@
 					"resources": [
 					]
 				}
+			}
+		},
+		{
+			"type": "Microsoft.Network/networkSecurityGroups",
+			"apiVersion": "2019-06-01",
+			"name": "[variables('networkSecurityGroupName')]",
+			"location": "[parameters('location')]",
+			"properties": {
+				"securityRules": [
+					{
+						"name": "TCP",
+						"properties": {
+							"protocol": "TCP",
+							"sourcePortRange": "*",
+							"sourceAddressPrefix": "*",
+							"destinationAddressPrefix": "*",
+							"access": "Allow",
+							"priority": 320,
+							"direction": "Inbound",
+							"destinationPortRanges": "[split(concat(parameters('portsToExpose'),variables('appGatewayPortrange')), ',')]"
+						}
+					}
+				]
 			}
 		},
 		{
@@ -218,6 +251,9 @@
 			"apiVersion": "2018-11-01",
 			"name": "[variables('virtualNetworkName')]",
 			"location": "[parameters('location')]",
+			"dependsOn": [
+				"[variables('networkSecurityGroupRef')]"
+			],
 			"properties": {
 				"addressSpace": {
 					"addressPrefixes": [
@@ -228,7 +264,10 @@
 					{
 						"name": "[variables('subnetName')]",
 						"properties": {
-							"addressPrefix": "[variables('subnetPrefix')]"
+							"addressPrefix": "[variables('subnetPrefix')]",
+							"networkSecurityGroup": {
+								"id": "[variables('networkSecurityGroupRef')]"
+							}
 						}
 					}
 				]
