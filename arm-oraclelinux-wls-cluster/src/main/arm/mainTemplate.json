@@ -203,7 +203,7 @@
 			"properties": {
 				"securityRules": [
 					{
-						"name": "TCP",
+						"name": "WebLogicPorts",
 						"properties": {
 							"protocol": "TCP",
 							"sourcePortRange": "*",
