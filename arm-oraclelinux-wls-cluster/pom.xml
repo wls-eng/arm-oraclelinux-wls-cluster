@@ -31,7 +31,7 @@
     <parent>
         <groupId>com.microsoft.azure.iaas</groupId>
         <artifactId>azure-javaee-iaas-parent</artifactId>
-        <version>1.0.1</version>
+        <version>1.0.2</version>
         <relativePath></relativePath>
     </parent>
     
@@ -39,7 +39,7 @@
     <name>${project.artifactId}</name>
 
     <properties>
-        <template.validation.tests.directory>${basedir}/../../azure-quickstart-templates/test/arm-ttk</template.validation.tests.directory>
+        <template.validation.tests.directory>${basedir}/../../arm-ttk/arm-ttk</template.validation.tests.directory>
         <tracking.pid>pid-07bfd1f7-83ff-50cd-bd74-61b00a2a6808</tracking.pid>
     </properties>
     
