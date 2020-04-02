@@ -1,406 +1,341 @@
 {
-	"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-	"contentVersion": "1.0.0.0",
-	"parameters": {
-		"_artifactsLocation": {
-			"type": "string",
-			"metadata": {
-				"description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
-			},
-			"defaultValue": "[deployment().properties.templateLink.uri]"
-		},
-		"_artifactsLocationSasToken": {
-			"type": "securestring",
-			"metadata": {
-				"description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
-			},
-			"defaultValue": ""
-		},
-		"guidValue": {
-			"type": "string",
-			"defaultValue": "[newGuid()]"
-		},
-		"adminUsername": {
-			"type": "string",
-			"metadata": {
-				"description": "User name for the Virtual Machine."
-			}
-		},
-		"authenticationType": {
-			"type": "string",
-			"defaultValue": "password",
-			"allowedValues": [
-				"sshPublicKey",
-				"password"
-			],
-			"metadata": {
-				"description": "Type of authentication to use on the Virtual Machine. SSH key is recommended."
-			}
-		},
-		"adminPasswordOrKey": {
-			"type": "securestring",
-			"metadata": {
-				"description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
-			}
-		},
-		"acceptOTNLicenseAgreement": {
-			"type": "string",
-			"metadata": {
-				"description": "Do you agree to provide OTN credentials to accept OTN License Agreement? Enter Y or y to agree, else N or n"
-			}
-		},
-		"otnAccountUsername": {
-			"type": "string",
-			"metadata": {
-				"description": "Username for your Oracle Technology Network account"
-			}
-		},
-		"otnAccountPassword": {
-			"type": "securestring",
-			"metadata": {
-				"description": "Password for your Oracle Technology Network account"
-			}
-		},
-		"portsToExpose": {
-			"type": "string",
-			"defaultValue": "80,443,7001-9000",
-			"metadata": {
-				"description": "Ports and port ranges to expose"
-			}
-		},
-		"wlsDomainName": {
-			"type": "string",
-			"metadata": {
-				"description": "Provide Weblogic domain name"
-			}
-		},
-		"wlsUserName": {
-			"type": "string",
-			"metadata": {
-				"description": "Username for your Weblogic domain name"
-			}
-		},
-		"wlsPassword": {
-			"type": "securestring",
-			"metadata": {
-				"description": "Password for your Weblogic domain name"
-			}
-		},
-		"managedServerPrefix": {
-			"type": "string",
-			"defaultValue": "managedServer",
-			"metadata": {
-				"description": "Provide managed server prefix names"
-			}
-		},
-		"dnsLabelPrefix": {
-			"type": "string",
-			"metadata": {
-				"description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
-			}
-		},
-		"linuxOSVersion": {
-			"type": "string",
-			"defaultValue": "7.4",
-			"allowedValues": [
-				"7.4",
-				"7.3"
-			],
-			"metadata": {
-				"description": "The Oracle Linux version for the VM. This will pick a fully patched image of this given Oracle Linux version."
-			}
-		},
-		"numberOfInstances": {
-			"type": "int",
-			"defaultValue": 2,
-			"minValue": 2,
-			"maxValue": 5,
-			"metadata": {
-				"description": "Number of VMs to deploy, limit 5 since this sample is using a single storage account"
-			}
-		},
-		"adminVMName": {
-			"type": "string",
-			"defaultValue": "adminVM",
-			"metadata": {
-				"description": "Admin Server hosting VM name."
-			}
-		},
-		"location": {
-			"type": "string",
-			"defaultValue": "[resourceGroup().location]",
-			"metadata": {
-				"description": "Location for all resources."
-			}
-		},
-		"vmSizeSelect": {
-			"type": "string",
-			"defaultValue": "Standard_A3",
-			"allowedValues": [
-				"Standard_A1",
-				"Standard_A2",
-				"Standard_A3",
-				"Standard_A4"
-			],
-			"metadata": {
-				"description": "Select appropriate VM Size as per requirement (Standard_A1, Standard_A2, Standard_A3, Standard_A4)"
-			}
-		}
-	},
-	"variables": {
-		"imagePublisher": "Oracle",
-		"imageOffer": "Oracle-Linux",
-		"managedVMPrefix": "[concat(parameters('managedServerPrefix'),'VM')]",
-		"nicName": "_NIC",
-		"storageAccountName": "[concat(take(replace(parameters('guidValue'),'-',''),6),'olvm')]",
-		"addressPrefix": "10.0.0.0/16",
-		"subnetName": "Subnet",
-		"subnetPrefix": "10.0.0.0/24",
-		"storageAccountType": "Standard_LRS",
-		"publicIPAddressName": "_PublicIP",
-		"outputAdminHostName": "[concat(parameters('adminVMName'),variables('publicIPAddressName'))]",
-		"publicIPAddressType": "Dynamic",
-		"vmSize": "[parameters('vmSizeSelect')]",
-		"virtualNetworkName": "[concat(parameters('wlsDomainName'),'_VNET')]",
-		"oradownScript": "oradown.sh",
-		"ScriptFileName": "setupClusterDomain.sh",
-		"linuxConfiguration": {
-			"disablePasswordAuthentication": true,
-			"ssh": {
-				"publicKeys": [
-					{
-						"path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
-						"keyData": "[parameters('adminPasswordOrKey')]"
-					}
-				]
-			}
-		},
-		"subnetRef": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('virtualNetworkName'), variables('subnetName'))]",
-		"networkSecurityGroupName": "[concat(parameters('dnsLabelPrefix'), '-nsg')]",
-		"networkSecurityGroupRef": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]",
-		"requiredPortrange": ",65200-65535,5556"
-	},
-	"resources": [
-		{
-			"apiVersion": "2019-10-01",
-			"name": "${tracking.pid}",
-			"type": "Microsoft.Resources/deployments",
-			"properties": {
-				"mode": "Incremental",
-				"template": {
-					"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-					"contentVersion": "1.0.0.0",
-					"resources": [
-					]
-				}
-			}
-		},
-		{
-			"type": "Microsoft.Network/networkSecurityGroups",
-			"apiVersion": "2019-06-01",
-			"name": "[variables('networkSecurityGroupName')]",
-			"location": "[parameters('location')]",
-			"properties": {
-				"securityRules": [
-					{
-						"name": "WebLogicPorts",
-						"properties": {
-							"protocol": "TCP",
-							"sourcePortRange": "*",
-							"sourceAddressPrefix": "*",
-							"destinationAddressPrefix": "*",
-							"access": "Allow",
-							"priority": 320,
-							"direction": "Inbound",
-							"destinationPortRanges": "[split(concat(parameters('portsToExpose'),variables('requiredPortrange')), ',')]"
-						}
-					}
-				]
-			}
-		},
-		{
-			"type": "Microsoft.Storage/storageAccounts",
-			"apiVersion": "2019-06-01",
-			"name": "[variables('storageAccountName')]",
-			"location": "[parameters('location')]",
-			"sku": {
-				"name": "[variables('storageAccountType')]"
-			},
-			"kind": "Storage",
-			"properties": {
-			}
-		},
-		{
-			"type": "Microsoft.Network/publicIPAddresses",
-			"apiVersion": "2018-11-01",
-			"name": "[if(equals(copyIndex(),0),concat(parameters('adminVMName'),variables('publicIPAddressName')),concat(variables('managedVMPrefix'), copyIndex(),variables('publicIPAddressName')))]",
-			"location": "[parameters('location')]",
-			"copy": {
-				"name": "publicIPLoop",
-				"count": "[parameters('numberOfInstances')]"
-			},
-			"properties": {
-				"publicIPAllocationMethod": "[variables('publicIPAddressType')]",
-				"dnsSettings": {
-					"domainNameLabel": "[concat(toLower(parameters('dnsLabelPrefix')),copyindex(),'-',take(replace(parameters('guidValue'),'-',''),10),'-',toLower(parameters('wlsDomainName')))]"
-				}
-			}
-		},
-		{
-			"type": "Microsoft.Network/virtualNetworks",
-			"apiVersion": "2018-11-01",
-			"name": "[variables('virtualNetworkName')]",
-			"location": "[parameters('location')]",
-			"dependsOn": [
-				"[variables('networkSecurityGroupRef')]"
-			],
-			"properties": {
-				"addressSpace": {
-					"addressPrefixes": [
-						"[variables('addressPrefix')]"
-					]
-				},
-				"subnets": [
-					{
-						"name": "[variables('subnetName')]",
-						"properties": {
-							"addressPrefix": "[variables('subnetPrefix')]",
-							"networkSecurityGroup": {
-								"id": "[variables('networkSecurityGroupRef')]"
-							}
-						}
-					}
-				]
-			}
-		},
-		{
-			"type": "Microsoft.Network/networkInterfaces",
-			"apiVersion": "2018-11-01",
-			"name": "[if(equals(copyIndex(),0),concat(parameters('adminVMName'),variables('nicName')),concat(variables('managedVMPrefix'), copyIndex(),variables('nicName')))]",
-			"location": "[parameters('location')]",
-			"copy": {
-				"name": "nicLoop",
-				"count": "[parameters('numberOfInstances')]"
-			},
-			"dependsOn": [
-				"[variables('virtualNetworkName')]",
-				"publicIPLoop"
-			],
-			"properties": {
-				"ipConfigurations": [
-					{
-						"name": "ipconfig1",
-						"properties": {
-							"privateIPAllocationMethod": "Dynamic",
-							"publicIPAddress": {
-								"id": "[resourceId('Microsoft.Network/publicIPAddresses',if(equals(copyIndex(),0),concat(parameters('adminVMName'),variables('publicIPAddressName')),concat(variables('managedVMPrefix'), copyIndex(),variables('publicIPAddressName'))))]"
-							},
-							"subnet": {
-								"id": "[variables('subnetRef')]"
-							}
-						}
-					}
-				]
-			}
-		},
-		{
-			"type": "Microsoft.Compute/virtualMachines",
-			"apiVersion": "2018-10-01",
-			"name": "[if(equals(copyIndex(),0),parameters('adminVMName'),concat(variables('managedVMPrefix'), copyIndex()))]",
-			"location": "[parameters('location')]",
-			"copy": {
-				"name": "virtualMachineLoop",
-				"count": "[parameters('numberOfInstances')]"
-			},
-			"dependsOn": [
-				"nicLoop"
-			],
-			"properties": {
-				"hardwareProfile": {
-					"vmSize": "[variables('vmSize')]"
-				},
-				"osProfile": {
-					"computerName": "[if(equals(copyIndex(),0),parameters('adminVMName'),concat(variables('managedVMPrefix'), copyIndex()))]",
-					"adminUsername": "[parameters('adminUsername')]",
-					"adminPassword": "[parameters('adminPasswordOrKey')]",
-					"linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
-				},
-				"storageProfile": {
-					"imageReference": {
-						"publisher": "[variables('imagePublisher')]",
-						"offer": "[variables('imageOffer')]",
-						"sku": "[parameters('linuxOSVersion')]",
-						"version": "latest"
-					},
-					"osDisk": {
-						"createOption": "FromImage"
-					},
-					"dataDisks": [
-						{
-							"diskSizeGB": 900,
-							"lun": 0,
-							"createOption": "Empty"
-						}
-					]
-				},
-				"networkProfile": {
-					"networkInterfaces": [
-						{
-							"id": "[resourceId('Microsoft.Network/networkInterfaces',if(equals(copyIndex(),0),concat(parameters('adminVMName'),variables('nicName')),concat(variables('managedVMPrefix'), copyIndex(),variables('nicName'))))]"
-						}
-					]
-				},
-				"diagnosticsProfile": {
-					"bootDiagnostics": {
-						"enabled": true,
-						"storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('storageAccountName')), '2019-06-01').primaryEndpoints.blob]"
-					}
-				}
-			}
-		},
-		{
-			"type": "Microsoft.Compute/virtualMachines/extensions",
-			"name": "[if(equals(copyIndex(),0),concat(parameters('adminVMName'),'/newuserscript'),concat(variables('managedVMPrefix'), copyIndex(),'/newuserscript'))]",
-			"apiVersion": "2019-07-01",
-			"location": "[parameters('location')]",
-			"copy": {
-				"name": "virtualMachineExtensionLoop",
-				"count": "[parameters('numberOfInstances')]"
-			},
-			"dependsOn": [
-				"virtualMachineLoop"
-			],
-			"properties": {
-				"publisher": "Microsoft.Azure.Extensions",
-				"type": "CustomScript",
-				"typeHandlerVersion": "2.0",
-				"autoUpgradeMinorVersion": true,
-				"settings": {
-					"fileUris": [
-						"[uri(parameters('_artifactsLocation'), concat('scripts/', variables('ScriptFileName'), parameters('_artifactsLocationSasToken')))]",
-						"[uri(parameters('_artifactsLocation'), concat('scripts/', variables('oradownScript'), parameters('_artifactsLocationSasToken')))]"
-					],
-					"commandToExecute": "[concat('sh',' ',variables('ScriptFileName'),' ',parameters('acceptOTNLicenseAgreement'),' ',parameters('otnAccountUsername'),' ',parameters('otnAccountPassword'),' ',parameters('wlsDomainName'),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',if(equals(copyIndex(),0),'admin',concat(parameters('managedServerPrefix'), copyIndex())),' ',parameters('adminVMName'))]"
-				}
-			}
-		}
-	],
-	"outputs": {
-		"wlsDomainLocation": {
-			"type": "string",
-			"value": "[concat('/u01/domains/', parameters('wlsDomainName'))]"
-		},
-		"adminHostName": {
-			"type": "string",
-			"value": "[reference(variables('outputAdminHostName')).dnsSettings.fqdn]"
-		},
-		"adminConsole": {
-			"type": "string",
-			"value": "[concat('http://',reference(concat(parameters('adminVMName'),variables('publicIPAddressName'))).dnsSettings.fqdn,':7001/console')]"
-		},
-		"adminSecuredConsole": {
-			"type": "string",
-			"value": "[concat('https://',reference(concat(parameters('adminVMName'),variables('publicIPAddressName'))).dnsSettings.fqdn,':7002/console')]"
-		}
-	}
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "_artifactsLocation": {
+            "type": "string",
+            "metadata": {
+                "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+            },
+            "defaultValue": "[deployment().properties.templateLink.uri]"
+        },
+        "_artifactsLocationSasToken": {
+            "type": "securestring",
+            "metadata": {
+                "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+            },
+            "defaultValue": ""
+        },
+        "adminUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "User name for the Virtual Machine."
+            }
+        },
+        "adminPasswordOrKey": {
+            "type": "securestring",
+            "metadata": {
+                "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
+            }
+        },
+        "acceptOTNLicenseAgreement": {
+            "type": "string",
+            "metadata": {
+                "description": "Do you agree to provide OTN credentials to accept OTN License Agreement? Enter Y or y to agree, else N or n"
+            }
+        },
+        "enableAppGateway": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "If true, deploy an Azure App Gateway in front of the nodes of the cluster"
+            }
+        },
+        "otnAccountUsername": {
+            "type": "string",
+            "metadata": {
+                "description": "Username for your Oracle Technology Network account"
+            }
+        },
+        "otnAccountPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password for your Oracle Technology Network account"
+            }
+        },
+        "portsToExpose": {
+            "type": "string",
+            "defaultValue": "80,443,7001-9000",
+            "metadata": {
+                "description": "Ports and port ranges to expose"
+            }
+        },
+        "wlsDomainName": {
+            "type": "string",
+            "metadata": {
+                "description": "Provide Weblogic domain name"
+            }
+        },
+        "wlsUserName": {
+            "type": "string",
+            "metadata": {
+                "description": "Username for your Weblogic domain name"
+            }
+        },
+        "wlsPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password for your Weblogic domain name"
+            }
+        },
+        "managedServerPrefix": {
+            "type": "string",
+            "defaultValue": "managedServer",
+            "metadata": {
+                "description": "Provide managed server prefix names"
+            }
+        },
+        "dnsLabelPrefix": {
+            "type": "string",
+            "metadata": {
+                "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
+            }
+        },
+        "dnsNameforApplicationGateway": {
+            "type": "string",
+            "defaultValue": "wlsclusterappgw",
+            "metadata": {
+                "description": "DNS for ApplicationGateway"
+            }
+        },
+        "gatewayPublicIPAddressName": {
+            "type": "string",
+            "defaultValue": "gatewayPublicIP",
+            "metadata": {
+                "description": "Public IP Name for the Application Gateway"
+            }
+        },
+        "linuxOSVersion": {
+            "type": "string",
+            "defaultValue": "7.4",
+            "allowedValues": [
+                "7.4",
+                "7.3"
+            ],
+            "metadata": {
+                "description": "The Oracle Linux version for the VM. This will pick a fully patched image of this given Oracle Linux version."
+            }
+        },
+        "numberOfInstances": {
+            "type": "int",
+            "defaultValue": 2,
+            "minValue": 2,
+            "maxValue": 5,
+            "metadata": {
+                "description": "Number of VMs to deploy, limit 5 since this sample is using a single storage account"
+            }
+        },
+        "adminVMName": {
+            "type": "string",
+            "defaultValue": "adminVM",
+            "metadata": {
+                "description": "Admin Server hosting VM name."
+            }
+        },
+        "location": {
+            "type": "string",
+            "defaultValue": "[resourceGroup().location]",
+            "metadata": {
+                "description": "Location for all resources."
+            }
+        },
+        "vmSizeSelect": {
+            "type": "string",
+            "defaultValue": "Standard_A3",
+            "allowedValues": [
+                "Standard_A1",
+                "Standard_A2",
+                "Standard_A3",
+                "Standard_A4"
+            ],
+            "metadata": {
+                "description": "Select appropriate VM Size as per requirement (Standard_A1, Standard_A2, Standard_A3, Standard_A4)"
+            }
+        },
+        "keyVaultName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "KeyVault Name"
+            }
+        },
+        "keyVaultResourceGroup": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Resource group name in current subscription containing the KeyVault"
+            }
+        },
+        "keyVaultSSLCertDataSecretName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The name of the secret in the specified KeyVault whose value is the SSL Certificate Data"
+            }
+        },
+        "keyVaultSSLCertPasswordSecretName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "The name of the secret in the specified KeyVault whose value is the password for the corresponding SSL Certificate"
+            }
+        }
+    },
+    "variables": {
+        "keyVaultLinkedTemplateName": "appGatewayNestedTemplate.json",
+        "clusterLinkedTemplateName": "clusterTemplate.json",
+        "subscriptionId": "[subscription().subscriptionId]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-05-01",
+            "name": "clusterLinkedTemplate",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/', variables('clusterLinkedTemplateName')))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    },
+                    "acceptOTNLicenseAgreement": {
+                        "value": "[parameters('acceptOTNLicenseAgreement')]"
+                    },
+                    "adminPasswordOrKey": {
+                        "value": "[parameters('adminPasswordOrKey')]"
+                    },
+                    "adminUsername": {
+                        "value": "[parameters('adminUsername')]"
+                    },
+                    "adminVMName": {
+                        "value": "[parameters('adminVMName')]"
+                    },
+                    "dnsLabelPrefix": {
+                        "value": "[parameters('dnsLabelPrefix')]"
+                    },
+                    "dnsNameforApplicationGateway": {
+                        "value": "[parameters('dnsNameforApplicationGateway')]"
+                    },
+                    "enableAppGateway": {
+                        "value": "[parameters('enableAppGateway')]"
+                    },
+                    "gatewayPublicIPAddressName": {
+                        "value": "[parameters('gatewayPublicIPAddressName')]"
+                    },
+                    "linuxOSVersion": {
+                        "value": "[parameters('linuxOSVersion')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "managedServerPrefix": {
+                        "value": "[parameters('managedServerPrefix')]"
+                    },
+                    "numberOfInstances": {
+                        "value": "[parameters('numberOfInstances')]"
+                    },
+                    "otnAccountUsername": {
+                        "value": "[parameters('otnAccountUsername')]"
+                    },
+                    "otnAccountPassword": {
+                        "value": "[parameters('otnAccountPassword')]"
+                    },
+                    "portsToExpose": {
+                        "value": "[parameters('portsToExpose')]"
+                    },
+                    "vmSizeSelect": {
+                        "value": "[parameters('vmSizeSelect')]"
+                    },
+                    "wlsDomainName": {
+                        "value": "[parameters('wlsDomainName')]"
+                    },
+                    "wlsUserName": {
+                        "value": "[parameters('wlsUserName')]"
+                    },
+                    "wlsPassword": {
+                        "value": "[parameters('wlsPassword')]"
+                    }
+
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2018-05-01",
+            "name": "keyVaultLinkedAppGatewayTemplate",
+            "condition": "[parameters('enableAppGateway')]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/', variables('keyVaultLinkedTemplateName')))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "appGatewaySSLCertificateData": {
+                        "reference": {
+                            "keyVault": {
+                                "id": "[resourceId(variables('subscriptionId'),  parameters('keyVaultResourceGroup'), 'Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+                            },
+                            "secretName": "[parameters('keyVaultSSLCertDataSecretName')]"
+                        }
+                    },
+                    "appGatewaySSLCertificatePassword": {
+                        "reference": {
+                            "keyVault": {
+                                "id": "[resourceId(variables('subscriptionId'),  parameters('keyVaultResourceGroup'), 'Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+                            },
+                            "secretName": "[parameters('keyVaultSSLCertPasswordSecretName')]"
+                        }
+                    },
+                    "gatewayPublicIPAddressName": {
+                        "value": "[parameters('gatewayPublicIPAddressName')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "managedServerPrefix": {
+                        "value": "[parameters('managedServerPrefix')]"
+                    },
+                    "numberOfInstances": {
+                        "value": "[parameters('numberOfInstances')]"
+                    },
+                    "wlsDomainName": {
+                        "value": "[parameters('wlsDomainName')]"
+                    }
+                }
+            },
+            "dependsOn": [
+                "clusterLinkedTemplate"
+            ]
+        }
+    ],
+    "outputs": {
+        "wlsDomainLocation": {
+            "type": "string",
+            "value": "[reference('clusterLinkedTemplate').outputs.wlsDomainLocation.value]"
+        },
+        "adminHostName": {
+            "type": "string",
+            "value": "[reference('clusterLinkedTemplate').outputs.adminHostName.value]"
+        },
+        "adminConsole": {
+            "type": "string",
+            "value": "[reference('clusterLinkedTemplate').outputs.adminConsole.value]"
+        },
+        "adminSecuredConsole": {
+            "type": "string",
+            "value": "[reference('clusterLinkedTemplate').outputs.adminSecuredConsole.value]"
+        },
+        "appGatewayURL": {
+            "type": "string",
+            "value": "[if(parameters('enableAppGateway'), reference('keyVaultLinkedAppGatewayTemplate').outputs.appGatewayURL.value, '')]"
+
+        }
+    }
 }

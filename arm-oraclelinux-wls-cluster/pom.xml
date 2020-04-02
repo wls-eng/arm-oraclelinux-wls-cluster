@@ -31,7 +31,7 @@
     <parent>
         <groupId>com.microsoft.azure.iaas</groupId>
         <artifactId>azure-javaee-iaas-parent</artifactId>
-        <version>1.0.3</version>
+        <version>1.0.4</version>
         <relativePath></relativePath>
     </parent>
     
@@ -40,7 +40,7 @@
 
     <properties>
         <template.validation.tests.directory>${basedir}/../../arm-ttk/arm-ttk</template.validation.tests.directory>
-        <tracking.pid>pid-07bfd1f7-83ff-50cd-bd74-61b00a2a6808</tracking.pid>
+        <template.pid.properties.url>https://raw.githubusercontent.com/wls-eng/arm-oraclelinux-wls/ee16e289999ef80367a9a4ebe9326c4d7d2f2c8a/src/main/resources/pid.properties</template.pid.properties.url>
     </properties>
     
     <description>

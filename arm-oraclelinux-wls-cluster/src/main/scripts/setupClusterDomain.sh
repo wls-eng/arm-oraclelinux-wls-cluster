@@ -9,7 +9,7 @@ function echo_stderr ()
 #Function to display usage message
 function usage()
 {
-  echo_stderr "./setupClusterDomain.sh <acceptOTNLicenseAgreement> <otnusername> <otnpassword> <wlsDomainName> <wlsUserName> <wlsPassword> <wlsServerName> <adminVMName>"  
+  echo_stderr "./setupClusterDomain.sh <acceptOTNLicenseAgreement> <otnusername> <otnpassword> <wlsDomainName> <wlsUserName> <wlsPassword> <wlsServerName> <adminVMName> <AppGWHostName>"
 }
 
 
@@ -18,6 +18,7 @@ function setupInstallPath()
     JDK_PATH="/u01/app/jdk"
     WLS_PATH="/u01/app/wls"
     DOMAIN_PATH="/u01/domains"
+    DOMAIN_DIR=$DOMAIN_PATH/$wlsDomainName
     WL_HOME="/u01/app/wls/install/Oracle/Middleware/Oracle_Home/wlserver"
 
     #create custom directory for setting up wls and jdk
@@ -54,7 +55,7 @@ function downloadUsingWget()
      then
         echo "$filename Driver Download failed on $downloadURL. Trying again..."
 	rm -f $filename
-     else 
+     else
         echo "$filename Driver Downloaded successfully"
         break
      fi
@@ -94,13 +95,13 @@ function installUtilities()
        sudo systemctl start rngd
        attempt=`expr $attempt + 1`
        sudo systemctl status rngd | grep running
-       if [[ $? == 0 ]]; 
+       if [[ $? == 0 ]];
        then
           echo "rngd utility service started successfully"
           break
        fi
        sleep 1m
-    done  
+    done
 }
 
 function addOracleGroupAndUser()
@@ -132,7 +133,7 @@ function validateInput()
     then
         echo_stderr "otnusername or otnpassword is required. "
         exit 1
-    fi	
+    fi
 
     if [ -z "$wlsDomainName" ];
     then
@@ -143,7 +144,7 @@ function validateInput()
     then
         echo_stderr "wlsUserName or wlsPassword is required. "
         exit 1
-    fi	
+    fi
 
     if [ -z "$wlsServerName" ];
     then
@@ -154,6 +155,7 @@ function validateInput()
     then
         echo_stderr "adminVMName is required. "
     fi
+
 }
 
 # Download JDK for WLS
@@ -162,12 +164,12 @@ function downloadJDK()
    for in in {1..5}
    do
      ${SCRIPT_PWD}/oradown.sh --cookie=accept-weblogicserver-server --username="${otnusername}" --password="${otnpassword}" https://download.oracle.com/otn/java/jdk/8u131-b11/d54c1d3a095b4ff2b6607d096fa80163/jdk-8u131-linux-x64.tar.gz
-     tar -tzf jdk-8u131-linux-x64.tar.gz 
+     tar -tzf jdk-8u131-linux-x64.tar.gz
      if [ $? != 0 ];
      then
         echo "Download failed. Trying again..."
         rm -f jdk-8u131-linux-x64.tar.gz
-     else 
+     else
         echo "Downloaded JDK successfully"
         break
      fi
@@ -197,7 +199,7 @@ function setupJDK()
     fi
 }
 
-# Setup WLS 12.2.1.3.0 
+# Setup WLS 12.2.1.3.0
 function setupWLS()
 {
     sudo cp $BASE_DIR/fmw_12.2.1.3.0_wls_Disk1_1of1.zip $WLS_PATH/fmw_12.2.1.3.0_wls_Disk1_1of1.zip
@@ -234,7 +236,7 @@ function downloadWLS()
      then
         echo "Download failed. Trying again..."
         rm -f fmw_12.2.1.3.0_wls_Disk1_1of1.zip
-     else 
+     else
         echo "Downloaded WLS successfully"
         break
      fi
@@ -263,18 +265,18 @@ function validateJDKZipCheckSum()
 function cleanup()
 {
     echo "Cleaning up temporary files..."
-	
+
     rm -f $BASE_DIR/jdk-8u131-linux-x64.tar.gz
     rm -f $BASE_DIR/fmw_12.2.1.3.0_wls_Disk1_1of1.zip
-	
+
     rm -rf $JDK_PATH/jdk-8u131-linux-x64.tar.gz
     rm -rf $WLS_PATH/fmw_12.2.1.3.0_wls_Disk1_1of1.zip
-    
+
     rm -rf $BASE_DIR/${POSTGRESQL_JDBC_DRIVER}
     rm -rf $BASE_DIR/${MSSQL_JDBC_DRIVER}
-    
+
     rm -rf $WLS_PATH/silent-template
-    	
+
     rm -rf $WLS_JAR
 
     rm -rf $DOMAIN_PATH/admin-domain.yaml
@@ -412,7 +414,7 @@ topology:
          NodeManager:
              ListenAddress: "$nmHost"
              ListenPort: $nmPort
-             NMType : ssl  
+             NMType : ssl
    Cluster:
         '$wlsClusterName':
              MigrationBasis: 'consensus'
@@ -423,7 +425,7 @@ topology:
             SSL:
                ListenPort: $wlsSSLAdminPort
                Enabled: true
-   SecurityConfiguration:	       
+   SecurityConfiguration:
        NodeManagerUsername: "$wlsUserName"
        NodeManagerPasswordEncrypted: "$wlsPassword"
 EOF
@@ -432,7 +434,7 @@ EOF
 #Creates weblogic deployment model for cluster domain managed server
 function create_managed_model()
 {
-    echo "Creating admin domain model"
+    echo "Creating managed domain model"
     cat <<EOF >$DOMAIN_PATH/managed-domain.yaml
 domainInfo:
    AdminUserName: "$wlsUserName"
@@ -445,7 +447,7 @@ topology:
          NodeManager:
              ListenAddress: "$nmHost"
              ListenPort: $nmPort
-             NMType : ssl  
+             NMType : ssl
    Cluster:
         '$wlsClusterName':
              MigrationBasis: 'consensus'
@@ -455,9 +457,29 @@ topology:
            Notes: "$wlsServerName managed server"
            Cluster: "$wlsClusterName"
            Machine: "$nmHost"
-   SecurityConfiguration:	       
+EOF
+    if [ -n "$AppGWHostName" ];
+    then
+        cat <<EOF >>$DOMAIN_PATH/managed-domain.yaml
+           NetworkAccessPoint:
+               T3Channel:
+                   Protocol: "t3"
+                   ListenAddress: None
+                   ListenPort: $channelPort
+                   PublicAddress: "$AppGWHostName"
+                   PublicPort: $channelPort
+               HTTPChannel:
+                   Protocol: "http"
+                   ListenAddress: None
+                   ListenPort: $channelPort
+                   PublicAddress: "$AppGWHostName"
+                   PublicPort: $channelPort
+EOF
+    fi
+    cat <<EOF >>$DOMAIN_PATH/managed-domain.yaml
+   SecurityConfiguration:
        NodeManagerUsername: "$wlsUserName"
-       NodeManagerPasswordEncrypted: "$wlsPassword" 
+       NodeManagerPasswordEncrypted: "$wlsPassword"
 EOF
 }
 
@@ -514,6 +536,45 @@ disconnect()
 EOF
 }
 
+#This function to add machine for a given managed server
+#This function must only be called if AppGWHostName is non-empty
+function createChannelPortsOnManagedServer()
+{
+    echo "Creating T3 channel Port on managed server $wlsServerName"
+    cat <<EOF >$DOMAIN_PATH/create-t3-channel.py
+
+connect('$wlsUserName','$wlsPassword','t3://$wlsAdminURL')
+
+edit("$wlsServerName")
+startEdit()
+cd('/Servers/$wlsServerName')
+create('T3Channel','NetworkAccessPoint')
+cd('/Servers/$wlsServerName/NetworkAccessPoints/T3Channel')
+set('Protocol','t3')
+set('ListenAddress','')
+set('ListenPort',$channelPort)
+set('PublicAddress', '$AppGWHostName')
+set('PublicPort', $channelPort)
+set('Enabled','true')
+
+cd('/Servers/$wlsServerName')
+create('HTTPChannel','NetworkAccessPoint')
+cd('/Servers/$wlsServerName/NetworkAccessPoints/HTTPChannel')
+set('Protocol','http')
+set('ListenAddress','')
+set('ListenPort',$channelPort)
+set('PublicAddress', '$AppGWHostName')
+set('PublicPort', $channelPort)
+set('Enabled','true')
+
+save()
+resolve()
+activate()
+destroyEditSession("$wlsServerName")
+disconnect()
+EOF
+}
+
 
 #Function to create Admin Only Domain
 function create_adminSetup()
@@ -522,7 +583,7 @@ function create_adminSetup()
     echo "Creating domain path ${DOMAIN_PATH}"
     echo "Downloading weblogic-deploy-tool"
     cd $DOMAIN_PATH
-    wget -q $WEBLOGIC_DEPLOY_TOOL  
+    wget -q $WEBLOGIC_DEPLOY_TOOL
     if [[ $? != 0 ]]; then
        echo "Error : Downloading weblogic-deploy-tool failed"
        exit 1
@@ -530,7 +591,7 @@ function create_adminSetup()
     sudo unzip -o weblogic-deploy.zip -d $DOMAIN_PATH
     create_admin_model
     sudo chown -R $username:$groupname $DOMAIN_PATH
-    runuser -l oracle -c "export JAVA_HOME=$JDK_PATH/jdk1.8.0_131 ; $DOMAIN_PATH/weblogic-deploy/bin/createDomain.sh -oracle_home $INSTALL_PATH/Oracle/Middleware/Oracle_Home -domain_parent $DOMAIN_PATH  -domain_type WLS -model_file $DOMAIN_PATH/admin-domain.yaml" 
+    runuser -l oracle -c "export JAVA_HOME=$JDK_PATH/jdk1.8.0_131 ; $DOMAIN_PATH/weblogic-deploy/bin/createDomain.sh -oracle_home $INSTALL_PATH/Oracle/Middleware/Oracle_Home -domain_parent $DOMAIN_PATH  -domain_type WLS -model_file $DOMAIN_PATH/admin-domain.yaml"
     if [[ $? != 0 ]]; then
        echo "Error : Admin setup failed"
        exit 1
@@ -548,7 +609,7 @@ function admin_boot_setup()
  sudo chown -R $username:$groupname $DOMAIN_PATH/$wlsDomainName/servers
  }
 
-#This function to wait for admin server 
+#This function to wait for admin server
 function wait_for_admin()
 {
  #wait for admin to start
@@ -573,7 +634,7 @@ do
      echo "Server $wlsServerName started succesfully..."
      break
   fi
-done  
+done
 }
 
 # Create systemctl service for nodemanager
@@ -591,7 +652,7 @@ function create_nodemanager_service()
  cat <<EOF >/etc/systemd/system/wls_nodemanager.service
  [Unit]
 Description=WebLogic nodemanager service
- 
+
 [Service]
 Type=simple
 # Note that the following three parameters should be changed to the correct paths
@@ -603,7 +664,7 @@ User=oracle
 Group=oracle
 KillMode=process
 LimitNOFILE=65535
- 
+
 [Install]
 WantedBy=multi-user.target
 EOF
@@ -616,7 +677,7 @@ function create_adminserver_service()
  cat <<EOF >/etc/systemd/system/wls_admin.service
 [Unit]
 Description=WebLogic Adminserver service
- 
+
 [Service]
 Type=simple
 WorkingDirectory="$DOMAIN_PATH/$wlsDomainName"
@@ -626,7 +687,7 @@ User=oracle
 Group=oracle
 KillMode=process
 LimitNOFILE=65535
- 
+
 [Install]
 WantedBy=multi-user.target
 EOF
@@ -643,7 +704,7 @@ try:
 except:
    print "Failed starting managed server $wlsServerName"
    dumpStack()
-disconnect()   
+disconnect()
 EOF
 sudo chown -R $username:$groupname $DOMAIN_PATH
 runuser -l oracle -c "export JAVA_HOME=$JDK_PATH/jdk1.8.0_131 ; $INSTALL_PATH/Oracle/Middleware/Oracle_Home/oracle_common/common/bin/wlst.sh $DOMAIN_PATH/start-server.py"
@@ -658,7 +719,7 @@ function create_managedSetup(){
     echo "Creating Managed Server Setup"
     echo "Downloading weblogic-deploy-tool"
     cd $DOMAIN_PATH
-    wget -q $WEBLOGIC_DEPLOY_TOOL  
+    wget -q $WEBLOGIC_DEPLOY_TOOL
     if [[ $? != 0 ]]; then
        echo "Error : Downloading weblogic-deploy-tool failed"
        exit 1
@@ -668,9 +729,13 @@ function create_managedSetup(){
     create_managed_model
     create_machine_model
     create_ms_server_model
+    if [ -n "$AppGWHostName" ];
+    then
+        createChannelPortsOnManagedServer
+    fi
     echo "Completed managed server model files"
     sudo chown -R $username:$groupname $DOMAIN_PATH
-    runuser -l oracle -c "export JAVA_HOME=$JDK_PATH/jdk1.8.0_131 ; $DOMAIN_PATH/weblogic-deploy/bin/createDomain.sh -oracle_home $INSTALL_PATH/Oracle/Middleware/Oracle_Home -domain_parent $DOMAIN_PATH  -domain_type WLS -model_file $DOMAIN_PATH/managed-domain.yaml" 
+    runuser -l oracle -c "export JAVA_HOME=$JDK_PATH/jdk1.8.0_131 ; $DOMAIN_PATH/weblogic-deploy/bin/createDomain.sh -oracle_home $INSTALL_PATH/Oracle/Middleware/Oracle_Home -domain_parent $DOMAIN_PATH  -domain_type WLS -model_file $DOMAIN_PATH/managed-domain.yaml"
     if [[ $? != 0 ]]; then
        echo "Error : Managed setup failed"
        exit 1
@@ -688,6 +753,17 @@ function create_managedSetup(){
          echo "Error : Adding server $wlsServerName failed"
          exit 1
     fi
+
+    if [ -n "$AppGWHostName" ];
+    then
+        echo "Creating T3 Channel on managed server $wlsServerName"
+        runuser -l oracle -c "export JAVA_HOME=$JDK_PATH/jdk1.8.0_131 ; $INSTALL_PATH/Oracle/Middleware/Oracle_Home/oracle_common/common/bin/wlst.sh $DOMAIN_PATH/create-t3-channel.py"
+        if [[ $? != 0 ]]; then
+            echo "Error : Creating T3 Channel on Managed server $wlsServerName failed"
+            exit 1
+        fi
+    fi
+    
 }
 
 #Install Weblogic Server using Silent Installation Templates
@@ -735,7 +811,7 @@ function enabledAndStartNodeManagerService()
 {
   sudo systemctl enable wls_nodemanager
   sudo systemctl daemon-reload
-  
+
   attempt=1
   while [[ $attempt -lt 6 ]]
   do
@@ -744,7 +820,7 @@ function enabledAndStartNodeManagerService()
      sleep 1m
      attempt=`expr $attempt + 1`
      sudo systemctl status wls_nodemanager | grep running
-     if [[ $? == 0 ]]; 
+     if [[ $? == 0 ]];
      then
          echo "wls_nodemanager service started successfully"
 	 break
@@ -758,7 +834,7 @@ function enableAndStartAdminServerService()
   sudo systemctl enable wls_admin
   sudo systemctl daemon-reload
   echo "Starting admin server service"
-  sudo systemctl start wls_admin  
+  sudo systemctl start wls_admin
 
 }
 
@@ -767,7 +843,18 @@ function enableAndStartAdminServerService()
 CURR_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export BASE_DIR="$(readlink -f ${CURR_DIR})"
 
-if [ $# -ne 8 ]
+# store arguments in a special array 
+args=("$@") 
+# get number of elements 
+ELEMENTS=${#args[@]} 
+ 
+# echo each element in array  
+# for loop 
+for (( i=0;i<$ELEMENTS;i++)); do 
+    echo "ARG[${args[${i}]}]"
+done
+
+if [ $# -le 7 ]
 then
     usage
 	exit 1
@@ -781,6 +868,7 @@ export wlsUserName=$5
 export wlsPassword=$6
 export wlsServerName=$7
 export wlsAdminHost=$8
+export AppGWHostName=$9
 
 
 validateInput
@@ -788,6 +876,7 @@ validateInput
 export wlsAdminPort=7001
 export wlsSSLAdminPort=7002
 export wlsManagedPort=8001
+export channelPort=8501
 export wlsAdminURL="$wlsAdminHost:$wlsAdminPort"
 export wlsClusterName="cluster1"
 export WLS_VER="12.2.1.3.0"
@@ -795,14 +884,14 @@ export nmHost=`hostname`
 export nmPort=5556
 export WEBLOGIC_DEPLOY_TOOL=https://github.com/oracle/weblogic-deploy-tooling/releases/download/weblogic-deploy-tooling-1.1.1/weblogic-deploy.zip
 
-export POSTGRESQL_JDBC_DRIVER_URL=https://jdbc.postgresql.org/download/postgresql-42.2.8.jar 
+export POSTGRESQL_JDBC_DRIVER_URL=https://jdbc.postgresql.org/download/postgresql-42.2.8.jar
 export POSTGRESQL_JDBC_DRIVER=${POSTGRESQL_JDBC_DRIVER_URL##*/}
 
 export MSSQL_JDBC_DRIVER_URL=https://repo.maven.apache.org/maven2/com/microsoft/sqlserver/mssql-jdbc/7.4.1.jre8/mssql-jdbc-7.4.1.jre8.jar
 export MSSQL_JDBC_DRIVER=${MSSQL_JDBC_DRIVER_URL##*/}
 
 export SCRIPT_PWD=`pwd`
-chmod ugo+x ${SCRIPT_PWD}/oradown.sh 
+chmod ugo+x ${SCRIPT_PWD}/oradown.sh
 
 addOracleGroupAndUser
 
@@ -832,9 +921,9 @@ modifyWLSClasspath
 
 if [ $wlsServerName == "admin" ];
 then
-  create_adminSetup    
-  create_nodemanager_service  
-  admin_boot_setup  
+  create_adminSetup
+  create_nodemanager_service
+  admin_boot_setup
   create_adminserver_service
   enabledAndStartNodeManagerService
   enableAndStartAdminServerService
@@ -843,6 +932,7 @@ else
   create_managedSetup
   create_nodemanager_service
   enabledAndStartNodeManagerService
+  wait_for_admin
   start_managed
 fi
 
