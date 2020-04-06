@@ -8,6 +8,13 @@
 				"description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
 			}
 		},
+                "_artifactsLocationClusterTemplate": {
+                    "defaultValue": "[deployment().properties.templateLink.uri]",
+                    "type": "string",
+                    "metadata": {
+                        "description": "Redefine locally."
+                    }
+                },
 		"_artifactsLocationSasToken": {
 			"type": "securestring",
 			"metadata": {
@@ -459,8 +466,8 @@
 				"autoUpgradeMinorVersion": true,
 				"settings": {
 					"fileUris": [
-						"[uri(parameters('_artifactsLocation'), concat('../scripts/', variables('name_scriptFile'), parameters('_artifactsLocationSasToken')))]",
-						"[uri(parameters('_artifactsLocation'), concat('../scripts/', variables('name_oradownScript'), parameters('_artifactsLocationSasToken')))]"
+						"[uri(parameters('_artifactsLocationClusterTemplate'), concat('../scripts/', variables('name_scriptFile'), parameters('_artifactsLocationSasToken')))]",
+						"[uri(parameters('_artifactsLocationClusterTemplate'), concat('../scripts/', variables('name_oradownScript'), parameters('_artifactsLocationSasToken')))]"
 					],
 					"commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ',parameters('acceptOTNLicenseAgreement'),' ',parameters('otnAccountUsername'),' ',parameters('otnAccountPassword'),' ',parameters('wlsDomainName'),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',if(equals(copyIndex(),0),'admin',concat(parameters('managedServerPrefix'), copyIndex())),' ',parameters('adminVMName'),' ',if(parameters('enableAppGateway'), reference(parameters('gatewayPublicIPAddressName'), '2019-11-01').dnsSettings.fqdn, ''))]"
 				}
@@ -481,7 +488,11 @@
 			}
 		}
 	],
-	"outputs": {
+        "outputs": {
+                "artifactsLocationPassedIn": {
+                        "type": "string",
+                        "value": "[parameters('_artifactsLocation')]"
+                },
 		"adminHostName": {
 			"type": "string",
 			"value": "[reference(variables('name_outputAdminHost')).dnsSettings.fqdn]"

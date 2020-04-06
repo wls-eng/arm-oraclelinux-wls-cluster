@@ -26,12 +26,12 @@
 
     <groupId>com.oracle.weblogic.azure</groupId>
     <artifactId>arm-oraclelinux-wls-cluster</artifactId>
-    <version>1.0.18</version>
+    <version>1.0.21</version>
     
     <parent>
         <groupId>com.microsoft.azure.iaas</groupId>
         <artifactId>azure-javaee-iaas-parent</artifactId>
-        <version>1.0.4</version>
+        <version>1.0.5</version>
         <relativePath></relativePath>
     </parent>
     
@@ -40,7 +40,7 @@
 
     <properties>
         <template.validation.tests.directory>${basedir}/../../arm-ttk/arm-ttk</template.validation.tests.directory>
-        <template.pid.properties.url>https://raw.githubusercontent.com/wls-eng/arm-oraclelinux-wls/ee16e289999ef80367a9a4ebe9326c4d7d2f2c8a/src/main/resources/pid.properties</template.pid.properties.url>
+        <template.pid.properties.url>https://raw.githubusercontent.com/wls-eng/arm-oraclelinux-wls/8404bb6bf077083e0773267b9b72ce96bc191b15/src/main/resources/pid.properties</template.pid.properties.url>
     </properties>
     
     <description>
