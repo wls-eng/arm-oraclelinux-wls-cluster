@@ -9,10 +9,10 @@
 			}
 		},
                 "_artifactsLocationClusterTemplate": {
-                    "defaultValue": "if(contains(parameters('_artifactsLocation'), 'githubusercontent'), parameters('_artifactsLocation'), deployment().properties.templateLink.uri)]",
+                    "defaultValue": "[deployment().properties.templateLink.uri]",
                     "type": "string",
                     "metadata": {
-                        "description": "If we are deploying from the command line, use the passed in _artifactsLocation, otherwise use the default."
+                        "description": "Redefine locally."
                     }
                 },
 		"_artifactsLocationSasToken": {
