@@ -92,7 +92,8 @@
 			"type": "Microsoft.Network/applicationGateways",
 			"apiVersion": "2019-06-01",
 			"name": "[variables('name_appGateway')]",
-			"location": "[parameters('location')]",
+		        "location": "[parameters('location')]",
+                        "dependsOn": "[parameters('ref_appGatewayPublicIP')]",
 			"properties": {
 				"sku": {
 					"name": "WAF_v2",
