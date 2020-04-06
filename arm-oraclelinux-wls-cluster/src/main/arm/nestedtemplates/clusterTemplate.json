@@ -9,7 +9,7 @@
 			}
 		},
                 "_artifactsLocationClusterTemplate": {
-                    "defaultValue": "[deployment().properties.templateLink.uri]",
+                    "defaultValue": "[if(contains(parameters('_artifactsLocation'), 'githubusercontent'), parameters('_artifactsLocation'), deployment().properties.templateLink.uri)]",
                     "type": "string",
                     "metadata": {
                         "description": "Redefine locally."
