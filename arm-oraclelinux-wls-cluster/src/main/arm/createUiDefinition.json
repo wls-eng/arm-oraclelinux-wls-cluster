@@ -323,19 +323,6 @@
                             "validationMessage": "The value must be 1-30 characters long and must only contain letters and numbers."
                         },
                         "visible": "[steps('serviceIntegrations').enableAppGateway]"
-                    },
-                    {
-                        "name": "keyVaultSSLCertPasswordSecretName",
-                        "type": "Microsoft.Common.TextBox",
-                        "label": "The name of the secret in the specified KeyVault whose value is the password for the corresponding SSL Certificate",
-                        "defaultValue": "",
-                        "toolTip": "Use only letters and numbers",
-                        "constraints": {
-                            "required": true,
-                            "regex": "^[a-z0-9A-Z]{1,30}$",
-                            "validationMessage": "The value must be 1-30 characters long and must only contain letters and numbers."
-                        },
-                        "visible": "[steps('serviceIntegrations').enableAppGateway]"
                     }
                     
                 ],
@@ -352,7 +339,6 @@
             "keyVaultName": "[steps('serviceIntegrations').keyVaultName]",
             "keyVaultResourceGroup": "[steps('serviceIntegrations').keyVaultResourceGroup]",
             "keyVaultSSLCertDataSecretName": "[steps('serviceIntegrations').keyVaultSSLCertDataSecretName]",
-            "keyVaultSSLCertPasswordSecretName": "[steps('serviceIntegrations').keyVaultSSLCertDataSecretName]",                        
             "managedServerPrefix": "[basics('basicsOptional').managedServerPrefix]",
             "numberOfInstances": "[int(basics('basicsRequired').numberOfInstances)]",
             "otnAccountPassword": "[basics('basicsRequired').otnAccountPassword]",
