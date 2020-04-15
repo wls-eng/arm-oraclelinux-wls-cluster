@@ -275,6 +275,7 @@
 			"apiVersion": "2019-10-01",
 			"name": "${cluster.appgateway.end}",
 			"type": "Microsoft.Resources/deployments",
+			"dependsOn": [ "resourceId('Microsoft.Network/applicationGateways', variables('name_appGateway'))" ],
 			"properties": {
 				"mode": "Incremental",
 				"template": {

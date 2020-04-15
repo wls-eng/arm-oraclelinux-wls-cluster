@@ -477,6 +477,7 @@
 			"apiVersion": "2019-10-01",
 			"name": "${cluster.cluster.end}",
 			"type": "Microsoft.Resources/deployments",
+			"dependsOn": [ "virtualMachineExtensionLoop" ],
 			"properties": {
 				"mode": "Incremental",
 				"template": {
