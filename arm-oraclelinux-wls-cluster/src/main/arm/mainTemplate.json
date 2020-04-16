@@ -312,7 +312,7 @@
                 }
             },
             "dependsOn": [
-                "clusterLinkedTemplate"
+                "[resourceId('Microsoft.Resources/deployments', 'clusterLinkedTemplate')]"
             ]
         },
         {
