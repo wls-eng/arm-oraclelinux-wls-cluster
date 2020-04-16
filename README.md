@@ -1,5 +1,5 @@
 # arm-oraclelinux-wls-cluster
- Simple deployment of a Weblogic Cluster Domain on multiple Oracle Linux VMs with Weblogic Server pre-installed
+ Simple deployment of a Weblogic Cluster Domain on multiple Oracle Linux VMs with Weblogic Server pre-installed.
 
 This template allows us to deploy Weblogic Cluster Domain on multiple Oracle Linux VMs with Weblogic Server (12.2.1.3.0) pre-installed. 
 This template deploy by default, an A3 size VM in the resource group location and return the fully qualified domain name of the VM.
