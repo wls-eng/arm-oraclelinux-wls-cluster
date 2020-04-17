@@ -8,13 +8,13 @@
 				"description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
 			}
 		},
-                "_artifactsLocationClusterTemplate": {
-                    "defaultValue": "[if(contains(parameters('_artifactsLocation'), 'githubusercontent'), parameters('_artifactsLocation'), deployment().properties.templateLink.uri)]",
-                    "type": "string",
-                    "metadata": {
-                        "description": "Redefine locally."
-                    }
-                },
+		"_artifactsLocationClusterTemplate": {
+			"defaultValue": "[if(contains(parameters('_artifactsLocation'), 'githubusercontent'), parameters('_artifactsLocation'), deployment().properties.templateLink.uri)]",
+			"type": "string",
+			"metadata": {
+				"description": "Redefine locally."
+			}
+		},
 		"_artifactsLocationSasToken": {
 			"type": "securestring",
 			"metadata": {
@@ -65,7 +65,7 @@
 		},
 		"dnsNameforApplicationGateway": {
 			"type": "string",
-			"defaultValue": "wlsclusterappgw",
+			"defaultValue": "wlsappgw",
 			"metadata": {
 				"description": "DNS for ApplicationGateway"
 			}
@@ -198,6 +198,7 @@
 		"const_vmSize": "[parameters('vmSizeSelect')]",
 		"name_appGatewaySubnet": "appGatewaySubnet",
 		"name_availabilitySet": "WLSCluster-AvailabilitySet",
+		"name_dnsNameforApplicationGateway": "[concat(parameters('dnsNameforApplicationGateway'), take(replace(parameters('guidValue'),'-',''),6))]",
 		"name_networkSecurityGroup": "[concat(parameters('dnsLabelPrefix'), '-nsg')]",
 		"name_nic": "_NIC",
 		"name_oradownScript": "oradown.sh",
@@ -276,7 +277,7 @@
 			"properties": {
 				"publicIPAllocationMethod": "Static",
 				"dnsSettings": {
-					"domainNameLabel": "[concat(parameters('dnsNameforApplicationGateway'),'-',toLower(resourceGroup().name),'-',toLower(parameters('wlsDomainName')))]"
+					"domainNameLabel": "[concat(variables('name_dnsNameforApplicationGateway'),'-',toLower(resourceGroup().name),'-',toLower(parameters('wlsDomainName')))]"
 				}
 			},
 			"dependsOn": [
@@ -477,7 +478,9 @@
 			"apiVersion": "2019-10-01",
 			"name": "${cluster.cluster.end}",
 			"type": "Microsoft.Resources/deployments",
-			"dependsOn": [ "virtualMachineExtensionLoop" ],
+			"dependsOn": [
+				"virtualMachineExtensionLoop"
+			],
 			"properties": {
 				"mode": "Incremental",
 				"template": {
@@ -489,11 +492,11 @@
 			}
 		}
 	],
-        "outputs": {
-                "artifactsLocationPassedIn": {
-                        "type": "string",
-                        "value": "[parameters('_artifactsLocation')]"
-                },
+	"outputs": {
+		"artifactsLocationPassedIn": {
+			"type": "string",
+			"value": "[parameters('_artifactsLocation')]"
+		},
 		"adminHostName": {
 			"type": "string",
 			"value": "[reference(variables('name_outputAdminHost'), '2019-11-01').dnsSettings.fqdn]"

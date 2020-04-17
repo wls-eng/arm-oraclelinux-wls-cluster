@@ -177,9 +177,9 @@
         }
     },
     "variables": {
-        "keyVaultLinkedTemplateName": "appGatewayNestedTemplate.json",
-        "clusterLinkedTemplateName": "clusterTemplate.json",
-        "currentSubscription": "[subscription().subscriptionId]"
+        "const_currentSubscription": "[subscription().subscriptionId]",
+        "name_clusterLinkedTemplateName": "clusterTemplate.json",
+        "name_keyVaultLinkedTemplateName": "appGatewayNestedTemplate.json"
     },
     "resources": [
         {
@@ -203,7 +203,7 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/', variables('clusterLinkedTemplateName')))]",
+                    "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/', variables('name_clusterLinkedTemplateName')))]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
@@ -282,14 +282,14 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/', variables('keyVaultLinkedTemplateName')))]",
+                    "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/', variables('name_keyVaultLinkedTemplateName')))]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
                     "appGatewaySSLCertificateData": {
                         "reference": {
                             "keyVault": {
-                                "id": "[resourceId(variables('currentSubscription'),  parameters('keyVaultResourceGroup'), 'Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+                                "id": "[resourceId(variables('const_currentSubscription'),  parameters('keyVaultResourceGroup'), 'Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
                             },
                             "secretName": "[parameters('keyVaultSSLCertDataSecretName')]"
                         }
