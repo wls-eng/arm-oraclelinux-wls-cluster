@@ -40,7 +40,7 @@
 
     <properties>
         <template.validation.tests.directory>${basedir}/../../arm-ttk/arm-ttk</template.validation.tests.directory>
-        <template.pid.properties.url>https://raw.githubusercontent.com/wls-eng/arm-oraclelinux-wls/7786dade9593cc858b0147934691a3c4ae103e6b/src/main/resources/pid.properties</template.pid.properties.url>
+        <template.pid.properties.url>https://raw.githubusercontent.com/wls-eng/arm-oraclelinux-wls/aaae6902181db1475d83cd93b40a727918835077/src/main/resources/pid.properties</template.pid.properties.url>
     </properties>
     
     <description>
