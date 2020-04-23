@@ -224,12 +224,11 @@
                     {
                         "name": "About",
                         "type": "Microsoft.Common.InfoBox",
-                        "visible": true,
                         "options": {
                             "icon": "None",
                             "text": "Template version ${project.version}"
                         },
-                        "visible": "[bool(basics('basicsOptional').basicsOptionalAcceptDefaults)]"
+                        "visible": "[bool('${template.version.visible}')]"
                     }
                 ],
                 "visible": true
