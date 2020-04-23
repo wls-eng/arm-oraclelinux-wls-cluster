@@ -34,6 +34,37 @@
                 "description": "Do you agree to provide OTN credentials to accept OTN License Agreement? Enter Y or y to agree, else N or n"
             }
         },
+        "connectToDatabase": {
+            "defaultValue": false,
+            "type": "bool",
+            "metadata": {
+                "description": "If true, use the supplied parameters to connect the cluster to a pre-provisioned database."
+            }
+        },
+        "databaseType": {
+            "type": "string",
+            "metadata": {
+                "description": "One of the supported database types"
+            }
+        },
+        "dsConnectionURL": {
+            "type": "string",
+            "metadata": {
+                "description": "JDBC Connection String"
+            }
+        },
+        "dsPassword": {
+            "type": "securestring",
+            "metadata": {
+                "description": "Password for Database"
+            }
+        },
+        "dsUser": {
+            "type": "string",
+            "metadata": {
+                "description": "Userid of Database"
+            }
+        },
         "enableAppGateway": {
             "defaultValue": false,
             "type": "bool",
@@ -105,6 +136,13 @@
             "type": "string",
             "metadata": {
                 "description": "Public IP Name for the Application Gateway"
+            }
+        },
+        "jdbcDataSourceName": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "JNDI Name for JDBC Datasource"
             }
         },
         "linuxOSVersion": {
@@ -179,6 +217,7 @@
     "variables": {
         "const_currentSubscription": "[subscription().subscriptionId]",
         "name_clusterLinkedTemplateName": "clusterTemplate.json",
+        "name_dbLinkedTemplateName": "dbTemplate.json",
         "name_keyVaultLinkedTemplateName": "appGatewayNestedTemplate.json"
     },
     "resources": [
@@ -314,6 +353,57 @@
             "dependsOn": [
                 "[resourceId('Microsoft.Resources/deployments', 'clusterLinkedTemplate')]"
             ]
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2019-10-01",
+            "name": "dbLinkedTemplate",
+            "condition": "[parameters('connectToDatabase')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'keyVaultLinkedAppGatewayTemplate')]"
+            ],
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/', variables('name_dbLinkedTemplateName')))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    },
+                    "adminVMName": {
+                        "value": "[parameters('adminVMName')]"
+                    },
+                    "dsConnectionURL": {
+                        "value": "[parameters('dsConnectionURL')]"
+                    },
+                    "databaseType": {
+                        "value": "[parameters('databaseType')]"
+                    },
+                    "dsUser": {
+                        "value": "[parameters('dsUser')]"
+                    },
+                    "dsPassword": {
+                        "value": "[parameters('dsPassword')]"
+                    },
+                    "jdbcDataSourceName": {
+                        "value": "[parameters('jdbcDataSourceName')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "wlsPassword": {
+                        "value": "[parameters('wlsPassword')]"
+                    },
+                    "wlsUserName": {
+                        "value": "[parameters('wlsUserName')]"
+                    }
+                }
+            }
         },
         {
             "apiVersion": "2019-10-01",
