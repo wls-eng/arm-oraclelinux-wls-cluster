@@ -328,6 +328,23 @@
                "commandToExecute": "[concat('sh',' ',variables('ScriptFileName'),' ',parameters('acceptOTNLicenseAgreement'),' ',parameters('otnAccountUsername'),' ',parameters('otnAccountPassword'),' ',parameters('wlsDomainName'),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',variables('vmName'),copyIndex(1),' ',variables('vmName'),' ', parameters('adminURL'))]"
             }
          }
+      },
+      {
+         "apiVersion": "2019-10-01",
+         "name": "${cluster.addnode.end}",
+         "type": "Microsoft.Resources/deployments",
+         "dependsOn": [
+            "virtualMachineExtensionLoop"
+         ],
+         "properties": {
+            "mode": "Incremental",
+            "template": {
+               "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+               "contentVersion": "1.0.0.0",
+               "resources": [
+               ]
+            }
+         }
       }
    ],
    "outputs": {
