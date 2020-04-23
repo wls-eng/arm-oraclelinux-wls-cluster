@@ -236,9 +236,9 @@
         ],
         "steps": [
             {
-                "name": "serviceIntegrations",
+                "name": "section_appGateway",
                 "type": "Microsoft.Common.Section",
-                "label": "Service Integrations",
+                "label": "Azure Application Gateway",
                 "elements": [
                     {
                         "name": "connectToAGText",
@@ -275,7 +275,7 @@
                     {
                         "name": "keyVaultText",
                         "type": "Microsoft.Common.TextBlock",
-                        "visible": "[steps('serviceIntegrations').enableAppGateway]",
+                        "visible": "[steps('section_appGateway').enableAppGateway]",
                         "options": {
                             "text": "App Gateway integration requires an SSL Certificate to enable SSL termination at the gateway.  End-to-end SSL encryption is not supported by the template.  The template will look for the certificate and its password in the Azure KeyVault specified here.",
                             "link": {
@@ -283,19 +283,6 @@
                                 "uri": "https://github.com/andrewatfornax/tech-articles/blob/6985d626e9815daf63f705dbe9bd570e38cc0297/azure-app-gateway-ssl-arm-template.md"
                             }
                         }
-                    },
-                    {
-                        "name": "keyVaultName",
-                        "type": "Microsoft.Common.TextBox",
-                        "label": "Name of the Azure KeyVault containing secrets for the Certificate for SSL Termination",
-                        "defaultValue": "",
-                        "toolTip": "Use only letters and numbers",
-                        "constraints": {
-                            "required": true,
-                            "regex": "^[a-z0-9A-Z]{1,30}$",
-                            "validationMessage": "The value must be 1-30 characters long and must only contain letters and numbers."
-                        },
-                        "visible": "[steps('serviceIntegrations').enableAppGateway]"
                     },
                     {
                         "name": "keyVaultResourceGroup",
@@ -308,7 +295,20 @@
                             "regex": "^[a-z0-9A-Z]{1,30}$",
                             "validationMessage": "The value must be 1-30 characters long and must only contain letters and numbers."
                         },
-                        "visible": "[steps('serviceIntegrations').enableAppGateway]"
+                        "visible": "[steps('section_appGateway').enableAppGateway]"
+                    },
+                    {
+                        "name": "keyVaultName",
+                        "type": "Microsoft.Common.TextBox",
+                        "label": "Name of the Azure KeyVault containing secrets for the Certificate for SSL Termination",
+                        "defaultValue": "",
+                        "toolTip": "Use only letters and numbers",
+                        "constraints": {
+                            "required": true,
+                            "regex": "^[a-z0-9A-Z]{1,30}$",
+                            "validationMessage": "The value must be 1-30 characters long and must only contain letters and numbers."
+                        },
+                        "visible": "[steps('section_appGateway').enableAppGateway]"
                     },
                     {
                         "name": "keyVaultSSLCertDataSecretName",
@@ -321,11 +321,140 @@
                             "regex": "^[a-z0-9A-Z]{1,30}$",
                             "validationMessage": "The value must be 1-30 characters long and must only contain letters and numbers."
                         },
-                        "visible": "[steps('serviceIntegrations').enableAppGateway]"
+                        "visible": "[steps('section_appGateway').enableAppGateway]"
                     }
-                    
                 ],
                 "visible": true
+            },
+            {
+                "name": "section_database",
+                "type": "Microsoft.Common.Section",
+                "label": "Database",
+                "subLabel": {
+                    "preValidation": "Configure integrations to Database",
+                    "postValidation": "Done"
+                },
+                "bladeTitle": "Database",
+                "elements": [
+                    {
+                        "name": "aboutDatabase",
+                        "type": "Microsoft.Common.TextBlock",
+                        "visible": true,
+                        "options": {
+                            "text": "Selecting 'Yes' here and providing the configuration will cause the template to configure the WebLogic Server to connect to the desired pre-existing Database.  The database must be network accessible to the VNET and subnets created by the template."
+                        }
+                    },
+                    {
+                        "name": "connectToDatabase",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Connect to Database?",
+                        "defaultValue": "No",
+                        "toolTip": "Select 'Yes' and provide required info to configure the connection to a database.",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Yes",
+                                    "value": "true"
+                                },
+                                {
+                                    "label": "No",
+                                    "value": "false"
+                                }
+                            ],
+                            "required": true
+                        }
+                    },
+                    {
+                        "name": "databaseConnectionInfo",
+                        "type": "Microsoft.Common.Section",
+                        "label": "Connection settings",
+                        "elements": [
+                            {
+                                "name": "databaseType",
+                                "type": "Microsoft.Common.DropDown",
+                                "label": "Choose database type",
+                                "toolTip": "Choose database type",
+                                "defaultValue": "Oracle Database",
+                                "constraints": {
+                                    "allowedValues": [
+                                        {
+                                            "label": "Azure Database for PostgreSQL",
+                                            "value": "postgresql"
+                                        },
+                                        {
+                                            "label": "Oracle Database",
+                                            "value": "oracle"
+                                        },
+                                        {
+                                            "label": "Azure SQL",
+                                            "value": "sqlserver"
+                                        }
+                                    ],
+                                    "required": true
+                                },
+                                "visible": true
+                            },
+                            {
+                                "name": "jdbcDataSourceName",
+                                "type": "Microsoft.Common.TextBox",
+                                "label": "JNDI Name",
+                                "toolTip": "The JNDI name for the database JDBC connection",
+                                "defaultValue": "",
+                                "constraints": {
+                                    "required": "[bool(steps('section_database').connectToDatabase)]",
+                                    "regex": "^[a-z0-9A-Z/]{1,30}$",
+                                    "validationMessage": "The value must be 1-30 characters long and must only contain letters and numbers."
+                                },
+                                "visible": true
+                            },
+                            {
+                                "name": "dsConnectionURL",
+                                "type": "Microsoft.Common.TextBox",
+                                "label": "DataSource Connection String",
+                                "toolTip": "The JDBC connection string for the database",
+                                "defaultValue": "",
+                                "constraints": {
+                                    "required": "[bool(steps('section_database').connectToDatabase)]",
+                                    "regex": "[concat('^jdbc:', coalesce(steps('section_database').databaseConnectionInfo.databaseType, ''), '.*$')]",
+                                    "validationMessage": "A valid JDBC URL for the chosen database type must be provided"
+                                },
+                                "visible": true
+                            },
+                            {
+                                "name": "dsUser",
+                                "type": "Microsoft.Common.TextBox",
+                                "label": "Database Username",
+                                "toolTip": "Use only letters and numbers",
+                                "defaultValue": "",
+                                "constraints": {
+                                    "required": "[bool(steps('section_database').connectToDatabase)]",
+                                    "regex": "^(([a-zA-Z0-9@]){6,30})$",
+                                    "validationMessage": "The value must be 1-30 characters long and must only contain letters, numbers and the at sign."
+                                },
+                                "visible": true
+                            },
+                            {
+                                "name": "dsPassword",
+                                "type": "Microsoft.Common.PasswordBox",
+                                "label": {
+                                    "password": "Database Password",
+                                    "confirmPassword": "Confirm password"
+                                },
+                                "toolTip": "Database Password",
+                                "constraints": {
+                                    "required": "[bool(steps('section_database').connectToDatabase)]",
+                                    "regex": "^((?=.*[0-9])(?=.*[a-z])|(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])|(?=.*[0-9])(?=.*[a-z])(?=.*[!@#$%^&*])|(?=.*[0-9])(?=.*[A-Z])(?=.*[!@#$%^&*])|(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])).{6,128}$",
+                                    "validationMessage": "The password must contain at least 6 characters, with at least 1 uppercase letter, 1 lowercase letter and 1 number."
+                                },
+                                "options": {
+                                    "hideConfirmation": false
+                                },
+                                "visible": true
+                            }
+                        ],
+                        "visible": "[bool(steps('section_database').connectToDatabase)]"
+                    }
+                ]
             }
         ],
         "outputs": {
@@ -333,11 +462,17 @@
             "acceptOTNLicenseAgreement": "[basics('acceptOTNLicenseAgreement')]",
             "adminPasswordOrKey": "[basics('basicsRequired').adminPasswordOrKey]",
             "adminUsername": "[basics('basicsRequired').adminUsername]",
+            "connectToDatabase": "[bool(steps('section_database').connectToDatabase)]",
+            "databaseType": "[steps('section_database').databaseConnectionInfo.databaseType]",
             "dnsLabelPrefix": "[basics('basicsOptional').dnsLabelPrefix]",
-            "enableAppGateway": "[steps('serviceIntegrations').enableAppGateway]",
-            "keyVaultName": "[steps('serviceIntegrations').keyVaultName]",
-            "keyVaultResourceGroup": "[steps('serviceIntegrations').keyVaultResourceGroup]",
-            "keyVaultSSLCertDataSecretName": "[steps('serviceIntegrations').keyVaultSSLCertDataSecretName]",
+            "dsConnectionURL": "[steps('section_database').databaseConnectionInfo.dsConnectionURL]",
+            "dsPassword": "[steps('section_database').databaseConnectionInfo.dsPassword]",
+            "dsUser": "[steps('section_database').databaseConnectionInfo.dsUser]",
+            "enableAppGateway": "[steps('section_appGateway').enableAppGateway]",
+            "jdbcDataSourceName": "[steps('section_database').databaseConnectionInfo.jdbcDataSourceName]",
+            "keyVaultName": "[steps('section_appGateway').keyVaultName]",
+            "keyVaultResourceGroup": "[steps('section_appGateway').keyVaultResourceGroup]",
+            "keyVaultSSLCertDataSecretName": "[steps('section_appGateway').keyVaultSSLCertDataSecretName]",
             "managedServerPrefix": "[basics('basicsOptional').managedServerPrefix]",
             "numberOfInstances": "[int(basics('basicsRequired').numberOfInstances)]",
             "otnAccountPassword": "[basics('basicsRequired').otnAccountPassword]",
