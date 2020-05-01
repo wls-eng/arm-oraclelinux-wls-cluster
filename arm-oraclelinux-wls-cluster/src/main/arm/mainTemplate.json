@@ -16,6 +16,24 @@
                 "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
             }
         },
+        "aadsPortNumber": {
+            "type": "string",
+            "defaultValue": "636",
+            "metadata": {
+                "description": "Accessible port of the LDAP server."
+            }
+        },
+        "addsPublicIP": {
+            "type": "string",
+            "defaultValue": "The LDAP server public IP address"
+        },
+        "addsServerHost": {
+            "type": "string",
+            "defaultValue": "ldaps.example.com",
+            "metadata": {
+                "description": "The LDAP server host."
+            }
+        },
         "adminUsername": {
             "type": "string",
             "metadata": {
@@ -65,6 +83,13 @@
                 "description": "Userid of Database"
             }
         },
+        "enableAAD": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Bool value, if it's set to true, will enable Azure Active Directory after WebLogic Server starts."
+            }
+        },
         "enableAppGateway": {
             "defaultValue": false,
             "type": "bool",
@@ -96,6 +121,48 @@
             "type": "string",
             "metadata": {
                 "description": "Provide Weblogic domain name"
+            }
+        },
+        "wlsLDAPGroupBaseDN": {
+            "type": "string",
+            "defaultValue": "null",
+            "metadata": {
+                "description": "The base distinguished name (DN) of the tree in the LDAP directory that contains groups."
+            }
+        },
+        "wlsLDAPPrincipal": {
+            "type": "string",
+            "defaultValue": "null",
+            "metadata": {
+                "description": "The Distinguished Name (DN) of the LDAP user that WebLogic Server should use to connect to the LDAP server."
+            }
+        },
+        "wlsLDAPPrincipalPassword": {
+            "type": "securestring",
+            "defaultValue": "[newGuid()]",
+            "metadata": {
+                "description": "The credential (usually a password) used to connect to the LDAP server."
+            }
+        },
+        "wlsLDAPProviderName": {
+            "type": "string",
+            "defaultValue": "AzureActiveDirectoryProvider",
+            "metadata": {
+                "description": "The value used for creating authentication provider name of WebLogic Server."
+            }
+        },
+        "wlsLDAPSSLCertificate": {
+            "type": "string",
+            "defaultValue": "null",
+            "metadata": {
+                "description": "Client certificate that will be imported to trust store of SSL."
+            }
+        },
+        "wlsLDAPUserBaseDN": {
+            "type": "string",
+            "defaultValue": "null",
+            "metadata": {
+                "description": "The base distinguished name (DN) of the tree in the LDAP directory that contains users."
             }
         },
         "wlsUserName": {
@@ -216,6 +283,7 @@
     },
     "variables": {
         "const_currentSubscription": "[subscription().subscriptionId]",
+        "name_aadLinkedTemplateName": "aadNestedTemplate.json",
         "name_clusterLinkedTemplateName": "clusterTemplate.json",
         "name_dbLinkedTemplateName": "dbTemplate.json",
         "name_keyVaultLinkedTemplateName": "appGatewayNestedTemplate.json"
@@ -406,12 +474,82 @@
             }
         },
         {
+            "name": "aadLinkedTemplate",
+            "type": "Microsoft.Resources/deployments",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'dbLinkedTemplate')]"
+            ],
+            "apiVersion": "2019-10-01",
+            "condition": "[parameters('enableAAD')]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/', variables('name_aadLinkedTemplateName')))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    },
+                    "aadsPortNumber": {
+                        "value": "[parameters('aadsPortNumber')]"
+                    },
+                    "addsPublicIP": {
+                        "value": "[parameters('addsPublicIP')]"
+                    },
+                    "addsServerHost": {
+                        "value": "[parameters('addsServerHost')]"
+                    },
+                    "adminPassword": {
+                        "value": "[parameters('adminPasswordOrKey')]"
+                    },
+                    "adminVMName": {
+                        "value": "[parameters('adminVMName')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "wlsDomainName": {
+                        "value": "[parameters('wlsDomainName')]"
+                    },
+                    "wlsLDAPGroupBaseDN": {
+                        "value": "[parameters('wlsLDAPGroupBaseDN')]"
+                    },
+                    "wlsLDAPPrincipal": {
+                        "value": "[parameters('wlsLDAPPrincipal')]"
+                    },
+                    "wlsLDAPPrincipalPassword": {
+                        "value": "[parameters('wlsLDAPPrincipalPassword')]"
+                    },
+                    "wlsLDAPProviderName": {
+                        "value": "[parameters('wlsLDAPProviderName')]"
+                    },
+                    "wlsLDAPSSLCertificate": {
+                        "value": "[parameters('wlsLDAPSSLCertificate')]"
+                    },
+                    "wlsLDAPUserBaseDN": {
+                        "value": "[parameters('wlsLDAPUserBaseDN')]"
+                    },
+                    "wlsPassword": {
+                        "value": "[parameters('wlsPassword')]"
+                    },
+                    "wlsUserName": {
+                        "value": "[parameters('wlsUserName')]"
+                    }
+                }
+            }
+        },
+        {
             "apiVersion": "2019-10-01",
             "name": "${cluster.end}",
             "type": "Microsoft.Resources/deployments",
             "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'aadLinkedTemplate')]",
                 "[resourceId('Microsoft.Resources/deployments', 'clusterLinkedTemplate')]",
-                "[resourceId('Microsoft.Resources/deployments', 'keyVaultLinkedAppGatewayTemplate')]"
+                "[resourceId('Microsoft.Resources/deployments', 'keyVaultLinkedAppGatewayTemplate')]"               
             ],
             "properties": {
                 "mode": "Incremental",
