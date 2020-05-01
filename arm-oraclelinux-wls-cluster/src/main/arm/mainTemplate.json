@@ -25,13 +25,13 @@
         },
         "addsPublicIP": {
             "type": "string",
-            "defaultValue": "The LDAP server public IP address"
+            "defaultValue": ""
         },
         "addsServerHost": {
             "type": "string",
-            "defaultValue": "ldaps.example.com",
+            "defaultValue": "",
             "metadata": {
-                "description": "The LDAP server host."
+                "description": ""
             }
         },
         "adminUsername": {
@@ -139,7 +139,7 @@
         },
         "wlsLDAPPrincipalPassword": {
             "type": "securestring",
-            "defaultValue": "[newGuid()]",
+            "defaultValue": "",
             "metadata": {
                 "description": "The credential (usually a password) used to connect to the LDAP server."
             }
