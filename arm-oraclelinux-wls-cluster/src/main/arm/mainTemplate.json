@@ -31,7 +31,7 @@
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": ""
+                "description": "The LDAP server host."
             }
         },
         "adminUsername": {
