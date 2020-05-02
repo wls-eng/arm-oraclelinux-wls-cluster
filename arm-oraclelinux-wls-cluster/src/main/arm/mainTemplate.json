@@ -279,6 +279,13 @@
             "metadata": {
                 "description": "The name of the secret in the specified KeyVault whose value is the SSL Certificate Data"
             }
+        },
+        "keyVaultSSLCertPasswordSecretName": {
+            "defaultValue": "",
+            "type": "string",
+            "metadata": {
+                "description": "The name of the secret in the specified KeyVault whose value is the password for the SSL Certificate"
+            }
         }
     },
     "variables": {
@@ -399,6 +406,14 @@
                                 "id": "[resourceId(variables('const_currentSubscription'),  parameters('keyVaultResourceGroup'), 'Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
                             },
                             "secretName": "[parameters('keyVaultSSLCertDataSecretName')]"
+                        }
+                    },
+                    "appGatewaySSLCertificatePassword": {
+                        "reference": {
+                            "keyVault": {
+                                "id": "[resourceId(variables('const_currentSubscription'),  parameters('keyVaultResourceGroup'), 'Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+                            },
+                            "secretName": "[parameters('keyVaultSSLCertPasswordSecretName')]"
                         }
                     },
                     "gatewayPublicIPAddressName": {
