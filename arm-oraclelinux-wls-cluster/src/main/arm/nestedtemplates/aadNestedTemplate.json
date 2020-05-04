@@ -29,8 +29,8 @@
             }
         },
         "addsPublicIP": {
-            "defaultValue": "The LDAP server public IP address"
-            "type": "string",
+            "defaultValue": "The LDAP server public IP address",
+            "type": "string"
         },
         "addsServerHost": {
             "defaultValue": "",

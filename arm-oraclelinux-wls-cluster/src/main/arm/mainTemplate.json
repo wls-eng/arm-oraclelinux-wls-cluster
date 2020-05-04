@@ -24,8 +24,8 @@
             }
         },
         "addsPublicIP": {
-            "defaultValue": ""
-            "type": "string",
+            "defaultValue": "",
+            "type": "string"
         },
         "addsServerHost": {
             "defaultValue": "",
