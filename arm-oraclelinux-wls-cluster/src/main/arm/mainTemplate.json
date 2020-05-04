@@ -61,17 +61,20 @@
         },
         "databaseType": {
             "type": "string",
+            "defaultValue": "",
             "metadata": {
                 "description": "One of the supported database types"
             }
         },
         "dsConnectionURL": {
+            "defaultValue": "",
             "type": "string",
             "metadata": {
                 "description": "JDBC Connection String"
             }
         },
         "dsPassword": {
+            "defaultValue": "",
             "type": "securestring",
             "metadata": {
                 "description": "Password for Database"
@@ -79,6 +82,7 @@
         },
         "dsUser": {
             "type": "string",
+            "defaultValue": "",
             "metadata": {
                 "description": "Userid of Database"
             }
