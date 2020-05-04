@@ -34,21 +34,22 @@
 			}
 		},
 		"adminUsername": {
+                        "defaultValue": "weblogic",
 			"type": "string",
 			"metadata": {
 				"description": "User name for the Virtual Machine."
 			}
 		},
 		"adminVMName": {
-			"type": "string",
 			"defaultValue": "adminVM",
+			"type": "string",
 			"metadata": {
 				"description": "Admin Server hosting VM name."
 			}
 		},
 		"authenticationType": {
-			"type": "string",
 			"defaultValue": "password",
+			"type": "string",
 			"allowedValues": [
 				"sshPublicKey",
 				"password"
@@ -64,8 +65,8 @@
 			}
 		},
 		"dnsNameforApplicationGateway": {
+			"defaultValue": "wlsgw",
 			"type": "string",
-			"defaultValue": "wlsappgw",
 			"metadata": {
 				"description": "DNS for ApplicationGateway"
 			}
@@ -160,6 +161,7 @@
 			}
 		},
 		"wlsUserName": {
+                        "defaultValue": "weblogic",
 			"type": "string",
 			"metadata": {
 				"description": "Username for your Weblogic domain name"
@@ -171,8 +173,6 @@
 				"description": "Password for your Weblogic domain name"
 			}
 		}
-
-
 	},
 	"variables": {
 		"const_addressPrefix": "10.0.0.0/16",

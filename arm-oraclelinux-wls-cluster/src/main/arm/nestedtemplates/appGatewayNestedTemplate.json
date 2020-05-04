@@ -9,8 +9,8 @@
 			"type": "string"
 		},
 		"gatewayPublicIPAddressName": {
+			"defaultValue": "gwip",
 			"type": "string",
-			"defaultValue": "gatewayPublicIP",
 			"metadata": {
 				"description": "Public IP Name for the Application Gateway"
 			}
@@ -22,15 +22,15 @@
 			}
 		},
 		"managedServerPrefix": {
+			"defaultValue": "msp",
 			"type": "string",
-			"defaultValue": "managedServer",
 			"metadata": {
 				"description": "Provide managed server prefix names"
 			}
 		},
 		"numberOfInstances": {
-			"type": "int",
 			"defaultValue": 2,
+			"type": "int",
 			"minValue": 2,
 			"maxValue": 5,
 			"metadata": {
@@ -38,6 +38,7 @@
 			}
 		},
 		"wlsDomainName": {
+                        "defaultValue": "wlsd",
 			"type": "string",
 			"metadata": {
 				"description": "Provide Weblogic domain name"
