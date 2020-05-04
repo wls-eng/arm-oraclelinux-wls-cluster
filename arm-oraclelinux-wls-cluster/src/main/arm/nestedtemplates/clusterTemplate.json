@@ -79,8 +79,8 @@
 			}
 		},
 		"gatewayPublicIPAddressName": {
+			"defaultValue": "gwip",
 			"type": "string",
-			"defaultValue": "gatewayPublicIP",
 			"metadata": {
 				"description": "Public IP Name for the Application Gateway"
 			}
