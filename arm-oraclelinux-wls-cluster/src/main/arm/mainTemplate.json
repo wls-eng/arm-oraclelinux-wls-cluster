@@ -47,7 +47,7 @@
                 "description": "SSH Key or password for the Virtual Machine. SSH key is recommended."
             }
         },
-        "connectToDatabase": {
+        "enableDB": {
             "defaultValue": false,
             "type": "bool",
             "metadata": {
@@ -443,7 +443,7 @@
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "2019-10-01",
             "name": "dbLinkedTemplate",
-            "condition": "[parameters('connectToDatabase')]",
+            "condition": "[parameters('enableDB')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Resources/deployments', 'keyVaultLinkedAppGatewayTemplate')]"
             ],
