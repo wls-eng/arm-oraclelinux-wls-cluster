@@ -23,11 +23,11 @@
                 "description": "Accessible port of the LDAP server."
             }
         },
-        "addsPublicIP": {
+        "aadsPublicIP": {
             "defaultValue": "",
             "type": "string"
         },
-        "addsServerHost": {
+        "aadsServerHost": {
             "defaultValue": "",
             "type": "string",
             "metadata": {
@@ -68,14 +68,14 @@
                 "description": "JDBC Connection String"
             }
         },
-        "dsPassword": {
+        "dbPassword": {
             "defaultValue": "",
             "type": "securestring",
             "metadata": {
                 "description": "Password for Database"
             }
         },
-        "dsUser": {
+        "dbUser": {
             "defaultValue": "",
             "type": "string",
             "metadata": {
@@ -469,11 +469,11 @@
                     "databaseType": {
                         "value": "[parameters('databaseType')]"
                     },
-                    "dsUser": {
-                        "value": "[parameters('dsUser')]"
+                    "dbUser": {
+                        "value": "[parameters('dbUser')]"
                     },
-                    "dsPassword": {
-                        "value": "[parameters('dsPassword')]"
+                    "dbPassword": {
+                        "value": "[parameters('dbPassword')]"
                     },
                     "jdbcDataSourceName": {
                         "value": "[parameters('jdbcDataSourceName')]"
@@ -514,11 +514,11 @@
                     "aadsPortNumber": {
                         "value": "[parameters('aadsPortNumber')]"
                     },
-                    "addsPublicIP": {
-                        "value": "[parameters('addsPublicIP')]"
+                    "aadsPublicIP": {
+                        "value": "[parameters('aadsPublicIP')]"
                     },
-                    "addsServerHost": {
-                        "value": "[parameters('addsServerHost')]"
+                    "aadsServerHost": {
+                        "value": "[parameters('aadsServerHost')]"
                     },
                     "adminPassword": {
                         "value": "[parameters('adminPasswordOrKey')]"

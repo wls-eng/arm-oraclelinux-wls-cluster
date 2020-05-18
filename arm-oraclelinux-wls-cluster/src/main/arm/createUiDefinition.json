@@ -426,7 +426,7 @@
                                 "visible": true
                             },
                             {
-                                "name": "dsUser",
+                                "name": "dbUser",
                                 "type": "Microsoft.Common.TextBox",
                                 "label": "Database Username",
                                 "toolTip": "Use only letters and numbers",
@@ -439,7 +439,7 @@
                                 "visible": true
                             },
                             {
-                                "name": "dsPassword",
+                                "name": "dbPassword",
                                 "type": "Microsoft.Common.PasswordBox",
                                 "label": {
                                     "password": "Database Password",
@@ -509,7 +509,7 @@
                         "label": "Connection settings",
                         "elements": [
                             {
-                                "name": "addsServerHost",
+                                "name": "aadsServerHost",
                                 "type": "Microsoft.Common.TextBox",
                                 "label": "Server Host",
                                 "toolTip": "The LDAP server host.",
@@ -522,7 +522,7 @@
                                 "required": true
                             },
                             {
-                                "name": "addsPublicIP",
+                                "name": "aadsPublicIP",
                                 "type": "Microsoft.Common.TextBox",
                                 "label": "Secure LDAP external IP address",
                                 "toolTip": "Secure LDAP external IP address.",
@@ -634,16 +634,16 @@
         "outputs": {
             "Location": "[location()]",
             "aadsPortNumber": "[steps('section_aad').aadInfo.aadsPortNumber]",
-            "addsPublicIP": "[steps('section_aad').aadInfo.addsPublicIP]",
-            "addsServerHost": "[steps('section_aad').aadInfo.addsServerHost]",
+            "aadsPublicIP": "[steps('section_aad').aadInfo.aadsPublicIP]",
+            "aadsServerHost": "[steps('section_aad').aadInfo.aadsServerHost]",
             "adminPasswordOrKey": "[basics('basicsRequired').adminPasswordOrKey]",
             "adminUsername": "[basics('basicsRequired').adminUsername]",
             "connectToDatabase": "[bool(steps('section_database').connectToDatabase)]",
             "databaseType": "[steps('section_database').databaseConnectionInfo.databaseType]",
             "dnsLabelPrefix": "[basics('basicsOptional').dnsLabelPrefix]",
             "dsConnectionURL": "[steps('section_database').databaseConnectionInfo.dsConnectionURL]",
-            "dsPassword": "[steps('section_database').databaseConnectionInfo.dsPassword]",
-            "dsUser": "[steps('section_database').databaseConnectionInfo.dsUser]",
+            "dbPassword": "[steps('section_database').databaseConnectionInfo.dbPassword]",
+            "dbUser": "[steps('section_database').databaseConnectionInfo.dbUser]",
             "enableAAD": "[bool(steps('section_aad').enableAAD)]",
             "enableAppGateway": "[steps('section_appGateway').enableAppGateway]",
             "jdbcDataSourceName": "[steps('section_database').databaseConnectionInfo.jdbcDataSourceName]",
