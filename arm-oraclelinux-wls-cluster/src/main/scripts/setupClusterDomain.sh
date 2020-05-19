@@ -9,7 +9,7 @@ function echo_stderr ()
 #Function to display usage message
 function usage()
 {
-  echo_stderr "./setupClusterDomain.sh <wlsDomainName> <wlsUserName> <wlsPassword> <wlsServerName> <adminVMName> <AppGWHostName>"
+  echo_stderr "./setupClusterDomain.sh <wlsDomainName> <wlsUserName> <wlsPassword> <wlsServerName> <wlsAdminHost> <AppGWHostName>"
 }
 
 function installUtilities()
@@ -52,9 +52,9 @@ function validateInput()
         echo_stderr "wlsServerName is required. "
     fi
 
-    if [ -z "$adminVMName" ];
+    if [ -z "$wlsAdminHost" ];
     then
-        echo_stderr "adminVMName is required. "
+        echo_stderr "wlsAdminHost is required. "
     fi
 
     if [ -z "$oracleHome" ]; 
@@ -574,7 +574,7 @@ export wlsAdminURL="$wlsAdminHost:$wlsAdminPort"
 export wlsClusterName="cluster1"
 export nmHost=`hostname`
 export nmPort=5556
-export WEBLOGIC_DEPLOY_TOOL=https://github.com/oracle/weblogic-deploy-tooling/releases/download/weblogic-deploy-tooling-1.1.1/weblogic-deploy.zip
+export WEBLOGIC_DEPLOY_TOOL=https://github.com/oracle/weblogic-deploy-tooling/releases/download/weblogic-deploy-tooling-1.8.1/weblogic-deploy.zip
 
 export AppGWHttpPort=80
 export AppGWHttpsPort=443
