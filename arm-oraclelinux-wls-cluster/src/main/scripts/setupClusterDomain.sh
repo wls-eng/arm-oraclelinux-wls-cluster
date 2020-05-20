@@ -533,52 +533,6 @@ function enableAndStartAdminServerService()
 
 }
 
-function openPortsAdminServerFromFirewall()
-{
-    openPorts=$(firewall-cmd --list-port --zone=public)
-    reloadFirewall=0
-
-    if [[ $openPorts != *"7001"* ]]; then
-        echo "open 7001/tcp from firewall"
-        firewall-cmd --zone=public --add-port=7001/tcp --permanent;
-        reloadFirewall=1
-    fi
-
-    if [[ $openPorts != *"7002"* ]]; then
-        echo "open 7002/tcp from firewall"
-        firewall-cmd --zone=public --add-port=7002/tcp --permanent;
-        reloadFirewall=1
-    fi
-
-    if [ $reloadFirewall -eq 1 ];then
-        echo "reload firewall"
-        firewall-cmd --reload;
-    fi
-}
-
-function openPortsForManagedServerFromFirewall()
-{
-    openPorts=$(firewall-cmd --list-port --zone=public)
-    reloadFirewall=0
-
-    if [[ $openPorts != *"8001"* ]]; then
-        echo "open 8001/tcp from firewall"
-        firewall-cmd --zone=public --add-port=8001/tcp --permanent;
-        reloadFirewall=1
-    fi
-
-    if [[ $openPorts != *"8501"* ]]; then
-        echo "open 8501/tcp from firewall"
-        firewall-cmd --zone=public --add-port=8501/tcp --permanent;
-        reloadFirewall=1
-    fi
-
-    if [ $reloadFirewall -eq 1 ];then
-        echo "reload firewall"
-        firewall-cmd --reload;
-    fi
-}
-
 #main script starts here
 
 CURR_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -642,14 +596,12 @@ then
   enabledAndStartNodeManagerService
   enableAndStartAdminServerService
   wait_for_admin
-  openPortsAdminServerFromFirewall
 else
   create_managedSetup
   create_nodemanager_service
   enabledAndStartNodeManagerService
   wait_for_admin
   start_managed
-  openPortsForManagedServerFromFirewall
 fi
 
 cleanup
