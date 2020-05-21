@@ -533,6 +533,31 @@ function enableAndStartAdminServerService()
 
 }
 
+function updateNetworkRules()
+{
+    # for Oracle Linux 7.3, 7.4, iptable is not running.
+    if [ -z `command -v firewall-cmd` ]; then
+        return 0
+    fi
+    
+    # for Oracle Linux 7.6, open weblogic ports
+    tag=$1
+    if [ ${tag} == 'admin' ]; then
+        echo "update network rules for admin server"
+        sudo firewall-cmd --zone=public --add-port=$wlsAdminPort/tcp
+        sudo firewall-cmd --zone=public --add-port=$wlsSSLAdminPort/tcp
+        sudo firewall-cmd --zone=public --add-port=$wlsManagedPort/tcp
+        sudo firewall-cmd --zone=public --add-port=$nmPort/tcp
+    else
+        echo "update network rules for managed server"
+        sudo firewall-cmd --zone=public --add-port=$wlsManagedPort/tcp
+        sudo firewall-cmd --zone=public --add-port=$nmPort/tcp
+    fi
+
+    sudo firewall-cmd --runtime-to-permanent
+    sudo systemctl restart firewalld
+}
+
 #main script starts here
 
 CURR_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -589,6 +614,7 @@ installUtilities
 
 if [ $wlsServerName == "admin" ];
 then
+  updateNetworkRules "admin"
   create_adminSetup
   create_nodemanager_service
   admin_boot_setup
@@ -597,6 +623,7 @@ then
   enableAndStartAdminServerService
   wait_for_admin
 else
+  updateNetworkRules "managed"
   create_managedSetup
   create_nodemanager_service
   enabledAndStartNodeManagerService
