@@ -2,14 +2,33 @@ name: Build and Test
 on: 
   push:
     branches:
-      - master
+      - develop
   pull_request:
     branches:
       - master
   schedule:
       - cron:  '0 7 * * *'
   repository_dispatch:
-        
+
+env:
+  azCliVersion: 2.0.72
+  location: eastus
+  nsg: wls-nsg
+  otnAccountPassword: ${{ secrets.OTN_PASSWORD }}
+  otnAccountUsername: ${{ secrets.OTN_USERID }}
+  resourceGroup: wls-${{ github.run_id }}-${{ github.run_number }}
+  userEmail: ${{ secrets.USER_EMAIL }}
+  userName: ${{ secrets.USER_NAME }}
+  wlsPassword: ${{ secrets.WLS_PASSWORD }}
+  adminPassword: ${{ secrets.WLS_PASSWORD }}
+  wlsDomainName : clusterDomain
+  wlsUserName : weblogic
+  managedServerPrefix : managedServer
+  numberOfInstances : 3
+  adminVMName: adminServerVM
+  managedServers: "managedServer1 managedServer2"
+  testbranchName: testcicd
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -30,6 +49,10 @@ jobs:
         uses: actions/checkout@v2
         with:
           path: arm-oraclelinux-wls-cluster  
+      - name: Checkout arm-oraclelinux-wls-cluster for test
+        uses: actions/checkout@v2
+        with:
+            path: arm-oraclelinux-wls-cluster-dev        
       - name: Set up JDK 1.8
         uses: actions/setup-java@v1
         with:
@@ -37,7 +60,166 @@ jobs:
       - name: Build azure-javaee-iaas
         run: mvn -DskipTests clean install --file azure-javaee-iaas/pom.xml
       - name: Build and test arm-oraclelinux-wls-cluster
-        run: mvn -Ptemplate-validation-tests clean install --file arm-oraclelinux-wls-cluster/pom.xml
+        run: mvn -Ptemplate-validation-tests clean install --file arm-oraclelinux-wls-cluster/pom.xml 
+      - name: Create a new branch of arm-oraclelinux-wls-cluster with development pids in nestedtemplates.        
+        run: |
+          current=`pwd`
+          echo "##[set-env name=current;]${current}"
+          cd arm-oraclelinux-wls-cluster-dev/arm-oraclelinux-wls-cluster/src/main/arm/nestedtemplates
+          git config --global core.longpaths true
+          git config --global user.email $userEmail
+          git config --global user.name $userName
+          echo "create branch $testbranchName"
+          git checkout -b $testbranchName
+          rm -r -f $current/arm-oraclelinux-wls-cluster-dev/arm-oraclelinux-wls-cluster/src/main/arm/nestedtemplates/*
+          cp -r -f $current/arm-oraclelinux-wls-cluster/arm-oraclelinux-wls-cluster/target/arm/nestedtemplates/* $current/arm-oraclelinux-wls-cluster-dev/arm-oraclelinux-wls-cluster/src/main/arm/nestedtemplates/
+          git status
+          git commit -a -m "hard code pids"
+          git push https://${{ secrets.git_token }}@github.com/wls-eng/arm-oraclelinux-wls-cluster.git -f
+      - uses: azure/login@v1
+        id: azure-login
+        with:
+         creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Create Resource Group
+        id: create-resource-group
+        uses: azure/CLI@v1
+        with:
+          azcliversion: ${{ env.azCliVersion }}
+          inlineScript: |
+            az group create --verbose --name ${{ env.resourceGroup }} --location ${location}
+      
+      - name: Prepare deployed parameters and test script
+        id: prepare-deployed-parameters-and-test-script
+        run: |
+          echo $otnAccountUsername $otnAccountPassword $location $adminPassword $wlsDomainName $wlsUserName $wlsPassword 
+          echo $managedServerPrefix $numberOfInstances $adminVMName
+          sed -i "s/#otnAccountUsername#/$otnAccountUsername/g; \
+           s/#otnAccountPassword#/$otnAccountPassword/g; \
+           s/#location#/$location/g; \
+           s/#adminPasswordOrKey#/$wlsPassword/g; \
+           s/#wlsdomainname#/$wlsDomainName/g; \
+           s/#wlsusername#/$wlsUserName/g; \
+           s/#wlspassword#/$wlsPassword/g; \
+           s/#managedserverprefix#/$managedServerPrefix/g; \
+           s/#numinstances#/$numberOfInstances/g; \
+           s/#adminvmname#/$adminVMName/g" \
+            arm-oraclelinux-wls-cluster/test/data/parameters-test.json  
+          sed -i "s/#adminPasswordOrKey#/$wlsPassword/g" \
+          arm-oraclelinux-wls-cluster/test/scripts/verify-wls-path.sh
+          sed -i "s/#adminVMName#/$adminVMName/g; \
+          s/#adminPasswordOrKey#/$wlsPassword/g; \
+          s/#managedServers#/$managedServers/g; \
+          s/#wlsUserName#/$wlsUserName/g; \
+          s/#wlspassword#/$wlsPassword/g" \
+          arm-oraclelinux-wls-cluster/test/scripts/verify-wls-access.sh
+          sed -i "s/#adminVMName#/$adminVMName/g; \
+          s/#adminPasswordOrKey#/$wlsPassword/g; \
+          s/#managedServers#/$managedServers/g; \
+          s/#wlsUserName#/$wlsUserName/g; \
+          s/#wlspassword#/$wlsPassword/g" \
+          arm-oraclelinux-wls-cluster/test/scripts/verify-servers-lifecycle.sh
+          cat arm-oraclelinux-wls-cluster/test/data/parameters-test.json
+          cat arm-oraclelinux-wls-cluster/arm-oraclelinux-wls-cluster/target/arm/mainTemplate.json
+          
+      - name: Deploy WebLogic Server Cluster Domain offer
+        id: deploy-wls-cluster
+        uses: azure/CLI@v1
+        with:
+          azcliversion: ${{ env.azCliVersion }}
+          inlineScript: |
+            az group deployment create \
+              --verbose \
+              --resource-group ${{ env.resourceGroup }} \
+              --name wls-cluster-node \
+              --parameters @arm-oraclelinux-wls-cluster/test/data/parameters-test.json \
+              --template-file arm-oraclelinux-wls-cluster/arm-oraclelinux-wls-cluster/target/arm/mainTemplate.json
+             
+      - name: Verify Network Security Group
+        id: verify-nsg
+        uses: azure/CLI@v1
+        with:
+          azcliversion: ${{ env.azCliVersion }}
+          inlineScript: |
+            echo "query nsg name, will exit with error if nsg does not exist."
+            az network nsg show -g ${{ env.resourceGroup }} -n ${nsg} --query "name"
+            
+      - name: Get IP of build machine
+        id: get-ip-address
+        run: |
+          myIP=$(dig @ns1.google.com TXT o-o.myaddr.l.google.com +short)
+          echo "##[set-env name=myIP;]${myIP}"
+
+      - name: Add ip address to security rule to access the wls machine
+        id: add-ip-to-security-rule
+        uses: azure/CLI@v1
+        with:
+          azcliversion: ${{ env.azCliVersion }}
+          inlineScript: |
+            echo "query existing source address prefixes"
+            sourceAddressPrefixes=$(az network nsg rule show \
+              --resource-group ${{ env.resourceGroup }} \
+              --nsg-name wls-nsg \
+              --name NRMS-Rule-101 \
+              --query "sourceAddressPrefixes")
+            echo "IP of this machine: " ${myIP}
+            sourceAddressPrefixes=$(echo ${myIP} ${sourceAddressPrefixes} | \
+              sed 's/,/ /g; s/\[//g; s/\]//g; s/"//g')
+            echo ${sourceAddressPrefixes}
+            az network nsg rule update \
+              --resource-group ${{ env.resourceGroup }} \
+              --nsg-name wls-nsg \
+              --name NRMS-Rule-101 \
+              --source-address-prefixes $sourceAddressPrefixes \
+              --destination-port-ranges 443 22
+
+      - name: Restart wls VM
+        id: restart-wls-wm
+        uses: azure/CLI@v1
+        with:
+          azcliversion: ${{ env.azCliVersion }}
+          inlineScript: |
+            echo "restart vm to make sure security rule work."
+            az vm restart -g ${{ env.resourceGroup }} -n $adminVMName
+   
+      - name: Query public IP of AdminServer VM
+        id: query-wls-admin-ip
+        uses: azure/CLI@v1
+        with:
+          azcliversion: ${{ env.azCliVersion }}
+          inlineScript: |
+            echo "query public ip"
+            publicIP=$(az vm show \
+              --resource-group ${{ env.resourceGroup }} \
+              --name $adminVMName -d \
+              --query publicIps -o tsv)
+            echo "VM Public IP ${publicIp}"
+            echo "##[set-env name=wlsPublicIP;]${publicIP}"  
+
+      - name: Verify WebLogic Server
+        id: verify-wls
+        run: |
+          echo "pubilc IP of wls machine: ${wlsPublicIP}"
+          echo "Verifying Weblgic server installation"
+          timeout 6m sh -c 'until nc -zv $0 $1; do echo "nc rc: $?"; sleep 5; done' ${wlsPublicIP} 22
+          sshpass -p ${wlsPassword} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt weblogic@${wlsPublicIP} 'bash -s' < arm-oraclelinux-wls-cluster/test/scripts/verify-wls-path.sh
+     
+      - name: Verify WebLogic Server Access
+        id: verify-wls-access
+        run: |
+          echo "Verifying Weblogic Server Access"
+          sshpass -p ${wlsPassword} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt weblogic@${wlsPublicIP} 'bash -s' < arm-oraclelinux-wls-cluster/test/scripts/verify-wls-access.sh
+
+      - name: Verify WebLogic Managed Server LifeCycle check
+        id: verify-server-lifecycle
+        run: |
+          echo "Verifying Weblogic managed server lifecycle"
+          sshpass -p ${wlsPassword} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt weblogic@${wlsPublicIP} 'bash -s' < arm-oraclelinux-wls-cluster/test/scripts/verify-servers-lifecycle.sh
+
+      - name: Delete testing branch
+        run: |
+          current=`pwd`
+          cd arm-oraclelinux-wls-cluster-dev
+          git push https://${{ secrets.git_token }}@github.com/wls-eng/arm-oraclelinux-wls-cluster.git -f --delete $testbranchName        
 
       - name: Get version information from arm-oraclelinux-wls-cluster/pom.xml
         id: version
@@ -96,3 +278,19 @@ jobs:
         with:
           name: ${{steps.addnode_artifact_file.outputs.addnode_artifactName}}
           path: ${{steps.addnode_artifact_path.outputs.addnode_artifactPath}}
+
+  cleanup:
+    needs: build
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Delete Resource Group
+        id: delete-resource-group
+        uses: azure/CLI@v1
+        with:
+          azcliversion: ${{ env.azCliVersion }}
+          inlineScript: |
+            az group delete --yes --no-wait --verbose --name ${{ env.resourceGroup }}      
