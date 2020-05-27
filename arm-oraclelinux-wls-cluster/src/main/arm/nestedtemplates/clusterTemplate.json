@@ -191,6 +191,7 @@
 			}
 		},
 		"const_managedVMPrefix": "[concat(parameters('managedServerPrefix'),'VM')]",
+		"const_mountPointPath": "/mnt/wlsshare",
 		"const_publicIPAddressType": "Dynamic",
 		"const_requiredPortrange": ",65200-65535,5556",
 		"const_storageAccountType": "Standard_LRS",
@@ -208,9 +209,10 @@
 		"name_storageAccount": "[concat(take(replace(parameters('guidValue'),'-',''),6),'olvm')]",
 		"name_subnet": "Subnet",
 		"name_virtualNetwork": "[concat(parameters('wlsDomainName'),'_VNET')]",
+		"ref_fileService": "[resourceId('Microsoft.Storage/storageAccounts/fileServices', variables('name_storageAccount'), 'default')]",
 		"ref_networkSecurityGroup": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('name_networkSecurityGroup'))]",
-		"ref_subnet": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('name_virtualNetwork'), variables('name_subnet'))]"
-
+		"ref_subnet": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('name_virtualNetwork'), variables('name_subnet'))]",
+		"ref_storage": "[resourceId('Microsoft.Storage/storageAccounts', variables('name_storageAccount'))]"
 	},
 	"resources": [
 		{
@@ -260,10 +262,41 @@
 			},
 			"kind": "Storage",
 			"properties": {
+				"supportsHttpsTrafficOnly": false
 			},
 			"dependsOn": [
 				"[variables('name_networkSecurityGroup')]"
 			]
+		},
+		{
+			"type": "Microsoft.Storage/storageAccounts/fileServices",
+			"apiVersion": "2019-06-01",
+			"name": "[concat(variables('name_storageAccount'), '/default')]",
+			"dependsOn": [
+				"[variables('ref_storage')]"
+			],
+			"sku": {
+				"name": "Standard_LRS",
+				"tier": "Standard"
+			},
+			"properties": {
+				"cors": {
+					"corsRules": [
+					]
+				}
+			}
+		},
+		{
+			"type": "Microsoft.Storage/storageAccounts/fileServices/shares",
+			"apiVersion": "2019-06-01",
+			"name": "[concat(variables('name_storageAccount'), '/default/wlsshare')]",
+			"dependsOn": [
+				"[variables('ref_fileService')]",
+				"[variables('ref_storage')]"
+			],
+			"properties": {
+				"shareQuota": 5
+			}
 		},
 		{
 			"type": "Microsoft.Network/publicIPAddresses",
@@ -480,7 +513,7 @@
 					"fileUris": [
 						"[uri(parameters('_artifactsLocationClusterTemplate'), concat('../scripts/', variables('name_scriptFile'), parameters('_artifactsLocationSasToken')))]"
 					],
-					"commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ',parameters('wlsDomainName'),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',if(equals(copyIndex(),0),'admin',concat(parameters('managedServerPrefix'), copyIndex())),' ',parameters('adminVMName'),' ',variables('const_wlsHome'),' ',if(parameters('enableAppGateway'), reference(parameters('gatewayPublicIPAddressName'), '2019-11-01').dnsSettings.fqdn, ''))]"
+					"commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ',parameters('wlsDomainName'),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',if(equals(copyIndex(),0),'admin',concat(parameters('managedServerPrefix'), copyIndex())),' ',parameters('adminVMName'),' ',variables('const_wlsHome'),' ',variables('name_storageAccount'),' ',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('name_storageAccount')), '2019-04-01').keys[0].value,' ',variables('const_mountPointPath'),' ',if(parameters('enableAppGateway'), reference(parameters('gatewayPublicIPAddressName'), '2019-11-01').dnsSettings.fqdn, ''))]"
 				}
 			}
 		},
