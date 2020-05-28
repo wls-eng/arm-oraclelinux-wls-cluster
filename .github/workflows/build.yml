@@ -121,7 +121,7 @@ jobs:
           cat arm-oraclelinux-wls-cluster/test/data/parameters-test.json
           cat arm-oraclelinux-wls-cluster/arm-oraclelinux-wls-cluster/target/arm/mainTemplate.json
           
-      - name: Deploy WebLogic Server Cluster Domain offer
+      - name: Deploy WebLogic Server  Cluster Domain offer
         id: deploy-wls-cluster
         uses: azure/CLI@v1
         with:
