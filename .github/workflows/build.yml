@@ -128,8 +128,6 @@ jobs:
           git config --global core.longpaths true
           git config --global user.email $userEmail
           git config --global user.name $userName
-          echo "delete branch" $testbranchName
-          git push https://$git_token@github.com/$userName/arm-oraclelinux-wls-cluster.git -f --delete $testbranchName
           echo "create branch $testbranchName"
           git checkout -b $testbranchName
           rm -r -f $current/arm-oraclelinux-wls-cluster-dev/arm-oraclelinux-wls-cluster/src/main/arm/nestedtemplates/*
