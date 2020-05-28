@@ -25,7 +25,7 @@ env:
   numberOfInstances : 2
   adminVMName: adminServerVM
   managedServers: "managedServer1"
-  testbranchName: testcicd
+  testbranchName: cicd-${{ github.run_id }}-${{ github.run_number }}
   ref_javaee: 6807e2ae3e8a8492edf211b9f4f0b7ed3a2a29e7
   ref_armttk: e2fbdcb93a4b2004c9ea953956b85248e0ef8c1c 
   git_token: ${{ secrets.GIT_TOKEN }} 
@@ -187,6 +187,7 @@ jobs:
            s/#numinstances#/$numberOfInstances/g; \
            s/#adminvmname#/$adminVMName/g; \
            s/#linuxImageOfferSKU#/${{ matrix.images }}/g; \
+           s/#testbranchName#/$testbranchName/g; \
            s/#gitUserName#/$userName/g" \
             arm-oraclelinux-wls-cluster/test/data/parameters-test.json  
           sed -i "s/#adminPasswordOrKey#/$wlsPassword/g" \

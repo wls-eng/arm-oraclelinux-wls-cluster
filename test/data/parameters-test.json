@@ -39,7 +39,7 @@
       "value": "#linuxImageOfferSKU#"
     },
     "_artifactsLocation": {
-      "value": "https://raw.githubusercontent.com/#gitUserName#/arm-oraclelinux-wls-cluster/testcicd/arm-oraclelinux-wls-cluster/src/main/arm/"
+      "value": "https://raw.githubusercontent.com/#gitUserName#/arm-oraclelinux-wls-cluster/#testbranchName#/arm-oraclelinux-wls-cluster/src/main/arm/"
     }
   }
 }
