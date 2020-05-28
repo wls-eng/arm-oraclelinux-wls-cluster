@@ -1,2 +1,2 @@
-echo "#adminPasswordOrKey#" | sudo -S [ -d "/u01/app/wls/install/Oracle/Middleware/Oracle_Home/wlserver/modules" ] && exit 0
+echo "#adminPasswordOrKey#" | sudo -S [ -d "/u01/app/wls/install/oracle/middleware/oracle_home/wlserver/modules" ] && exit 0
 exit 1

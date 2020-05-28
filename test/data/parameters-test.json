@@ -11,15 +11,6 @@
     "dnsLabelPrefix": {
       "value": "wls"
     },
-    "acceptOTNLicenseAgreement": {
-      "value": "Y"
-    },
-    "otnAccountUsername": {
-      "value": "#otnAccountUsername#"
-    },
-    "otnAccountPassword": {
-      "value": "#otnAccountPassword#"
-    },
     "wlsDomainName": {
       "value": "#wlsdomainname#"
     },
@@ -44,8 +35,11 @@
     "location": {
       "value": "#location#"
     },
+    "linuxImageOfferSKU": {
+      "value": "#linuxImageOfferSKU#"
+    },
     "_artifactsLocation": {
-      "value": "https://raw.githubusercontent.com/sanjaymantoor/arm-oraclelinux-wls-cluster/testcicd/arm-oraclelinux-wls-cluster/src/main/arm/"
+      "value": "https://raw.githubusercontent.com/#gitUserName#/arm-oraclelinux-wls-cluster/testcicd/arm-oraclelinux-wls-cluster/src/main/arm/"
     }
   }
 }
