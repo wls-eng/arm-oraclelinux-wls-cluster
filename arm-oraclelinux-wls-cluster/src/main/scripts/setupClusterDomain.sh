@@ -9,13 +9,13 @@ function echo_stderr ()
 #Function to display usage message
 function usage()
 {
-  echo_stderr "./setupClusterDomain.sh <wlsDomainName> <wlsUserName> <wlsPassword> <wlsServerName> <wlsAdminHost> <AppGWHostName>"
+  echo_stderr "./setupClusterDomain.sh <wlsDomainName> <wlsUserName> <wlsPassword> <wlsServerName> <wlsAdminHost> <storageAccountName> <storageAccountKey> <mountpointPath> <AppGWHostName>"
 }
 
 function installUtilities()
 {
-    echo "Installing zip unzip wget vnc-server rng-tools"
-    sudo yum install -y zip unzip wget vnc-server rng-tools
+    echo "Installing zip unzip wget vnc-server rng-tools cifs-utils"
+    sudo yum install -y zip unzip wget vnc-server rng-tools cifs-utils
 
     #Setting up rngd utils
     attempt=1
@@ -61,6 +61,24 @@ function validateInput()
     then 
         echo_stderr "oracleHome is required. " 
         exit 1 
+    fi
+
+    if [ -z "$storageAccountName" ];
+    then 
+        echo_stderr "storageAccountName is required. "
+        exit 1
+    fi
+    
+    if [ -z "$storageAccountKey" ];
+    then 
+        echo_stderr "storageAccountKey is required. "
+        exit 1
+    fi
+    
+    if [ -z "$mountpointPath" ];
+    then 
+        echo_stderr "mountpointPath is required. "
+        exit 1
     fi
 }
 
@@ -327,6 +345,9 @@ function create_adminSetup()
        echo "Error : Admin setup failed"
        exit 1
     fi
+
+    # For issue https://github.com/wls-eng/arm-oraclelinux-wls/issues/89
+    copySerializedSystemIniFileToShare
 }
 
 #Function to setup admin boot properties
@@ -477,6 +498,10 @@ function create_managedSetup(){
        exit 1
     fi
     wait_for_admin
+    
+    # For issue https://github.com/wls-eng/arm-oraclelinux-wls/issues/89
+    getSerializedSystemIniFileFromShare
+    
     echo "Adding machine to managed server $wlsServerName"
     runuser -l oracle -c ". $oracleHome/oracle_common/common/bin/setWlstEnv.sh; java $WLST_ARGS weblogic.WLST $DOMAIN_PATH/add-machine.py"
     if [[ $? != 0 ]]; then
@@ -558,6 +583,63 @@ function updateNetworkRules()
     sudo systemctl restart firewalld
 }
 
+# Mount the Azure file share on all VMs created
+function mountFileShare()
+{
+  echo "Creating mount point"
+  echo "Mount point: $mountpointPath"
+  sudo mkdir -p $mountpointPath
+  if [ ! -d "/etc/smbcredentials" ]; then
+    sudo mkdir /etc/smbcredentials
+  fi
+  if [ ! -f "/etc/smbcredentials/${storageAccountName}.cred" ]; then
+    echo "Crearing smbcredentials"
+    echo "username=$storageAccountName >> /etc/smbcredentials/${storageAccountName}.cred"
+    echo "password=$storageAccountKey >> /etc/smbcredentials/${storageAccountName}.cred"
+    sudo bash -c "echo "username=$storageAccountName" >> /etc/smbcredentials/${storageAccountName}.cred"
+    sudo bash -c "echo "password=$storageAccountKey" >> /etc/smbcredentials/${storageAccountName}.cred"
+  fi
+  echo "chmod 600 /etc/smbcredentials/${storageAccountName}.cred"
+  sudo chmod 600 /etc/smbcredentials/${storageAccountName}.cred
+  echo "//${storageAccountName}.file.core.windows.net/wlsshare $mountpointPath cifs nofail,vers=2.1,credentials=/etc/smbcredentials/${storageAccountName}.cred ,dir_mode=0777,file_mode=0777,serverino"
+  sudo bash -c "echo \"//${storageAccountName}.file.core.windows.net/wlsshare $mountpointPath cifs nofail,vers=2.1,credentials=/etc/smbcredentials/${storageAccountName}.cred ,dir_mode=0777,file_mode=0777,serverino\" >> /etc/fstab"
+  echo "mount -t cifs //${storageAccountName}.file.core.windows.net/wlsshare $mountpointPath -o vers=2.1,credentials=/etc/smbcredentials/${storageAccountName}.cred,dir_mode=0777,file_mode=0777,serverino"
+  sudo mount -t cifs //${storageAccountName}.file.core.windows.net/wlsshare $mountpointPath -o vers=2.1,credentials=/etc/smbcredentials/${storageAccountName}.cred,dir_mode=0777,file_mode=0777,serverino
+  if [[ $? != 0 ]];
+  then
+         echo "Failed to mount //${storageAccountName}.file.core.windows.net/wlsshare $mountpointPath"
+	 exit 1
+  fi
+}
+
+# Copy SerializedSystemIni.dat file from admin server vm to share point
+function copySerializedSystemIniFileToShare()
+{
+  runuser -l oracle -c "cp ${DOMAIN_PATH}/${wlsDomainName}/security/SerializedSystemIni.dat ${mountpointPath}/."
+  ls -lt ${mountpointPath}/SerializedSystemIni.dat
+  if [[ $? != 0 ]]; 
+  then
+      echo "Failed to copy ${DOMAIN_PATH}/${wlsDomainName}/security/SerializedSystemIni.dat"
+      exit 1
+  fi
+}
+
+# Get SerializedSystemIni.dat file from share point to managed server vm
+function getSerializedSystemIniFileFromShare()
+{
+  runuser -l oracle -c "mv ${DOMAIN_PATH}/${wlsDomainName}/security/SerializedSystemIni.dat ${DOMAIN_PATH}/${wlsDomainName}/security/SerializedSystemIni.dat.backup"
+  runuser -l oracle -c "cp ${mountpointPath}/SerializedSystemIni.dat ${DOMAIN_PATH}/${wlsDomainName}/security/."
+  ls -lt ${DOMAIN_PATH}/${wlsDomainName}/security/SerializedSystemIni.dat
+  if [[ $? != 0 ]]; 
+  then
+      echo "Failed to get ${mountpointPath}/SerializedSystemIni.dat"
+      exit 1
+  fi
+  runuser -l oracle -c "chmod 640 ${DOMAIN_PATH}/${wlsDomainName}/security/SerializedSystemIni.dat"
+}
+
+
+
 #main script starts here
 
 CURR_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -574,20 +656,22 @@ for (( i=0;i<$ELEMENTS;i++)); do
     echo "ARG[${args[${i}]}]"
 done
 
-if [ $# -le 5 ]
+if [ $# -le 8 ]
 then
     usage
-	exit 1
+    exit 1
 fi
 
-export wlsDomainName=$1
-export wlsUserName=$2
-export wlsPassword=$3
-export wlsServerName=$4
-export wlsAdminHost=$5
-export oracleHome=$6
-export AppGWHostName=$7
-
+export wlsDomainName=${1}
+export wlsUserName=${2}
+export wlsPassword=${3}
+export wlsServerName=${4}
+export wlsAdminHost=${5}
+export oracleHome=${6}
+export storageAccountName=${7}
+export storageAccountKey=${8}
+export mountpointPath=${9}
+export AppGWHostName=${10}
 
 validateInput
 
@@ -611,6 +695,7 @@ export groupname="oracle"
 cleanup
 
 installUtilities
+mountFileShare
 
 if [ $wlsServerName == "admin" ];
 then
