@@ -291,7 +291,19 @@ jobs:
           echo "Verifying Weblgic server installation"
           timeout 6m sh -c 'until nc -zv $0 $1; do echo "nc rc: $?"; sleep 5; done' ${wlsPublicIP} 22
           sshpass -p ${wlsPassword} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt weblogic@${wlsPublicIP} 'bash -s' < arm-oraclelinux-wls-cluster/test/scripts/verify-wls-path.sh
-
+          
+      - name: Verify WebLogic Server Access
+        id: verify-wls-access
+        run: |
+          echo "Verifying Weblogic Server Access"
+          sshpass -p ${wlsPassword} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt weblogic@${wlsPublicIP} 'bash -s' < arm-oraclelinux-wls-cluster/test/scripts/verify-wls-access.sh
+      
+      - name: Verify WebLogic Managed Server LifeCycle check
+        id: verify-server-lifecycle
+        run: |
+          echo "Verifying Weblogic managed server lifecycle"
+          sshpass -p ${wlsPassword} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt weblogic@${wlsPublicIP} 'bash -s' < arm-oraclelinux-wls-cluster/test/scripts/verify-servers-lifecycle.sh
+      
   cleanupResourceGroup:
     needs: deploy
     if: always()
