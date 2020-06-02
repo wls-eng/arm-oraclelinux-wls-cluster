@@ -8,7 +8,7 @@ testbranchName="$5"
 scriptsDir="$6"
 
 groupName=${prefix}-preflight
-keyVaultName=preflightkeyvault
+keyVaultName=${prefix}keyvault
 certDataName=certData
 certPasswordName=certPassword
 
@@ -28,21 +28,28 @@ az keyvault secret set --vault-name ${keyVaultName} -n ${certPasswordName} --val
 parametersList=()
 bash ${scriptsDir}/gen-parameters.sh ${scriptsDir}/parameters.json $githubUserName $testbranchName
 parametersList+=(${scriptsDir}/parameters.json)
+
 bash ${scriptsDir}/gen-parameters-db.sh ${scriptsDir}/parameters-db.json $githubUserName $testbranchName
 parametersList+=(${scriptsDir}/parameters-db.json)
+
 bash ${scriptsDir}/gen-parameters-aad.sh ${scriptsDir}/parameters-aad.json $githubUserName $testbranchName
 parametersList+=(${scriptsDir}/parameters-aad.json)
+
 bash ${scriptsDir}/gen-parameters-db-aad.sh ${scriptsDir}/parameters-db-aad.json $githubUserName $testbranchName
 parametersList+=(${scriptsDir}/parameters-db-aad.json)
+
 bash ${scriptsDir}/gen-parameters-ag.sh ${scriptsDir}/parameters-ag.json $githubUserName $testbranchName \
     ${keyVaultName} ${groupName} ${certDataName} ${certPasswordName}
 parametersList+=(${scriptsDir}/parameters-ag.json)
+
 bash ${scriptsDir}/gen-parameters-db-ag.sh ${scriptsDir}/parameters-db-ag.json $githubUserName $testbranchName \
     ${keyVaultName} ${groupName} ${certDataName} ${certPasswordName}
 parametersList+=(${scriptsDir}/parameters-db-ag.json)
+
 bash ${scriptsDir}/gen-parameters-aad-ag.sh ${scriptsDir}/parameters-aad-ag.json $githubUserName $testbranchName \
     ${keyVaultName} ${groupName} ${certDataName} ${certPasswordName}
 parametersList+=(${scriptsDir}/parameters-aad-ag.json)
+
 bash ${scriptsDir}/gen-parameters-db-aad-ag.sh ${scriptsDir}/parameters-db-aad-ag.json $githubUserName $testbranchName \
     ${keyVaultName} ${groupName} ${certDataName} ${certPasswordName}
 parametersList+=(${scriptsDir}/parameters-db-aad-ag.json)

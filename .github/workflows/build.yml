@@ -144,7 +144,7 @@ jobs:
         id: validate-deployment-templates
         run: |
           bash arm-oraclelinux-wls-cluster/test/scripts/verify-deployments.sh \
-            ${resourceGroupPrefix} ${location} \
+            ${{ github.run_id }}${{ github.run_number }} ${location} \
             arm-oraclelinux-wls-cluster/arm-oraclelinux-wls-cluster/target/arm/mainTemplate.json \
             ${userName} ${testbranchName} arm-oraclelinux-wls-cluster/test/scripts
 
