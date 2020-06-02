@@ -11,7 +11,7 @@ on:
   repository_dispatch:
 
 env:
-  azCliVersion: 2.0.72
+  azCliVersion: 2.6.0
   location: eastus
   nsg: wls-nsg
   resourceGroupPrefix: wls-${{ github.run_id }}-${{ github.run_number }}
