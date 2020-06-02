@@ -28,6 +28,7 @@ for parameters in "${parametersList[@]}";
 do
     az deployment group validate -g ${groupName} -f ${template} -p @${parameters} --no-prompt
     if [[ $? != 0 ]]; then
+        echo "deployment validation for ${parameters} failed!"
         success=false
     fi
 done
