@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 parametersPath=$1
 githubUserName=$2
