@@ -8,7 +8,7 @@ testbranchName="$5"
 scriptsDir="$6"
 
 groupName=${prefix}-preflight
-keyVaultName=${prefix}keyvault
+keyVaultName=keyvault${prefix}
 certDataName=certData
 certPasswordName=certPassword
 
