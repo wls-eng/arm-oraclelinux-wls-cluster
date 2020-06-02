@@ -146,7 +146,7 @@ jobs:
           bash arm-oraclelinux-wls-cluster/test/scripts/verify-deployments.sh \
             ${resourceGroupPrefix} ${location} \
             arm-oraclelinux-wls-cluster/arm-oraclelinux-wls-cluster/target/arm/mainTemplate.json \
-            ${githubUserName} ${testbranchName} arm-oraclelinux-wls-cluster/test/scripts
+            ${userName} ${testbranchName} arm-oraclelinux-wls-cluster/test/scripts
 
   deploy:
     needs: preflight
