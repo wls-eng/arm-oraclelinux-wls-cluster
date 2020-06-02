@@ -18,6 +18,8 @@ bash ${scriptsDir}/gen-parameters-aad.sh ${scriptsDir}/parameters-aad.json $gith
 parametersList+=(${scriptsDir}/parameters-aad.json)
 bash ${scriptsDir}/gen-parameters-db-aad.sh ${scriptsDir}/parameters-db-aad.json $githubUserName $testbranchName
 parametersList+=(${scriptsDir}/parameters-db-aad.json)
+bash ${scriptsDir}/gen-parameters-ag.sh ${scriptsDir}/parameters-ag.json $githubUserName $testbranchName 4 5 6 7
+parametersList+=(${scriptsDir}/parameters-ag.json)
 
 # create Azure resources for preflight testing
 az group create --verbose --name $groupName --location ${location}
