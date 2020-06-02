@@ -224,7 +224,7 @@ jobs:
         with:
           azcliversion: ${{ env.azCliVersion }}
           inlineScript: |
-            az group deployment create \
+            az deployment group create \
               --verbose \
               --resource-group $resourceGroup \
               --name wls-cluster-node \
