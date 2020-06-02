@@ -23,10 +23,20 @@ parametersList+=(${scriptsDir}/parameters-db-aad.json)
 az group create --verbose --name $groupName --location ${location}
 
 # run preflight tests
+success=true
 for parameters in "${parametersList[@]}";
 do
     az deployment group validate -g ${groupName} -f ${template} -p @${parameters} --no-prompt
+    if [[ $? != 0 ]]; then
+        success=false
+    fi
 done
 
 # release Azure resources
 az group delete --yes --no-wait --verbose --name $groupName
+
+if [[ $success == "false" ]]; then
+    exit 1
+else
+    exit 0
+fi
