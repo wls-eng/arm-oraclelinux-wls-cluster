@@ -135,6 +135,18 @@ jobs:
           git status
           git commit -a -m "hard code pids"
           git push https://$git_token@github.com/$userName/arm-oraclelinux-wls-cluster.git -f
+      
+      - uses: azure/login@v1
+        id: azure-login
+        with:
+         creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Validate deployment templates for different combinations of service integration
+        id: validate-deployment-templates
+        run: |
+          bash arm-oraclelinux-wls-cluster/test/scripts/verify-deployments.sh \
+            ${resourceGroupPrefix} ${location} \
+            arm-oraclelinux-wls-cluster/arm-oraclelinux-wls-cluster/target/arm/mainTemplate.json \
+            ${githubUserName} ${testbranchName} arm-oraclelinux-wls-cluster/test/scripts
 
   deploy:
     needs: preflight
