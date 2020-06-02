@@ -12,13 +12,15 @@ keyVaultName=preflightkeyvault
 certDataName=certData
 certPasswordName=certPassword
 
+# create SSL certificate for Azure Application Gateway
+openssl genrsa -passout pass:GEN-UNIQUE -out privkey.pem 3072
+openssl req -x509 -new -key privkey.pem -out privkey.pub -subj "/C=US"
+openssl pkcs12 -passout pass:GEN-UNIQUE -export -in privkey.pub -inkey privkey.pem -out mycert.pfx
+
 # create Azure resources for preflight testing
 az group create --verbose --name $groupName --location ${location}
 az keyvault create -n ${keyVaultName} -g ${groupName} -l ${location}
 az keyvault update -n ${keyVaultName} -g ${groupName} --enabled-for-template-deployment true
-openssl genrsa -passout pass:GEN-UNIQUE -out privkey.pem 3072
-openssl req -x509 -new -key privkey.pem -out privkey.pub -subj "/C=US"
-openssl pkcs12 -passout pass:GEN-UNIQUE -export -in privkey.pub -inkey privkey.pem -out mycert.pfx
 az keyvault secret set --vault-name ${keyVaultName} -n ${certDataName} --file mycert.pfx --encoding base64
 az keyvault secret set --vault-name ${keyVaultName} -n ${certPasswordName} --value GEN-UNIQUE
 
@@ -35,6 +37,15 @@ parametersList+=(${scriptsDir}/parameters-db-aad.json)
 bash ${scriptsDir}/gen-parameters-ag.sh ${scriptsDir}/parameters-ag.json $githubUserName $testbranchName \
     ${keyVaultName} ${groupName} ${certDataName} ${certPasswordName}
 parametersList+=(${scriptsDir}/parameters-ag.json)
+bash ${scriptsDir}/gen-parameters-db-ag.sh ${scriptsDir}/parameters-db-ag.json $githubUserName $testbranchName \
+    ${keyVaultName} ${groupName} ${certDataName} ${certPasswordName}
+parametersList+=(${scriptsDir}/parameters-db-ag.json)
+bash ${scriptsDir}/gen-parameters-aad-ag.sh ${scriptsDir}/parameters-aad-ag.json $githubUserName $testbranchName \
+    ${keyVaultName} ${groupName} ${certDataName} ${certPasswordName}
+parametersList+=(${scriptsDir}/parameters-aad-ag.json)
+bash ${scriptsDir}/gen-parameters-db-aad-ag.sh ${scriptsDir}/parameters-db-aad-ag.json $githubUserName $testbranchName \
+    ${keyVaultName} ${groupName} ${certDataName} ${certPasswordName}
+parametersList+=(${scriptsDir}/parameters-db-aad-ag.json)
 
 # run preflight tests
 success=true
