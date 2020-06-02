@@ -1,12 +1,23 @@
 #!/bin/bash
 
-groupNamePrefix="$1"
-groupName=${groupNamePrefix}-preflight
+prefix="$1"
 location="$2"
 template="$3"
 githubUserName="$4"
 testbranchName="$5"
 scriptsDir="$6"
+
+groupName=${prefix}-preflight
+keyVaultName=${prefix}-keyvault
+certDataName=certData
+certPasswordName=certPassword
+
+# create Azure resources for preflight testing
+az group create --verbose --name $groupName --location ${location}
+az keyvault create -n ${keyVaultName} -g ${groupName} -l ${location}
+az keyvault update -n ${keyVaultName} -g ${groupName} --enabled-for-template-deployment true
+az keyvault secret set --vault-name ${keyVaultName} -n ${certDataName} --value GEN-UNIQUE
+az keyvault secret set --vault-name ${keyVaultName} -n ${certPasswordName} --value GEN-UNIQUE
 
 # generate parameters for testing differnt cases
 parametersList=()
@@ -18,11 +29,9 @@ bash ${scriptsDir}/gen-parameters-aad.sh ${scriptsDir}/parameters-aad.json $gith
 parametersList+=(${scriptsDir}/parameters-aad.json)
 bash ${scriptsDir}/gen-parameters-db-aad.sh ${scriptsDir}/parameters-db-aad.json $githubUserName $testbranchName
 parametersList+=(${scriptsDir}/parameters-db-aad.json)
-bash ${scriptsDir}/gen-parameters-ag.sh ${scriptsDir}/parameters-ag.json $githubUserName $testbranchName 4 5 6 7
+bash ${scriptsDir}/gen-parameters-ag.sh ${scriptsDir}/parameters-ag.json $githubUserName $testbranchName \
+    ${keyVaultName} ${groupName} ${certDataName} ${certPasswordName}
 parametersList+=(${scriptsDir}/parameters-ag.json)
-
-# create Azure resources for preflight testing
-az group create --verbose --name $groupName --location ${location}
 
 # run preflight tests
 success=true
