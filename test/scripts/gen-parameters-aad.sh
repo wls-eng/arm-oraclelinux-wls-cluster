@@ -18,13 +18,10 @@ cat <<EOF > ${parametersPath}
         "aadsPortNumber": {
             "value": "636"
         },
-        "acceptOTNLicenseAgreement": {
-            "value": "Y"
-        },
-        "addsPublicIP": {
+        "aadsPublicIP": {
             "value": "GEN-UNIQUE"
         },
-        "addsServerHost": {
+        "aadsServerHost": {
             "value": "GEN-UNIQUE"
         },
         "adminPasswordOrKey": {
@@ -33,23 +30,17 @@ cat <<EOF > ${parametersPath}
         "adminUsername": {
             "value": "GEN-UNIQUE"
         },
-        "connectToDatabase": {
-            "value": false
-        },
         "enableAAD": {
             "value": true
         },
         "enableAppGateway": {
             "value": false
         },
+        "enableDB": {
+            "value": false
+        },
         "numberOfInstances": {
             "value": 4
-        },
-        "otnAccountPassword": {
-            "value": "GEN-UNIQUE"
-        },
-        "otnAccountUsername": {
-            "value": "GEN-UNIQUE"
         },
         "wlsLDAPGroupBaseDN": {
             "value": "GEN-UNIQUE"

@@ -15,28 +15,22 @@ cat <<EOF > ${parametersPath}
         "_artifactsLocationSasToken": {
             "value": ""
         },
-        "acceptOTNLicenseAgreement": {
-            "value": "Y"
-        },
         "adminPasswordOrKey": {
             "value": "GEN-UNIQUE"
         },
         "adminUsername": {
             "value": "GEN-UNIQUE"
         },
-        "connectToDatabase": {
-            "value": true
-        },
         "databaseType": {
             "value": "postgresql"
         },
+        "dbPassword": {
+            "value": "GEN-UNIQUE"
+        },
+        "dbUser": {
+            "value": "GEN-UNIQUE"
+        },
         "dsConnectionURL": {
-            "value": "GEN-UNIQUE"
-        },
-        "dsPassword": {
-            "value": "GEN-UNIQUE"
-        },
-        "dsUser": {
             "value": "GEN-UNIQUE"
         },
         "enableAAD": {
@@ -45,17 +39,14 @@ cat <<EOF > ${parametersPath}
         "enableAppGateway": {
             "value": false
         },
+        "enableDB": {
+            "value": true
+        },
         "jdbcDataSourceName": {
             "value": "jdbc/postgresql"
         },
         "numberOfInstances": {
             "value": 4
-        },
-        "otnAccountPassword": {
-            "value": "GEN-UNIQUE"
-        },
-        "otnAccountUsername": {
-            "value": "GEN-UNIQUE"
         },
         "wlsPassword": {
             "value": "GEN-UNIQUE"

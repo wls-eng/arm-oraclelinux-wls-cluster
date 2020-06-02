@@ -18,13 +18,10 @@ cat <<EOF > ${parametersPath}
         "aadsPortNumber": {
             "value": "636"
         },
-        "acceptOTNLicenseAgreement": {
-            "value": "Y"
-        },
-        "addsPublicIP": {
+        "aadsPublicIP": {
             "value": "GEN-UNIQUE"
         },
-        "addsServerHost": {
+        "aadsServerHost": {
             "value": "GEN-UNIQUE"
         },
         "adminPasswordOrKey": {
@@ -33,19 +30,16 @@ cat <<EOF > ${parametersPath}
         "adminUsername": {
             "value": "GEN-UNIQUE"
         },
-        "connectToDatabase": {
-            "value": true
-        },
         "databaseType": {
             "value": "postgresql"
         },
+        "dbPassword": {
+            "value": "GEN-UNIQUE"
+        },
+        "dbUser": {
+            "value": "GEN-UNIQUE"
+        },
         "dsConnectionURL": {
-            "value": "GEN-UNIQUE"
-        },
-        "dsPassword": {
-            "value": "GEN-UNIQUE"
-        },
-        "dsUser": {
             "value": "GEN-UNIQUE"
         },
         "enableAAD": {
@@ -54,17 +48,14 @@ cat <<EOF > ${parametersPath}
         "enableAppGateway": {
             "value": false
         },
+        "enableDB": {
+            "value": true
+        },
         "jdbcDataSourceName": {
             "value": "jdbc/postgresql"
         },
         "numberOfInstances": {
             "value": 4
-        },
-        "otnAccountPassword": {
-            "value": "GEN-UNIQUE"
-        },
-        "otnAccountUsername": {
-            "value": "GEN-UNIQUE"
         },
         "wlsLDAPGroupBaseDN": {
             "value": "GEN-UNIQUE"

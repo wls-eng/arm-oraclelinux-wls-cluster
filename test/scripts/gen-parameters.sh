@@ -15,17 +15,11 @@ cat <<EOF > ${parametersPath}
         "_artifactsLocationSasToken": {
             "value": ""
         },
-        "acceptOTNLicenseAgreement": {
-            "value": "Y"
-        },
         "adminPasswordOrKey": {
             "value": "GEN-UNIQUE"
         },
         "adminUsername": {
             "value": "GEN-UNIQUE"
-        },
-        "connectToDatabase": {
-            "value": false
         },
         "enableAAD": {
             "value": false
@@ -33,14 +27,11 @@ cat <<EOF > ${parametersPath}
         "enableAppGateway": {
             "value": false
         },
+        "enableDB": {
+            "value": false
+        },
         "numberOfInstances": {
             "value": 4
-        },
-        "otnAccountPassword": {
-            "value": "GEN-UNIQUE"
-        },
-        "otnAccountUsername": {
-            "value": "GEN-UNIQUE"
         },
         "wlsPassword": {
             "value": "GEN-UNIQUE"
