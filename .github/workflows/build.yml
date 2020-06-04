@@ -195,7 +195,7 @@ jobs:
           arm-oraclelinux-wls-cluster/test/data \
           $location $wlsPassword $wlsDomainName $wlsUserName $wlsPassword \
           $managedServerPrefix $numberOfInstances $adminVMName ${{ matrix.images }} \
-          $userName $testbranchName
+          $testbranchName $userName
 
           sed -i "s/#adminPasswordOrKey#/$wlsPassword/g" \
           arm-oraclelinux-wls-cluster/test/scripts/verify-wls-path.sh
