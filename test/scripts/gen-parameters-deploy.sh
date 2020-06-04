@@ -22,8 +22,11 @@ then
     linuxImageVersion="1.1.6"
 fi
 
-#Clean up parameters
-rm -f ${parametersPath}
+#Clean up parameters.json
+if [[ -f "$parametersPath" ]]; then
+    rm -f ${parametersPath}
+fi
+
 cat <<EOF > ${parametersPath}
 {
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
