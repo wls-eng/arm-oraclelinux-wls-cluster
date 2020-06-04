@@ -1,14 +1,10 @@
 name: Build and Test
 on: 
-  push:
-    branches:
-      - develop
   pull_request:
     branches:
       - develop
   schedule:
       - cron:  '0 7 * * *'
-  repository_dispatch:
 
 env:
   azCliVersion: 2.6.0
