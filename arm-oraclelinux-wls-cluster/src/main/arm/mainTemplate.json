@@ -344,15 +344,6 @@
                     "dnsLabelPrefix": {
                         "value": "[parameters('dnsLabelPrefix')]"
                     },
-                    "dnsNameforApplicationGateway": {
-                        "value": "[parameters('dnsNameforApplicationGateway')]"
-                    },
-                    "enableAppGateway": {
-                        "value": "[parameters('enableAppGateway')]"
-                    },
-                    "gatewayPublicIPAddressName": {
-                        "value": "[parameters('gatewayPublicIPAddressName')]"
-                    },
                     "linuxImageOfferSKU": {
                         "value": "[parameters('linuxImageOfferSKU')]"
                     },
@@ -401,6 +392,15 @@
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    },
+                    "adminVMName": {
+                        "value": "[parameters('adminVMName')]"
+                    },
                     "appGatewaySSLCertificateData": {
                         "reference": {
                             "keyVault": {
@@ -417,6 +417,9 @@
                             "secretName": "[parameters('keyVaultSSLCertPasswordSecretName')]"
                         }
                     },
+                     "dnsNameforApplicationGateway": {
+                        "value": "[parameters('dnsNameforApplicationGateway')]"
+                    },
                     "gatewayPublicIPAddressName": {
                         "value": "[parameters('gatewayPublicIPAddressName')]"
                     },
@@ -431,6 +434,12 @@
                     },
                     "wlsDomainName": {
                         "value": "[parameters('wlsDomainName')]"
+                    },
+                    "wlsPassword": {
+                        "value": "[parameters('wlsPassword')]"
+                    },
+                    "wlsUserName": {
+                        "value": "[parameters('wlsUserName')]"
                     }
                 }
             },
