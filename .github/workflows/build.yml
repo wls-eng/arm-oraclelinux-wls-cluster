@@ -153,6 +153,7 @@ jobs:
       fail-fast: false
       matrix:
         images: [owls-122130-8u131-ol73,owls-122130-8u131-ol74, owls-122140-8u251-ol76,owls-141100-8u251-ol76,owls-141100-11_07-ol76]
+        version: [1.1.6, 1.1.1, 1.1.1, 1.1.1, 1.1.1]
     steps:
       - name: Checkout arm-oraclelinux-wls-cluster
         uses: actions/checkout@v2
@@ -196,11 +197,12 @@ jobs:
            s/#numinstances#/$numberOfInstances/g; \
            s/#adminvmname#/$adminVMName/g; \
            s/#linuxImageOfferSKU#/${{ matrix.images }}/g; \
+           s/#linuxImageVersion#/${{ matrix.version }}/g; \
            s/#testbranchName#/$testbranchName/g; \
            s/#gitUserName#/$userName/g" \
-            arm-oraclelinux-wls-cluster/test/data/parameters-test.json  
+            arm-oraclelinux-wls-cluster/test/data/parameters-test.json
           sed -i "s/#adminPasswordOrKey#/$wlsPassword/g" \
-          arm-oraclelinux-wls-cluster/test/scripts/verify-wls-path.sh          
+          arm-oraclelinux-wls-cluster/test/scripts/verify-wls-path.sh
           sed -i "s/#adminVMName#/$adminVMName/g; \
           s/#adminPasswordOrKey#/$wlsPassword/g; \
           s/#managedServers#/$managedServers/g; \
