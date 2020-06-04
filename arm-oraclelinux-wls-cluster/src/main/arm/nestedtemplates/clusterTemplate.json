@@ -59,27 +59,6 @@
                 "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
             }
         },
-        "dnsNameforApplicationGateway": {
-            "defaultValue": "wlsgw",
-            "type": "string",
-            "metadata": {
-                "description": "DNS for ApplicationGateway"
-            }
-        },
-        "enableAppGateway": {
-            "type": "bool",
-            "defaultValue": false,
-            "metadata": {
-                "description": "If true, deploy the necessary resoucres required for the App Gateway"
-            }
-        },
-        "gatewayPublicIPAddressName": {
-            "defaultValue": "gwip",
-            "type": "string",
-            "metadata": {
-                "description": "Public IP Name for the Application Gateway"
-            }
-        },
         "guidValue": {
             "type": "string",
             "defaultValue": "[newGuid()]"
@@ -201,7 +180,6 @@
         "const_wlsHome": "/u01/app/wls/install/oracle/middleware/oracle_home",
         "name_appGatewaySubnet": "appGatewaySubnet",
         "name_availabilitySet": "WLSCluster-AvailabilitySet",
-        "name_dnsNameforApplicationGateway": "[concat(parameters('dnsNameforApplicationGateway'), take(replace(parameters('guidValue'),'-',''),6))]",
         "name_networkSecurityGroup": "[concat(parameters('dnsLabelPrefix'), '-nsg')]",
         "name_nic": "_NIC",
         "name_publicIPAddress": "_PublicIP",
@@ -266,7 +244,10 @@
             "kind": "Storage",
             "properties": {
                 "supportsHttpsTrafficOnly": false
-            }
+			},
+			"dependsOn": [
+				"[variables('name_networkSecurityGroup')]"
+			]
         },
         {
             "type": "Microsoft.Storage/storageAccounts/fileServices",
@@ -291,25 +272,6 @@
             "properties": {
                 "shareQuota": 5
             }
-        },
-        {
-            "type": "Microsoft.Network/publicIPAddresses",
-            "apiVersion": "2019-11-01",
-            "name": "[parameters('gatewayPublicIPAddressName')]",
-            "condition": "[parameters('enableAppGateway')]",
-            "sku": {
-                "name": "Standard"
-            },
-            "location": "[parameters('location')]",
-            "properties": {
-                "publicIPAllocationMethod": "Static",
-                "dnsSettings": {
-                    "domainNameLabel": "[concat(variables('name_dnsNameforApplicationGateway'),'-',toLower(resourceGroup().name),'-',toLower(parameters('wlsDomainName')))]"
-                }
-            },
-            "dependsOn": [
-                "[variables('name_storageAccount')]"
-            ]
         },
         {
             "type": "Microsoft.Network/publicIPAddresses",
@@ -507,7 +469,7 @@
                     "fileUris": [
                         "[uri(parameters('_artifactsLocationClusterTemplate'), concat('../scripts/', variables('name_scriptFile'), parameters('_artifactsLocationSasToken')))]"
                     ],
-                    "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ',parameters('wlsDomainName'),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',if(equals(copyIndex(),0),'admin',concat(parameters('managedServerPrefix'), copyIndex())),' ',parameters('adminVMName'),' ',variables('const_wlsHome'),' ',variables('name_storageAccount'),' ',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('name_storageAccount')), '2019-04-01').keys[0].value,' ',variables('const_mountPointPath'),' ',if(parameters('enableAppGateway'), reference(parameters('gatewayPublicIPAddressName'), '2019-11-01').dnsSettings.fqdn, ''))]"
+                    "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ',parameters('wlsDomainName'),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',if(equals(copyIndex(),0),'admin',concat(parameters('managedServerPrefix'), copyIndex())),' ',parameters('adminVMName'),' ',variables('const_wlsHome'),' ',variables('name_storageAccount'),' ',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('name_storageAccount')), '2019-04-01').keys[0].value,' ',variables('const_mountPointPath'),' ')]"
                 }
             }
         },
