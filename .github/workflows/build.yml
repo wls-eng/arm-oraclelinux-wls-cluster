@@ -1,5 +1,8 @@
 name: Build and Test
 on:
+  push:
+    branches:
+      - develop
   pull_request:
     branches:
       - develop
@@ -153,7 +156,6 @@ jobs:
       fail-fast: false
       matrix:
         images: [owls-122130-8u131-ol73,owls-122130-8u131-ol74, owls-122140-8u251-ol76,owls-141100-8u251-ol76,owls-141100-11_07-ol76]
-        version: [1.1.6, 1.1.1, 1.1.1, 1.1.1, 1.1.1]
     steps:
       - name: Checkout arm-oraclelinux-wls-cluster
         uses: actions/checkout@v2
@@ -188,27 +190,23 @@ jobs:
         id: prepare-deployed-parameters-and-test-script
         run: |
           echo $managedServerPrefix $numberOfInstances $adminVMName
-          sed -i "s/#location#/$location/g; \
-           s/#adminPasswordOrKey#/$wlsPassword/g; \
-           s/#wlsdomainname#/$wlsDomainName/g; \
-           s/#wlsusername#/$wlsUserName/g; \
-           s/#wlspassword#/$wlsPassword/g; \
-           s/#managedserverprefix#/$managedServerPrefix/g; \
-           s/#numinstances#/$numberOfInstances/g; \
-           s/#adminvmname#/$adminVMName/g; \
-           s/#linuxImageOfferSKU#/${{ matrix.images }}/g; \
-           s/#linuxImageVersion#/${{ matrix.version }}/g; \
-           s/#testbranchName#/$testbranchName/g; \
-           s/#gitUserName#/$userName/g" \
-            arm-oraclelinux-wls-cluster/test/data/parameters-test.json
+          echo "Generate deplyment parameters..."
+          bash arm-oraclelinux-wls-cluster/test/scripts/gen-parameters-deploy.sh \
+          arm-oraclelinux-wls-cluster/test/data/parameters-test.json \
+          $location $wlsPassword $wlsDomainName $wlsUserName $wlsPassword \
+          $managedServerPrefix $numberOfInstances $adminVMName ${{ matrix.images }} \
+          $userName $testbranchName
+
           sed -i "s/#adminPasswordOrKey#/$wlsPassword/g" \
           arm-oraclelinux-wls-cluster/test/scripts/verify-wls-path.sh
+
           sed -i "s/#adminVMName#/$adminVMName/g; \
           s/#adminPasswordOrKey#/$wlsPassword/g; \
           s/#managedServers#/$managedServers/g; \
           s/#wlsUserName#/$wlsUserName/g; \
           s/#wlspassword#/$wlsPassword/g" \
           arm-oraclelinux-wls-cluster/test/scripts/verify-wls-access.sh
+
           sed -i "s/#adminVMName#/$adminVMName/g; \
           s/#adminPasswordOrKey#/$wlsPassword/g; \
           s/#managedServers#/$managedServers/g; \
