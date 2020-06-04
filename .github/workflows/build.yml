@@ -192,7 +192,7 @@ jobs:
           echo $managedServerPrefix $numberOfInstances $adminVMName
           echo "Generate deplyment parameters..."
           bash arm-oraclelinux-wls-cluster/test/scripts/gen-parameters-deploy.sh \
-          arm-oraclelinux-wls-cluster/test/data/parameters-test.json \
+          arm-oraclelinux-wls-cluster/test/data \
           $location $wlsPassword $wlsDomainName $wlsUserName $wlsPassword \
           $managedServerPrefix $numberOfInstances $adminVMName ${{ matrix.images }} \
           $userName $testbranchName

@@ -23,11 +23,10 @@ then
 fi
 
 #Clean up parameters.json
-if [[ -f "$parametersPath" ]]; then
-    rm -f ${parametersPath}
-fi
+rm -f -r ${parametersPath}
+mkdir ${parametersPath}
 
-cat <<EOF > ${parametersPath}
+cat <<EOF > ${parametersPath}/parameters-test.json
 {
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
