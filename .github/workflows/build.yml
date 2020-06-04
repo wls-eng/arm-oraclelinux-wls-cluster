@@ -152,7 +152,7 @@ jobs:
       max-parallel: 1
       fail-fast: false
       matrix:
-        images: [owls-122130-8u131-ol74, owls-122140-8u251-ol76]
+        images: [owls-122130-8u131-ol73,owls-122130-8u131-ol74, owls-122140-8u251-ol76,owls-141100-8u251-ol76,owls-141100-11_07-ol76]
     steps:
       - name: Checkout arm-oraclelinux-wls-cluster
         uses: actions/checkout@v2
@@ -320,7 +320,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        images: [owls-122130-8u131-ol74, owls-122140-8u251-ol76]
+        images: [owls-122130-8u131-ol73,owls-122130-8u131-ol74, owls-122140-8u251-ol76,owls-141100-8u251-ol76,owls-141100-11_07-ol76]
     steps:
       - uses: azure/login@v1
         with:
