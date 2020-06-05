@@ -312,6 +312,7 @@ jobs:
 
       - name: Delete Resource Group
         id: delete-resource-group
+        if: always()
         uses: azure/CLI@v1
         with:
           azcliversion: ${{ env.azCliVersion }}
