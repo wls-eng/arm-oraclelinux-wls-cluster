@@ -106,6 +106,13 @@
                 "description": "Number of VMs to deploy, limit 5 since this sample is using a single storage account"
             }
         },
+        "portsToExpose": {
+            "type": "string",
+            "defaultValue": "80,443,7001-9000",
+            "metadata": {
+                "description": "Ports and port ranges to expose"
+            }
+        },
         "skuUrnVersion": {
            "type": "string",
            "defaultValue": "owls-122130-8u131-ol74;Oracle:weblogic-122130-jdk8u131-ol74:owls-122130-8u131-ol7;1.1.1",
@@ -119,13 +126,6 @@
            "metadata": {
               "description": "The Oracle Linux image with Weblogic and Java preinstalled. Semicolon separated string of Sku, URN, and Version"
            }
-        },
-        "portsToExpose": {
-            "type": "string",
-            "defaultValue": "80,443,7001-9000",
-            "metadata": {
-                "description": "Ports and port ranges to expose"
-            }
         },
         "usePreviewImage": {
             "type": "bool",
