@@ -3,9 +3,6 @@ on:
   push:
     branches:
       - develop
-  pull_request:
-    branches:
-      - develop
   schedule:
       - cron:  '0 7 * * *'
   repository_dispatch:
@@ -156,7 +153,7 @@ jobs:
       max-parallel: 1
       fail-fast: false
       matrix:
-        images: [owls-122130-8u131-ol74, owls-122140-8u251-ol76]
+        images: ["owls-122130-8u131-ol73;Oracle:weblogic-122130-jdk8u131-ol73:owls-122130-8u131-ol7;1.1.6", "owls-122130-8u131-ol74;Oracle:weblogic-122130-jdk8u131-ol74:owls-122130-8u131-ol7;1.1.1", "owls-122140-8u251-ol76;Oracle:weblogic-122140-jdk8u251-ol76:owls-122140-8u251-ol7;1.1.1", "owls-141100-8u251-ol76;Oracle:weblogic-141100-jdk8u251-ol76:owls-141100-8u251-ol7;1.1.1", "owls-141100-11_07-ol76;Oracle:weblogic-141100-jdk11_07-ol76:owls-141100-11_07-ol7;1.1.1"]
     steps:
       - name: Checkout arm-oraclelinux-wls-cluster
         uses: actions/checkout@v2
@@ -176,13 +173,19 @@ jobs:
         id: azure-login
         with:
          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Get Image SKU
+        id: image-sku
+        run: |
+          imageUrn="${{ matrix.images }}"
+          sku=${imageUrn%%;*}
+          echo "##[set-env name=sku;]${sku}"
       - name: Create Resource Group
         id: create-resource-group
         uses: azure/CLI@v1
         with:
           azcliversion: ${{ env.azCliVersion }}
           inlineScript: |
-            resourceGroup=${{ env.resourceGroupPrefix }}-${{ matrix.images }}
+            resourceGroup=${{ env.resourceGroupPrefix }}-${sku}
             echo "create resource group" $resourceGroup
             echo "##[set-env name=resourceGroup;]${resourceGroup}"
             az group create --verbose --name $resourceGroup --location ${location}
@@ -199,12 +202,12 @@ jobs:
            s/#managedserverprefix#/$managedServerPrefix/g; \
            s/#numinstances#/$numberOfInstances/g; \
            s/#adminvmname#/$adminVMName/g; \
-           s/#linuxImageOfferSKU#/${{ matrix.images }}/g; \
+           s/#skuUrnVersion#/${{ matrix.images }}/g; \
            s/#testbranchName#/$testbranchName/g; \
            s/#gitUserName#/$userName/g" \
-            arm-oraclelinux-wls-cluster/test/data/parameters-test.json  
+            arm-oraclelinux-wls-cluster/test/data/parameters-test.json
           sed -i "s/#adminPasswordOrKey#/$wlsPassword/g" \
-          arm-oraclelinux-wls-cluster/test/scripts/verify-wls-path.sh          
+          arm-oraclelinux-wls-cluster/test/scripts/verify-wls-path.sh
           sed -i "s/#adminVMName#/$adminVMName/g; \
           s/#adminPasswordOrKey#/$wlsPassword/g; \
           s/#managedServers#/$managedServers/g; \
@@ -317,27 +320,16 @@ jobs:
           echo "Verifying Weblogic managed server lifecycle"
           sshpass -p ${wlsPassword} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt weblogic@${wlsPublicIP} 'bash -s' < arm-oraclelinux-wls-cluster/test/scripts/verify-servers-lifecycle.sh
       
-  cleanupResourceGroup:
-    needs: deploy
-    if: always()
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        images: [owls-122130-8u131-ol74, owls-122140-8u251-ol76]
-    steps:
-      - uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Delete Resource Group
         id: delete-resource-group
+        if: always()
         uses: azure/CLI@v1
         with:
           azcliversion: ${{ env.azCliVersion }}
           inlineScript: |
-            resourceGroup=${{ env.resourceGroupPrefix }}-${{ matrix.images }}
             echo "delete... " $resourceGroup
             az group delete --yes --no-wait --verbose --name $resourceGroup
+
   cleanup:
     needs: deploy
     if: always()
