@@ -242,7 +242,19 @@ jobs:
           s/#wlsUserName#/$wlsUserName/g; \
           s/#wlspassword#/$wlsPassword/g" \
           arm-oraclelinux-wls-cluster/test/scripts/verify-servers-lifecycle.sh
-          
+
+      - name: Accept Image Terms
+        id: accept-terms
+        uses: azure/CLI@v1
+        with:
+          azcliversion: ${{ env.azCliVersion }}
+          inlineScript: |
+            echo "accept terms for " "${{ matrix.images }}"
+            rawUrn="${{ matrix.images }}"
+            publisherAndName=$(echo ${rawUrn} | grep -o ";.*:" | sed "s/;//g")
+            imageVersion=${rawUrn##*;}
+            az vm image terms accept --urn ${publisherAndName}${sku}:${imageVersion}
+
       - name: Deploy WebLogic Server Cluster Domain offer
         id: deploy-wls-cluster
         uses: azure/CLI@v1
