@@ -59,27 +59,6 @@
                 "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
             }
         },
-        "dnsNameforApplicationGateway": {
-            "defaultValue": "wlsgw",
-            "type": "string",
-            "metadata": {
-                "description": "DNS for ApplicationGateway"
-            }
-        },
-        "enableAppGateway": {
-            "type": "bool",
-            "defaultValue": false,
-            "metadata": {
-                "description": "If true, deploy the necessary resoucres required for the App Gateway"
-            }
-        },
-        "gatewayPublicIPAddressName": {
-            "defaultValue": "gwip",
-            "type": "string",
-            "metadata": {
-                "description": "Public IP Name for the Application Gateway"
-            }
-        },
         "guidValue": {
             "type": "string",
             "defaultValue": "[newGuid()]"
@@ -114,18 +93,18 @@
             }
         },
         "skuUrnVersion": {
-           "type": "string",
-           "defaultValue": "owls-122130-8u131-ol74;Oracle:weblogic-122130-jdk8u131-ol74:owls-122130-8u131-ol7;1.1.1",
-           "allowedValues": [
-              "owls-122130-8u131-ol73;Oracle:weblogic-122130-jdk8u131-ol73:owls-122130-8u131-ol7;1.1.6",
-              "owls-122130-8u131-ol74;Oracle:weblogic-122130-jdk8u131-ol74:owls-122130-8u131-ol7;1.1.1",
-              "owls-122140-8u251-ol76;Oracle:weblogic-122140-jdk8u251-ol76:owls-122140-8u251-ol7;1.1.1",
-              "owls-141100-8u251-ol76;Oracle:weblogic-141100-jdk8u251-ol76:owls-141100-8u251-ol7;1.1.1",
-              "owls-141100-11_07-ol76;Oracle:weblogic-141100-jdk11_07-ol76:owls-141100-11_07-ol7;1.1.1"
-           ],
-           "metadata": {
-              "description": "The Oracle Linux image with Weblogic and Java preinstalled. Semicolon separated string of Sku, URN, and Version"
-           }
+            "type": "string",
+            "defaultValue": "owls-122130-8u131-ol74;Oracle:weblogic-122130-jdk8u131-ol74:owls-122130-8u131-ol7;1.1.1",
+            "allowedValues": [
+                "owls-122130-8u131-ol73;Oracle:weblogic-122130-jdk8u131-ol73:owls-122130-8u131-ol7;1.1.6",
+                "owls-122130-8u131-ol74;Oracle:weblogic-122130-jdk8u131-ol74:owls-122130-8u131-ol7;1.1.1",
+                "owls-122140-8u251-ol76;Oracle:weblogic-122140-jdk8u251-ol76:owls-122140-8u251-ol7;1.1.1",
+                "owls-141100-8u251-ol76;Oracle:weblogic-141100-jdk8u251-ol76:owls-141100-8u251-ol7;1.1.1",
+                "owls-141100-11_07-ol76;Oracle:weblogic-141100-jdk11_07-ol76:owls-141100-11_07-ol7;1.1.1"
+            ],
+            "metadata": {
+                "description": "The Oracle Linux image with Weblogic and Java preinstalled. Semicolon separated string of Sku, URN, and Version"
+            }
         },
         "usePreviewImage": {
             "type": "bool",
@@ -194,7 +173,6 @@
         "const_wlsHome": "/u01/app/wls/install/oracle/middleware/oracle_home",
         "name_appGatewaySubnet": "appGatewaySubnet",
         "name_availabilitySet": "WLSCluster-AvailabilitySet",
-        "name_dnsNameforApplicationGateway": "[concat(parameters('dnsNameforApplicationGateway'), take(replace(parameters('guidValue'),'-',''),6))]",
         "name_linuxImageOfferSKU": "[first(split(parameters('skuUrnVersion'), ';'))]",
         "name_linuxImageVersion": "[last(split(parameters('skuUrnVersion'),';'))]",
         "name_networkSecurityGroup": "[concat(parameters('dnsLabelPrefix'), '-nsg')]",
@@ -261,7 +239,10 @@
             "kind": "Storage",
             "properties": {
                 "supportsHttpsTrafficOnly": false
-            }
+            },
+            "dependsOn": [
+                "[variables('name_networkSecurityGroup')]"
+            ]
         },
         {
             "type": "Microsoft.Storage/storageAccounts/fileServices",
@@ -286,25 +267,6 @@
             "properties": {
                 "shareQuota": 5
             }
-        },
-        {
-            "type": "Microsoft.Network/publicIPAddresses",
-            "apiVersion": "2019-11-01",
-            "name": "[parameters('gatewayPublicIPAddressName')]",
-            "condition": "[parameters('enableAppGateway')]",
-            "sku": {
-                "name": "Standard"
-            },
-            "location": "[parameters('location')]",
-            "properties": {
-                "publicIPAllocationMethod": "Static",
-                "dnsSettings": {
-                    "domainNameLabel": "[concat(variables('name_dnsNameforApplicationGateway'),'-',toLower(resourceGroup().name),'-',toLower(parameters('wlsDomainName')))]"
-                }
-            },
-            "dependsOn": [
-                "[variables('name_storageAccount')]"
-            ]
         },
         {
             "type": "Microsoft.Network/publicIPAddresses",
@@ -502,7 +464,7 @@
                     "fileUris": [
                         "[uri(parameters('_artifactsLocationClusterTemplate'), concat('../scripts/', variables('name_scriptFile'), parameters('_artifactsLocationSasToken')))]"
                     ],
-                    "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ',parameters('wlsDomainName'),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',if(equals(copyIndex(),0),'admin',concat(parameters('managedServerPrefix'), copyIndex())),' ',parameters('adminVMName'),' ',variables('const_wlsHome'),' ',variables('name_storageAccount'),' ',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('name_storageAccount')), '2019-04-01').keys[0].value,' ',variables('const_mountPointPath'),' ',if(parameters('enableAppGateway'), reference(parameters('gatewayPublicIPAddressName'), '2019-11-01').dnsSettings.fqdn, ''))]"
+                    "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ',parameters('wlsDomainName'),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',if(equals(copyIndex(),0),'admin',concat(parameters('managedServerPrefix'), copyIndex())),' ',parameters('adminVMName'),' ',variables('const_wlsHome'),' ',variables('name_storageAccount'),' ',listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('name_storageAccount')), '2019-04-01').keys[0].value,' ',variables('const_mountPointPath'),' ')]"
                 }
             }
         },
@@ -527,6 +489,7 @@
             "apiVersion": "2019-10-01",
             "name": "${from.owls-122130-8u131-ol74}",
             "type": "Microsoft.Resources/deployments",
+
             "condition": "[if(contains(variables('name_linuxImageOfferSKU'), 'owls-122130-8u131-ol74'), bool('true'), bool('false'))]",
             "dependsOn": [
                 "virtualMachineExtensionLoop"
@@ -545,6 +508,7 @@
             "apiVersion": "2019-10-01",
             "name": "${from.owls-122130-8u131-ol73}",
             "type": "Microsoft.Resources/deployments",
+
             "condition": "[if(contains(variables('name_linuxImageOfferSKU'), 'from.owls-122130-8u131-ol73'), bool('true'), bool('false'))]",
             "dependsOn": [
                 "virtualMachineExtensionLoop"
@@ -563,6 +527,7 @@
             "apiVersion": "2019-10-01",
             "name": "${from.owls-122140-8u251-ol76}",
             "type": "Microsoft.Resources/deployments",
+
             "condition": "[if(contains(variables('name_linuxImageOfferSKU'), 'from.owls-122140-8u251-ol76'), bool('true'), bool('false'))]",
             "dependsOn": [
                 "virtualMachineExtensionLoop"
@@ -581,6 +546,7 @@
             "apiVersion": "2019-10-01",
             "name": "${from.owls-141100-8u251-ol76}",
             "type": "Microsoft.Resources/deployments",
+
             "condition": "[if(contains(variables('name_linuxImageOfferSKU'), 'owls-141100-8u251-ol76'), bool('true'), bool('false'))]",
             "dependsOn": [
                 "virtualMachineExtensionLoop"
@@ -599,6 +565,7 @@
             "apiVersion": "2019-10-01",
             "name": "${from.owls-141100-11_07-ol76}",
             "type": "Microsoft.Resources/deployments",
+
             "condition": "[if(contains(variables('name_linuxImageOfferSKU'), 'owls-141100-11_07-ol76'), bool('true'), bool('false'))]",
             "dependsOn": [
                 "virtualMachineExtensionLoop"

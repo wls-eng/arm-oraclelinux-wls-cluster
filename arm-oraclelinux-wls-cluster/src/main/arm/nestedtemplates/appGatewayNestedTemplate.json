@@ -2,11 +2,45 @@
 	"$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
 	"contentVersion": "1.0.0.0",
 	"parameters": {
+		"_artifactsLocation": {
+			"type": "string",
+			"metadata": {
+				"description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
+			}
+		},
+		"_artifactsLocationAGWTemplate": {
+			"defaultValue": "[if(contains(parameters('_artifactsLocation'), 'githubusercontent'), parameters('_artifactsLocation'), deployment().properties.templateLink.uri)]",
+			"type": "string",
+			"metadata": {
+				"description": "If we are deploying from the command line, use the passed in _artifactsLocation, otherwise use the default."
+			}
+		},
+		"_artifactsLocationSasToken": {
+			"defaultValue": "",
+			"type": "securestring",
+			"metadata": {
+				"description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated. Use the defaultValue if the staging location is not secured."
+			}
+		},
+		"adminVMName": {
+			"defaultValue": "adminVM",
+			"type": "string",
+			"metadata": {
+				"description": "Admin Server hosting VM name."
+			}
+		},
 		"appGatewaySSLCertificateData": {
 			"type": "string"
 		},
 		"appGatewaySSLCertificatePassword": {
 			"type": "string"
+		},
+		"dnsNameforApplicationGateway": {
+			"defaultValue": "wlsgw",
+			"type": "string",
+			"metadata": {
+				"description": "DNS for ApplicationGateway"
+			}
 		},
 		"gatewayPublicIPAddressName": {
 			"defaultValue": "gwip",
@@ -14,6 +48,10 @@
 			"metadata": {
 				"description": "Public IP Name for the Application Gateway"
 			}
+		},
+		"guidValue": {
+			"type": "string",
+			"defaultValue": "[newGuid()]"
 		},
 		"location": {
 			"type": "string",
@@ -38,18 +76,35 @@
 			}
 		},
 		"wlsDomainName": {
-                        "defaultValue": "wlsd",
+			"defaultValue": "wlsd",
 			"type": "string",
 			"metadata": {
 				"description": "Provide Weblogic domain name"
 			}
+		},
+		"wlsPassword": {
+			"type": "securestring",
+			"metadata": {
+				"description": "Password for your Weblogic domain name"
+			}
+		},
+		"wlsUserName": {
+			"defaultValue": "weblogic",
+			"type": "string",
+			"metadata": {
+				"description": "Username for your Weblogic domain name"
+			}
 		}
 	},
 	"variables": {
+		"const_adminServerName": "admin",
 		"const_appGatewayFrontEndHTTPPort": 80,
 		"const_appGatewayFrontEndHTTPSPort": 443,
 		"const_backendPort": 8001,
 		"const_managedVMPrefix": "[concat(parameters('managedServerPrefix'),'VM')]",
+		"const_wlsAdminPort": "7001",
+		"const_wlsHome": "/u01/app/wls/install/oracle/middleware/oracle_home",
+		"name_dnsNameforApplicationGateway": "[concat(parameters('dnsNameforApplicationGateway'), take(replace(parameters('guidValue'),'-',''),6))]",
 		"name_appGateway": "myAppGateway",
 		"name_appGatewayCertificate": "appGwSslCertificate",
 		"name_appGatewaySubnet": "appGatewaySubnet",
@@ -61,6 +116,7 @@
 		"name_httpsListener": "HTTPSListener",
 		"name_httpsPort": "https_port",
 		"name_probe": "HTTPhealthProbe",
+		"name_scriptAGWConfiguration": "setupApplicationGateway.sh",
 		"name_virtualNetwork": "[concat(parameters('wlsDomainName'),'_VNET')]",
 		"ref_appGatewayPublicIP": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('gatewayPublicIPAddressName'))]",
 		"ref_appGatewaySubnet": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('name_virtualNetwork'), variables('name_appGatewaySubnet'))]",
@@ -90,10 +146,28 @@
 			}
 		},
 		{
+			"type": "Microsoft.Network/publicIPAddresses",
+			"apiVersion": "2019-11-01",
+			"name": "[parameters('gatewayPublicIPAddressName')]",
+			"sku": {
+				"name": "Standard"
+			},
+			"location": "[parameters('location')]",
+			"properties": {
+				"publicIPAllocationMethod": "Static",
+				"dnsSettings": {
+					"domainNameLabel": "[concat(variables('name_dnsNameforApplicationGateway'),'-',toLower(resourceGroup().name),'-',toLower(parameters('wlsDomainName')))]"
+				}
+			}
+		},
+		{
 			"type": "Microsoft.Network/applicationGateways",
 			"apiVersion": "2019-06-01",
 			"name": "[variables('name_appGateway')]",
 			"location": "[parameters('location')]",
+			"dependsOn": [
+				"[resourceId('Microsoft.Network/publicIPAddresses', parameters('gatewayPublicIPAddressName'))]"
+			],
 			"properties": {
 				"sku": {
 					"name": "WAF_v2",
@@ -141,8 +215,8 @@
 					{
 						"name": "appGwSslCertificate",
 						"properties": {
-						    "data": "[parameters('appGatewaySSLCertificateData')]",
-                                                    "password": "[parameters('appGatewaySSLCertificatePassword')]"
+							"data": "[parameters('appGatewaySSLCertificateData')]",
+							"password": "[parameters('appGatewaySSLCertificatePassword')]"
 						}
 					}
 				],
@@ -277,10 +351,33 @@
 			}
 		},
 		{
+			"type": "Microsoft.Compute/virtualMachines/extensions",
+			"name": "[concat(parameters('adminVMName'),'/newuserscript')]",
+			"apiVersion": "2019-07-01",
+			"location": "[parameters('location')]",
+			"dependsOn": [
+				"[resourceId('Microsoft.Network/applicationGateways', variables('name_appGateway'))]"
+			],
+			"properties": {
+				"publisher": "Microsoft.Azure.Extensions",
+				"type": "CustomScript",
+				"typeHandlerVersion": "2.0",
+				"autoUpgradeMinorVersion": true,
+				"settings": {
+					"fileUris": [
+						"[uri(parameters('_artifactsLocationAGWTemplate'), concat('../scripts/', variables('name_scriptAGWConfiguration'), parameters('_artifactsLocationSasToken')))]"
+					],
+					"commandToExecute": "[concat('sh',' ',variables('name_scriptAGWConfiguration'),' ', variables('const_adminServerName'),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',parameters('adminVMName'),' ',variables('const_wlsAdminPort'),' ', reference(variables('ref_appGatewayPublicIP'), '2019-11-01').dnsSettings.fqdn, ' ',variables('const_wlsHome'))]"
+				}
+			}
+		},
+		{
 			"apiVersion": "2019-10-01",
 			"name": "${cluster.appgateway.end}",
 			"type": "Microsoft.Resources/deployments",
-			"dependsOn": [ "[resourceId('Microsoft.Network/applicationGateways', variables('name_appGateway'))]" ],
+			"dependsOn": [
+                "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('adminVMName'), 'newuserscript')]"
+            ],
 			"properties": {
 				"mode": "Incremental",
 				"template": {
@@ -290,7 +387,7 @@
 					]
 				}
 			}
-		}		
+		}
 	],
 	"outputs": {
 		"appGatewayURL": {

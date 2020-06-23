@@ -9,7 +9,7 @@ function echo_stderr ()
 #Function to display usage message
 function usage()
 {
-  echo_stderr "./setupClusterDomain.sh <wlsDomainName> <wlsUserName> <wlsPassword> <wlsServerName> <wlsAdminHost> <storageAccountName> <storageAccountKey> <mountpointPath> <AppGWHostName>"
+  echo_stderr "./setupClusterDomain.sh <wlsDomainName> <wlsUserName> <wlsPassword> <wlsServerName> <wlsAdminHost> <storageAccountName> <storageAccountKey> <mountpointPath>"
 }
 
 function installUtilities()
@@ -101,9 +101,7 @@ function cleanup()
 function create_admin_model()
 {
     echo "Creating admin domain model"
-   if [ -z "$AppGWHostName" ];
-   then
-      cat <<EOF >$DOMAIN_PATH/admin-domain.yaml
+    cat <<EOF >$DOMAIN_PATH/admin-domain.yaml
 domainInfo:
    AdminUserName: "$wlsUserName"
    AdminPassword: "$wlsPassword"
@@ -131,39 +129,6 @@ topology:
        NodeManagerUsername: "$wlsUserName"
        NodeManagerPasswordEncrypted: "$wlsPassword"
 EOF
-   else
-      cat <<EOF >$DOMAIN_PATH/admin-domain.yaml
-domainInfo:
-   AdminUserName: "$wlsUserName"
-   AdminPassword: "$wlsPassword"
-   ServerStartMode: prod
-topology:
-   Name: "$wlsDomainName"
-   AdminServerName: admin
-   Machine:
-     '$nmHost':
-         NodeManager:
-             ListenAddress: "$nmHost"
-             ListenPort: $nmPort
-             NMType : ssl
-   Cluster:
-        '$wlsClusterName':
-             MigrationBasis: 'consensus'
-             FrontendHost: '$AppGWHostName'
-             FrontendHTTPPort:  $AppGWHttpPort
-             FrontendHTTPSPort: $AppGWHttpsPort
-   Server:
-        '$wlsServerName':
-            ListenPort: $wlsAdminPort
-            RestartDelaySeconds: 10
-            SSL:
-               ListenPort: $wlsSSLAdminPort
-               Enabled: true
-   SecurityConfiguration:
-       NodeManagerUsername: "$wlsUserName"
-       NodeManagerPasswordEncrypted: "$wlsPassword"
-EOF
-   fi
 }
 
 #Creates weblogic deployment model for cluster domain managed server
@@ -187,14 +152,7 @@ topology:
         '$wlsClusterName':
              MigrationBasis: 'consensus'
 EOF
-   if [ -n "$AppGWHostName" ];
-   then
-	      cat <<EOF >>$DOMAIN_PATH/managed-domain.yaml
-             FrontendHost: '$AppGWHostName'
-             FrontendHTTPPort:  $AppGWHttpPort
-             FrontendHTTPSPort: $AppGWHttpsPort
-EOF
-   fi
+   
    cat <<EOF >>$DOMAIN_PATH/managed-domain.yaml
    Server:
         '$wlsServerName' :
@@ -203,24 +161,7 @@ EOF
            Cluster: "$wlsClusterName"
            Machine: "$nmHost"
 EOF
-    if [ -n "$AppGWHostName" ];
-    then
-        cat <<EOF >>$DOMAIN_PATH/managed-domain.yaml
-           NetworkAccessPoint:
-               T3Channel:
-                   Protocol: "t3"
-                   ListenAddress: None
-                   ListenPort: $channelPort
-                   PublicAddress: "$AppGWHostName"
-                   PublicPort: $channelPort
-               HTTPChannel:
-                   Protocol: "http"
-                   ListenAddress: None
-                   ListenPort: $channelPort
-                   PublicAddress: "$AppGWHostName"
-                   PublicPort: $channelPort
-EOF
-    fi
+    
     cat <<EOF >>$DOMAIN_PATH/managed-domain.yaml
    SecurityConfiguration:
        NodeManagerUsername: "$wlsUserName"
@@ -280,46 +221,6 @@ nmGenBootStartupProps('$wlsServerName')
 disconnect()
 EOF
 }
-
-#This function to add machine for a given managed server
-#This function must only be called if AppGWHostName is non-empty
-function createChannelPortsOnManagedServer()
-{
-    echo "Creating T3 channel Port on managed server $wlsServerName"
-    cat <<EOF >$DOMAIN_PATH/create-t3-channel.py
-
-connect('$wlsUserName','$wlsPassword','t3://$wlsAdminURL')
-
-edit("$wlsServerName")
-startEdit()
-cd('/Servers/$wlsServerName')
-create('T3Channel','NetworkAccessPoint')
-cd('/Servers/$wlsServerName/NetworkAccessPoints/T3Channel')
-set('Protocol','t3')
-set('ListenAddress','')
-set('ListenPort',$channelPort)
-set('PublicAddress', '$AppGWHostName')
-set('PublicPort', $channelPort)
-set('Enabled','true')
-
-cd('/Servers/$wlsServerName')
-create('HTTPChannel','NetworkAccessPoint')
-cd('/Servers/$wlsServerName/NetworkAccessPoints/HTTPChannel')
-set('Protocol','http')
-set('ListenAddress','')
-set('ListenPort',$channelPort)
-set('PublicAddress', '$AppGWHostName')
-set('PublicPort', $channelPort)
-set('Enabled','true')
-
-save()
-resolve()
-activate()
-destroyEditSession("$wlsServerName")
-disconnect()
-EOF
-}
-
 
 #Function to create Admin Only Domain
 function create_adminSetup()
@@ -486,10 +387,7 @@ function create_managedSetup(){
     create_managed_model
     create_machine_model
     create_ms_server_model
-    if [ -n "$AppGWHostName" ];
-    then
-        createChannelPortsOnManagedServer
-    fi
+    
     echo "Completed managed server model files"
     sudo chown -R $username:$groupname $DOMAIN_PATH
     runuser -l oracle -c ". $oracleHome/oracle_common/common/bin/setWlstEnv.sh; $DOMAIN_PATH/weblogic-deploy/bin/createDomain.sh -oracle_home $oracleHome -domain_parent $DOMAIN_PATH  -domain_type WLS -model_file $DOMAIN_PATH/managed-domain.yaml"
@@ -514,17 +412,6 @@ function create_managedSetup(){
          echo "Error : Adding server $wlsServerName failed"
          exit 1
     fi
-
-    if [ -n "$AppGWHostName" ];
-    then
-        echo "Creating T3 Channel on managed server $wlsServerName"
-        runuser -l oracle -c ". $oracleHome/oracle_common/common/bin/setWlstEnv.sh; java $WLST_ARGS weblogic.WLST $DOMAIN_PATH/create-t3-channel.py"
-        if [[ $? != 0 ]]; then
-            echo "Error : Creating T3 Channel on Managed server $wlsServerName failed"
-            exit 1
-        fi
-    fi
-    
 }
 
 function enabledAndStartNodeManagerService()
@@ -671,22 +558,17 @@ export oracleHome=${6}
 export storageAccountName=${7}
 export storageAccountKey=${8}
 export mountpointPath=${9}
-export AppGWHostName=${10}
 
 validateInput
 
 export wlsAdminPort=7001
 export wlsSSLAdminPort=7002
 export wlsManagedPort=8001
-export channelPort=8501
 export wlsAdminURL="$wlsAdminHost:$wlsAdminPort"
 export wlsClusterName="cluster1"
 export nmHost=`hostname`
 export nmPort=5556
 export WEBLOGIC_DEPLOY_TOOL=https://github.com/oracle/weblogic-deploy-tooling/releases/download/weblogic-deploy-tooling-1.8.1/weblogic-deploy.zip
-
-export AppGWHttpPort=80
-export AppGWHttpsPort=443
 
 export SCRIPT_PWD=`pwd`
 export username="oracle"
