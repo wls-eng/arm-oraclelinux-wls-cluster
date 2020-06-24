@@ -8,26 +8,37 @@ on:
   repository_dispatch:
   
 env:
-  adminVMName: adminServerVM
   adminPassword: ${{ secrets.WLS_PASSWORD }}
+  adminVMName: adminServerVM
+  adminVMName: adminServerVM
   azCliVersion: 2.6.0
   dbName: wlsdb${{ github.run_id }}${{ github.run_number }}
   gitToken: ${{ secrets.GIT_TOKEN }} 
+  git_token: ${{ secrets.GIT_TOKEN }} 
   location: eastus
   managedServerPrefix : managedServer
+  managedServerPrefix : managedServer
+  managedServerVM: "managedServerVM1"
   managedServers: "managedServer1"
-  numberOfInstances : 2
+  managedServers: "managedServer1"
   nsg: wls-nsg
+  numberOfInstances : 2
+  numberOfInstances : 2
   refArmttk: e2fbdcb93a4b2004c9ea953956b85248e0ef8c1c
   refJavaee: 6807e2ae3e8a8492edf211b9f4f0b7ed3a2a29e7
-  resourceGroupPrefix: wls-${{ github.run_id }}-${{ github.run_number }}
+  ref_armttk: e2fbdcb93a4b2004c9ea953956b85248e0ef8c1c 
+  ref_javaee: 6807e2ae3e8a8492edf211b9f4f0b7ed3a2a29e7
   resourceGroupForDB: db-${{ github.run_id }}-${{ github.run_number }}
+  resourceGroupPrefix: wls-${{ github.run_id }}-${{ github.run_number }}
+  testbranchName: cicd-${{ github.run_id }}-${{ github.run_number }}
   testbranchName: cicd-${{ github.run_id }}-${{ github.run_number }}
   userEmail: ${{ secrets.USER_EMAIL }}
   userName: ${{ secrets.USER_NAME }}
-  wlsPassword: ${{ secrets.WLS_PASSWORD }}
   wlsDomainName : clusterDomain
+  wlsPassword: ${{ secrets.WLS_PASSWORD }}
   wlsUserName : weblogic
+  wls_admin_services : "rngd wls_admin wls_nodemanager"
+  wls_managedServer_services : "rngd wls_nodemanager"
 
 jobs:
   preflight:
@@ -334,6 +345,20 @@ jobs:
             echo "VM Public IP ${publicIp}"
             echo "##[set-env name=wlsPublicIP;]${publicIP}"  
 
+      - name: Query public IP of managedServerVM1
+        id: query-wls-managed-ip
+        uses: azure/CLI@v1
+        with:
+          azcliversion: ${{ env.azCliVersion }}
+          inlineScript: |
+            echo "query public ip"
+            publicIP=$(az vm show \
+              --resource-group $resourceGroup \
+              --name $managedServerVM -d \
+              --query publicIps -o tsv)
+            echo "VM Public IP ${publicIp}"
+            echo "##[set-env name=ms1PublicIP;]${publicIP}"  
+
       - name: Verify WebLogic Server Installation
         id: verify-wls
         run: |
@@ -341,6 +366,18 @@ jobs:
           echo "Verifying Weblgic server installation"
           timeout 6m sh -c 'until nc -zv $0 $1; do echo "nc rc: $?"; sleep 5; done' ${wlsPublicIP} 22
           sshpass -p ${wlsPassword} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt weblogic@${wlsPublicIP} 'bash -s' < arm-oraclelinux-wls-cluster/test/scripts/verify-wls-path.sh
+
+      - name: Verify wls admin services
+        id: veriy-admin-service
+        run: |
+          echo "Verifying WebLogic services at admin server"
+          sshpass -p ${wlsPassword} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt weblogic@${wlsPublicIP} 'bash -s' < arm-oraclelinux-wls-cluster/test/scripts/verify-services.sh $wls_admin_services          
+
+      - name: Verify wls managed server services
+        id: veriy-msservice
+        run: |
+          echo "Verifying WebLogic services at managed server"
+          sshpass -p ${wlsPassword} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt weblogic@${ms1PublicIP} 'bash -s' < arm-oraclelinux-wls-cluster/test/scripts/verify-services.sh $wls_managedServer_services
 
       - name: Verify WebLogic Server Access
         id: verify-wls-access
