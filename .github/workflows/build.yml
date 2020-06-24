@@ -1,32 +1,42 @@
 name: Build and Test
-on: 
+on:
   push:
     branches:
       - develop
   schedule:
       - cron:  '0 7 * * *'
   repository_dispatch:
-
+  
 env:
-  azCliVersion: 2.6.0
-  location: eastus
-  nsg: wls-nsg
-  resourceGroupPrefix: wls-${{ github.run_id }}-${{ github.run_number }}
-  userEmail: ${{ secrets.USER_EMAIL }}
-  userName: ${{ secrets.USER_NAME }}
-  wlsPassword: ${{ secrets.WLS_PASSWORD }}
   adminPassword: ${{ secrets.WLS_PASSWORD }}
-  wlsDomainName : clusterDomain
-  wlsUserName : weblogic
+  adminVMName: adminServerVM
+  adminVMName: adminServerVM
+  azCliVersion: 2.6.0
+  dbName: wlsdb${{ github.run_id }}${{ github.run_number }}
+  gitToken: ${{ secrets.GIT_TOKEN }} 
+  git_token: ${{ secrets.GIT_TOKEN }} 
+  location: eastus
+  managedServerPrefix : managedServer
   managedServerPrefix : managedServer
   managedServerVM: "managedServerVM1"
-  numberOfInstances : 2
-  adminVMName: adminServerVM
   managedServers: "managedServer1"
-  testbranchName: cicd-${{ github.run_id }}-${{ github.run_number }}
-  ref_javaee: 6807e2ae3e8a8492edf211b9f4f0b7ed3a2a29e7
+  managedServers: "managedServer1"
+  nsg: wls-nsg
+  numberOfInstances : 2
+  numberOfInstances : 2
+  refArmttk: e2fbdcb93a4b2004c9ea953956b85248e0ef8c1c
+  refJavaee: 6807e2ae3e8a8492edf211b9f4f0b7ed3a2a29e7
   ref_armttk: e2fbdcb93a4b2004c9ea953956b85248e0ef8c1c 
-  git_token: ${{ secrets.GIT_TOKEN }} 
+  ref_javaee: 6807e2ae3e8a8492edf211b9f4f0b7ed3a2a29e7
+  resourceGroupForDB: db-${{ github.run_id }}-${{ github.run_number }}
+  resourceGroupPrefix: wls-${{ github.run_id }}-${{ github.run_number }}
+  testbranchName: cicd-${{ github.run_id }}-${{ github.run_number }}
+  testbranchName: cicd-${{ github.run_id }}-${{ github.run_number }}
+  userEmail: ${{ secrets.USER_EMAIL }}
+  userName: ${{ secrets.USER_NAME }}
+  wlsDomainName : clusterDomain
+  wlsPassword: ${{ secrets.WLS_PASSWORD }}
+  wlsUserName : weblogic
   wls_admin_services : "rngd wls_admin wls_nodemanager"
   wls_managedServer_services : "rngd wls_nodemanager"
 
@@ -39,13 +49,13 @@ jobs:
         with:
           repository: Azure/azure-javaee-iaas
           path: azure-javaee-iaas
-          ref: ${{ env.ref_javaee }}
+          ref: ${{ env.refJavaee }}
       - name: Checkout arm-ttk
         uses: actions/checkout@v2
         with:
           repository: Azure/arm-ttk
           path: arm-ttk
-          ref: ${{ env.ref_armttk }}
+          ref: ${{ env.refArmttk }}
       - name: Checkout arm-oraclelinux-wls-cluster
         uses: actions/checkout@v2
         with:
@@ -77,7 +87,7 @@ jobs:
           cp -r -f $current/arm-oraclelinux-wls-cluster/arm-oraclelinux-wls-cluster/target/arm/nestedtemplates/* $current/arm-oraclelinux-wls-cluster-dev/arm-oraclelinux-wls-cluster/src/main/arm/nestedtemplates/
           git status
           git commit -a -m "hard code pids"
-          git push https://$git_token@github.com/$userName/arm-oraclelinux-wls-cluster.git -f
+          git push https://$gitToken@github.com/$userName/arm-oraclelinux-wls-cluster.git -f
       
       - uses: azure/login@v1
         id: azure-login
@@ -89,7 +99,7 @@ jobs:
           bash arm-oraclelinux-wls-cluster/test/scripts/verify-deployments.sh \
             ${{ github.run_id }}${{ github.run_number }} ${location} \
             arm-oraclelinux-wls-cluster/arm-oraclelinux-wls-cluster/target/arm/mainTemplate.json \
-            ${userName} ${testbranchName} arm-oraclelinux-wls-cluster/test/scripts        
+            ${userName} ${testbranchName} arm-oraclelinux-wls-cluster/test/scripts
 
       - name: Get version information from arm-oraclelinux-wls-cluster/pom.xml
         id: version
@@ -148,6 +158,26 @@ jobs:
         with:
           name: ${{steps.addnode_artifact_file.outputs.addnode_artifactName}}
           path: ${{steps.addnode_artifact_path.outputs.addnode_artifactPath}}
+
+      - name: Set Up Azure Postgresql to Test dbTemplate
+        id: setup-postgresql
+        uses: azure/CLI@v1
+        with:
+          azcliversion: ${{ env.azCliVersion }}
+          inlineScript: |
+            echo "create resource group" ${{ env.resourceGroupForDB }}
+            az group create --verbose --name ${{ env.resourceGroupForDB }} --location ${location}
+
+            echo "Deploy DB with name " ${{ env.dbName }}
+            az postgres server create \
+            --resource-group ${{ env.resourceGroupForDB }} \
+            --name ${{ env.dbName }}  \
+            --location ${location} \
+            --admin-user weblogic \
+            --ssl-enforcement Disabled \
+            --public-network-access Enabled \
+            --admin-password ${{ env.wlsPassword }} \
+            --sku-name B_Gen5_1
 
   deploy:
     needs: preflight
@@ -223,8 +253,20 @@ jobs:
           s/#wlsUserName#/$wlsUserName/g; \
           s/#wlspassword#/$wlsPassword/g" \
           arm-oraclelinux-wls-cluster/test/scripts/verify-servers-lifecycle.sh
-          
-      - name: Deploy WebLogic Server  Cluster Domain offer
+
+      - name: Accept Image Terms
+        id: accept-terms
+        uses: azure/CLI@v1
+        with:
+          azcliversion: ${{ env.azCliVersion }}
+          inlineScript: |
+            echo "accept terms for " "${{ matrix.images }}"
+            rawUrn="${{ matrix.images }}"
+            publisherAndName=$(echo ${rawUrn} | grep -o ";.*:" | sed "s/;//g")
+            imageVersion=${rawUrn##*;}
+            az vm image terms accept --urn ${publisherAndName}${sku}:${imageVersion}
+
+      - name: Deploy WebLogic Server Cluster Domain offer
         id: deploy-wls-cluster
         uses: azure/CLI@v1
         with:
@@ -342,13 +384,38 @@ jobs:
         run: |
           echo "Verifying Weblogic Server Access"
           sshpass -p ${wlsPassword} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt weblogic@${wlsPublicIP} 'bash -s' < arm-oraclelinux-wls-cluster/test/scripts/verify-wls-access.sh
-      
+
       - name: Verify WebLogic Managed Server LifeCycle check
         id: verify-server-lifecycle
         run: |
           echo "Verifying Weblogic managed server lifecycle"
           sshpass -p ${wlsPassword} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt weblogic@${wlsPublicIP} 'bash -s' < arm-oraclelinux-wls-cluster/test/scripts/verify-servers-lifecycle.sh
-      
+
+      - name: Deploy DB Template to Connect to Azure Postgresql Database
+        id: enable-postgresql-db
+        uses: azure/CLI@v1
+        with:
+          azcliversion: ${{ env.azCliVersion }}
+          inlineScript: |
+            # Generate parameters for db template deployment
+            bash arm-oraclelinux-wls-cluster/test/scripts/gen-parameters-deploy-db.sh \
+            arm-oraclelinux-wls-cluster/test/scripts/ \
+            ${{ env.adminVMName }} \
+            ${{ env.wlsPassword}} \
+            ${{ env.dbName }} \
+            ${{ env.location }} \
+            ${{ env.wlsUserName }} \
+            ${{ env.wlsPassword }} \
+            ${{ env.userName }} \
+            ${{ env.testbranchName }}
+            echo "Deploy DB Template..."
+            az group deployment create \
+            --verbose \
+            --resource-group ${resourceGroup} \
+            --name db \
+            --parameters @arm-oraclelinux-wls-cluster/test/scripts/parameters-deploy-db.json \
+            --template-file arm-oraclelinux-wls-cluster-$version-arm-assembly/nestedtemplates/dbTemplate.json
+
       - name: Delete Resource Group
         id: delete-resource-group
         if: always()
@@ -371,4 +438,17 @@ jobs:
       - name: Delete testing branch
         run: |
           cd arm-oraclelinux-wls-cluster
-          git push https://$git_token@github.com/$userName/arm-oraclelinux-wls-cluster.git -f --delete $testbranchName
+          git push https://$gitToken@github.com/$userName/arm-oraclelinux-wls-cluster.git -f --delete $testbranchName
+
+      - uses: azure/login@v1
+        id: azure-login
+        with:
+         creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Delete DB Resource Group
+        id: delete-db-resource-group
+        uses: azure/CLI@v1
+        with:
+          azcliversion: ${{ env.azCliVersion }}
+          inlineScript: |
+            echo "delete... " $resourceGroup
+            az group delete --yes --no-wait --verbose --name ${{ env.resourceGroupForDB }}

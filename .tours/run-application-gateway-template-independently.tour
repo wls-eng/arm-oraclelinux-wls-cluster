@@ -1,0 +1,151 @@
+{
+  "title": "Run Application Gateway Template Independently",
+  "steps": [
+    {
+      "file": "arm-oraclelinux-wls-cluster/src/main/arm/mainTemplate.json",
+      "line": 347,
+      "description": "Remove app gateway stuff from clusterTemplate.json,  they will be added to appGatewayNestedTemplate.json.\n```\n\"dnsNameforApplicationGateway\": { \n\t\"value\": \"[parameters('dnsNameforApplicationGateway')]\" \n}, \n\"enableAppGateway\": { \n\t\"value\": \"[parameters('enableAppGateway')]\" \n}, \n\"gatewayPublicIPAddressName\": {\n\t\"value\": \"[parameters('gatewayPublicIPAddressName')]\" \n},\n```"
+    },
+    {
+      "file": "arm-oraclelinux-wls-cluster/src/main/arm/mainTemplate.json",
+      "line": 395,
+      "description": "Add parameters to appGatewayNestedTemplate.json.\n- _artifactsLocation\n- _artifactsLocationSasToken\n- adminVMName\n- dnsNameforApplicationGateway\n- wlsPassword\n- wlsUserName \n"
+    },
+    {
+      "file": "arm-oraclelinux-wls-cluster/src/main/arm/nestedtemplates/appGatewayNestedTemplate.json",
+      "line": 5,
+      "description": "Add parameters to appGatewayNestedTemplate.json.\n- _artifactsLocation\n- _artifactsLocationSasToken\n- adminVMName\n- dnsNameforApplicationGateway\n- guidValue\n- wlsPassword\n- wlsUserName."
+    },
+    {
+      "file": "arm-oraclelinux-wls-cluster/src/main/arm/nestedtemplates/appGatewayNestedTemplate.json",
+      "line": 100,
+      "description": "Add variables.\n- const_adminServerName\n- const_wlsAdminPort\n- const_wlsHome\n- name_dnsNameforApplicationGateway\n- name_scriptAGWConfiguration"
+    },
+    {
+      "file": "arm-oraclelinux-wls-cluster/src/main/arm/nestedtemplates/appGatewayNestedTemplate.json",
+      "line": 148,
+      "description": "Deploy app gateway public IP.",
+      "selection": {
+        "start": {
+          "line": 148,
+          "character": 1
+        },
+        "end": {
+          "line": 162,
+          "character": 5
+        }
+      }
+    },
+    {
+      "file": "arm-oraclelinux-wls-cluster/src/main/arm/nestedtemplates/appGatewayNestedTemplate.json",
+      "line": 169,
+      "description": "Add dependency to public ip."
+    },
+    {
+      "file": "arm-oraclelinux-wls-cluster/src/main/arm/nestedtemplates/appGatewayNestedTemplate.json",
+      "line": 373,
+      "description": "Add vm extension to deploy setupApplicationGateway.sh",
+      "selection": {
+        "start": {
+          "line": 353,
+          "character": 3
+        },
+        "end": {
+          "line": 373,
+          "character": 5
+        }
+      }
+    },
+    {
+      "file": "arm-oraclelinux-wls-cluster/src/main/arm/nestedtemplates/appGatewayNestedTemplate.json",
+      "line": 379,
+      "description": "Change end pid dependecy to vm extension."
+    },
+    {
+      "file": "arm-oraclelinux-wls-cluster/src/main/arm/nestedtemplates/clusterTemplate.json",
+      "line": 61,
+      "description": "Remove app gateway parameters from clusterTemplate.json, which will be added to appGatewayNestedTemplate.json.\n- dnsNameforApplicationGateway\n- enableAppGateway - delete this parameter\n- gatewayPublicIPAddressName"
+    },
+    {
+      "file": "arm-oraclelinux-wls-cluster/src/main/arm/nestedtemplates/clusterTemplate.json",
+      "line": 182,
+      "description": "Remove variable name_dnsNameforApplicationGateway, will not use in cluster template and shell script."
+    },
+    {
+      "file": "arm-oraclelinux-wls-cluster/src/main/arm/nestedtemplates/clusterTemplate.json",
+      "line": 248,
+      "description": "dependsOn item was removed in [commmit fcc003f0d35c3e035f52a5c9387d3667a66b19a0](https://github.com/wls-eng/arm-oraclelinux-wls-cluster/commit/fcc003f0d35c3e035f52a5c9387d3667a66b19a0).\nWe need it, and add again."
+    },
+    {
+      "file": "arm-oraclelinux-wls-cluster/src/main/arm/nestedtemplates/clusterTemplate.json",
+      "line": 276,
+      "description": "Remove application gateway public ip, will deploy in appGatewayNestedTemplate.json."
+    },
+    {
+      "file": "arm-oraclelinux-wls-cluster/src/main/arm/nestedtemplates/clusterTemplate.json",
+      "line": 472,
+      "description": "Remove argument 'gatewayPublicIPAddressName'"
+    },
+    {
+      "file": "arm-oraclelinux-wls-cluster/src/main/scripts/setupApplicationGateway.sh",
+      "line": 1,
+      "description": "Create script to set up application gateway in WebLogic Server automatically."
+    },
+    {
+      "file": "arm-oraclelinux-wls-cluster/src/main/scripts/setupApplicationGateway.sh",
+      "line": 48,
+      "description": "Create py script to configure app gateway in an existing weblogic instance.\nNeed to config cluster, Console portal path: domain -> Cluster -> HTTP\nNeed to create channels for every managed servers,  Console portal path: domain -> servers -> managed server -> Protocal -> Channels -> new"
+    },
+    {
+      "file": "arm-oraclelinux-wls-cluster/src/main/scripts/setupApplicationGateway.sh",
+      "line": 104,
+      "description": "Create py script to restart managed servers."
+    },
+    {
+      "file": "arm-oraclelinux-wls-cluster/src/main/scripts/setupApplicationGateway.sh",
+      "line": 125,
+      "description": "Restart managed server to make app gateway config work."
+    },
+    {
+      "file": "arm-oraclelinux-wls-cluster/src/main/scripts/setupClusterDomain.sh",
+      "line": 12,
+      "description": "Remove AppGWHostName, we don't need it anymore for in setupClusterDomain.sh"
+    },
+    {
+      "file": "arm-oraclelinux-wls-cluster/src/main/scripts/setupClusterDomain.sh",
+      "line": 104,
+      "description": "Remove app gateway configuration in admin-domain.yaml"
+    },
+    {
+      "file": "arm-oraclelinux-wls-cluster/src/main/scripts/setupClusterDomain.sh",
+      "line": 139,
+      "description": "Remove appliaction gateway configuration fro manged-domain.yaml"
+    },
+    {
+      "file": "arm-oraclelinux-wls-cluster/src/main/scripts/setupClusterDomain.sh",
+      "line": 224,
+      "description": "Remove function createChannelPortsOnManagedServer"
+    },
+    {
+      "file": "arm-oraclelinux-wls-cluster/src/main/scripts/setupClusterDomain.sh",
+      "line": 390,
+      "description": "Remove calling createChannelPortsOnManagedServer"
+    },
+    {
+      "file": "arm-oraclelinux-wls-cluster/src/main/scripts/setupClusterDomain.sh",
+      "line": 414,
+      "description": "Remove running create-t3-channel.py, it will be created in setupApplicationGateway.sh"
+    },
+    {
+      "file": "arm-oraclelinux-wls-cluster/src/main/scripts/setupClusterDomain.sh",
+      "line": 567,
+      "description": "Remove channelPort"
+    },
+    {
+      "file": "arm-oraclelinux-wls-cluster/src/main/scripts/setupClusterDomain.sh",
+      "line": 572,
+      "description": "Remove app gateway ports.\nexport AppGWHttpPort=80 \nexport AppGWHttpsPort=443"
+    }
+  ],
+  "ref": "2dde3e6198cb456b5ee961afa4f009c8b4142807"
+}
