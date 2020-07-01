@@ -7,7 +7,7 @@ function echo_stderr()
 #Function to display usage message
 function usage()
 {
-  echo_stderr "./aadIntegration.sh <wlsUserName> <wlsPassword> <wlsDomainName> <wlsLDAPProviderName> <addsServerHost> <aadsPortNumber> <wlsLDAPPrincipal> <wlsLDAPPrincipalPassword> <wlsLDAPUserBaseDN> <wlsLDAPGroupBaseDN> <oracleHome> <adminVMName> <wlsAdminPort> <wlsLDAPSSLCertificate> <addsPublicIP> <adminPassword> <wlsAdminServerName>"  
+  echo_stderr "./aadIntegration.sh <wlsUserName> <wlsPassword> <wlsDomainName> <wlsLDAPProviderName> <addsServerHost> <aadsPortNumber> <wlsLDAPPrincipal> <wlsLDAPPrincipalPassword> <wlsLDAPUserBaseDN> <wlsLDAPGroupBaseDN> <oracleHome> <adminVMName> <wlsAdminPort> <wlsLDAPSSLCertificate> <addsPublicIP> <adminPassword> <wlsAdminServerName> <wlsDomainPath> <vmIndex>"  
 }
 
 function validateInput()
@@ -97,6 +97,16 @@ function validateInput()
     then
         echo_stderr "wlsAdminServerName is required. "
     fi
+
+    if [ -z "$wlsDomainPath" ];
+    then
+        echo_stderr "wlsDomainPath is required. "
+    fi
+
+    if [ -z "$vmIndex" ];
+    then
+        echo_stderr "vmIndex is required. "
+    fi
 }
 
 function createAADProvider_model()
@@ -165,16 +175,36 @@ function createSSL_model()
 # Connect to the AdminServer.
 connect('$wlsUserName','$wlsPassword','t3://$wlsAdminURL')
 try:
-   edit()
-   startEdit()
-   print "set keystore to ${wlsAdminServerName}"
-   cd('/Servers/${wlsAdminServerName}/SSL/${wlsAdminServerName}')
-   cmo.setHostnameVerificationIgnored(true)
-   save()
-   activate()
+    edit()
+    startEdit()
+    servers=cmo.getServers()
+    for server in servers:
+        path="/Servers/"+server.getName()+"/SSL/"+server.getName()
+        print "ignore host name verification in " + server.getName()
+        cd(path)
+        cmo.setHostnameVerificationIgnored(true)
+EOF
+
+    . $oracleHome/oracle_common/common/bin/setWlstEnv.sh
+    ${JAVA_HOME}/bin/java -version  2>&1  | grep -e "1[.]8[.][0-9]*_"  > /dev/null 
+    javaStatus=$?
+    if [ "${javaStatus}" == "0" ]; then
+        cat <<EOF >>${SCRIPT_PWD}/configure-ssl.py
+        if(server.getName() == '$wlsAdminServerName'):
+            continue
+        print "Enable TLSv1.2 in " + server.getName()
+        cd('/Servers/'+server.getName()+'//ServerStart/'+server.getName())
+        arguments = cmo.getArguments()
+        arguments = arguments + ' ' + '${JAVA_OPTIONS_TLS_V12}'
+        cmo.setArguments(arguments)
+EOF
+    fi
+    cat <<EOF >>${SCRIPT_PWD}/configure-ssl.py
+    save()
+    activate()
 except:
-   stopEdit('y')
-   sys.exit(1)
+    stopEdit('y')
+    sys.exit(1)
 
 disconnect()
 sys.exit(0)
@@ -215,11 +245,20 @@ function importAADCertificate()
 {
     # import the key to java security 
     . $oracleHome/oracle_common/common/bin/setWlstEnv.sh
-    java_cacerts_path=${JAVA_HOME}/jre/lib/security/cacerts
+    # For AAD failure: exception happens when importing certificate to JDK 11.0.7
+    # ISSUE: https://github.com/wls-eng/arm-oraclelinux-wls/issues/109
+    # JRE was removed since JDK 11.
+    java_version=$(java -version 2>&1 | sed -n ';s/.* version "\(.*\)\.\(.*\)\..*"/\1\2/p;')
+    if [ ${java_version:0:3} -ge 110 ]; 
+    then 
+        java_cacerts_path=${JAVA_HOME}/lib/security/cacerts
+    else
+        java_cacerts_path=${JAVA_HOME}/jre/lib/security/cacerts
+    fi
 
     # remove existing certificate.
     queryAADTrust=$(${JAVA_HOME}/bin/keytool -list -keystore ${java_cacerts_path} -storepass changeit | grep "aadtrust")
-    if [ -n "queryAADTrust" ];
+    if [ -n "${queryAADTrust}" ];
     then
         sudo ${JAVA_HOME}/bin/keytool -delete -alias aadtrust -keystore ${java_cacerts_path} -storepass changeit  
     fi
@@ -332,11 +371,30 @@ function cleanup()
     echo "Cleanup completed."
 }
 
+function enableTLSv12onJDK8()
+{
+    if ! grep -q "${STRING_ENABLE_TLSV12}" ${wlsDomainPath}/bin/setDomainEnv.sh; then
+        cat <<EOF >>${wlsDomainPath}/bin/setDomainEnv.sh
+# Append -Djdk.tls.client.protocols to JAVA_OPTIONS in jdk8
+# Enable TLSv1.2
+\${JAVA_HOME}/bin/java -version  2>&1  | grep -e "1[.]8[.][0-9]*_"  > /dev/null 
+javaStatus=$?
+
+if [[ "\${javaStatus}" = "0" && "\${JAVA_OPTIONS}"  != *"${JAVA_OPTIONS_TLS_V12}"* ]]; then
+    JAVA_OPTIONS="\${JAVA_OPTIONS} ${JAVA_OPTIONS_TLS_V12}"
+    export JAVA_OPTIONS
+fi
+EOF
+fi
+}
+
 export LDAP_USER_NAME='sAMAccountName'
 export LDAP_USER_FROM_NAME_FILTER='(&(sAMAccountName=%u)(objectclass=user))'
+export JAVA_OPTIONS_TLS_V12="-Djdk.tls.client.protocols=TLSv1.2"
+export STRING_ENABLE_TLSV12="Append -Djdk.tls.client.protocols to JAVA_OPTIONS in jdk8"
 export SCRIPT_PWD=`pwd`
 
-if [ $# -ne 17 ]
+if [ $# -ne 19 ]
 then
     usage
 	exit 1
@@ -359,25 +417,38 @@ export wlsADSSLCer="${14}"
 export wlsLDAPPublicIP="${15}"
 export vituralMachinePassword="${16}"
 export wlsAdminServerName=${17}
+export wlsDomainPath=${18}
+export vmIndex=${19}
 export wlsAdminURL=$wlsAdminHost:$wlsAdminPort
 
+if [ $vmIndex -eq 0 ];
+then
+    cleanup
+    echo "check status of admin server"
+    wait_for_admin
 
-echo "check status of admin server"
-wait_for_admin
+    echo "start to configure Azure Active Directory"
+    enableTLSv12onJDK8
+    createAADProvider_model
+    createSSL_model
+    mapLDAPHostWithPublicIP
+    parseLDAPCertificate
+    importAADCertificate
+    configureSSL
+    configureAzureActiveDirectory
+    restartAdminServerService
 
-echo "start to configure Azure Active Directory"
-createAADProvider_model
-createSSL_model
-mapLDAPHostWithPublicIP
-parseLDAPCertificate
-importAADCertificate
-configureSSL
-configureAzureActiveDirectory
-restartAdminServerService
+    echo "Waiting for admin server to be available"
+    wait_for_admin
+    echo "Weblogic admin server is up and running"
 
-echo "Waiting for admin server to be available"
-wait_for_admin
-echo "Weblogic admin server is up and running"
-
-restartManagedServers
+    restartManagedServers
+    cleanup
+else
+    cleanup
+    mapLDAPHostWithPublicIP
+    parseLDAPCertificate
+    importAADCertificate
+    cleanup
+fi
 

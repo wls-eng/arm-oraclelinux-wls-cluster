@@ -10,27 +10,19 @@ on:
 env:
   adminPassword: ${{ secrets.WLS_PASSWORD }}
   adminVMName: adminServerVM
-  adminVMName: adminServerVM
   azCliVersion: 2.6.0
   dbName: wlsdb${{ github.run_id }}${{ github.run_number }}
   gitToken: ${{ secrets.GIT_TOKEN }} 
-  git_token: ${{ secrets.GIT_TOKEN }} 
   location: eastus
-  managedServerPrefix : managedServer
   managedServerPrefix : managedServer
   managedServerVM: "managedServerVM1"
   managedServers: "managedServer1"
-  managedServers: "managedServer1"
   nsg: wls-nsg
-  numberOfInstances : 2
   numberOfInstances : 2
   refArmttk: e2fbdcb93a4b2004c9ea953956b85248e0ef8c1c
   refJavaee: 6807e2ae3e8a8492edf211b9f4f0b7ed3a2a29e7
-  ref_armttk: e2fbdcb93a4b2004c9ea953956b85248e0ef8c1c 
-  ref_javaee: 6807e2ae3e8a8492edf211b9f4f0b7ed3a2a29e7
   resourceGroupForDB: db-${{ github.run_id }}-${{ github.run_number }}
   resourceGroupPrefix: wls-${{ github.run_id }}-${{ github.run_number }}
-  testbranchName: cicd-${{ github.run_id }}-${{ github.run_number }}
   testbranchName: cicd-${{ github.run_id }}-${{ github.run_number }}
   userEmail: ${{ secrets.USER_EMAIL }}
   userName: ${{ secrets.USER_NAME }}
@@ -371,7 +363,7 @@ jobs:
         id: veriy-admin-service
         run: |
           echo "Verifying WebLogic services at admin server"
-          sshpass -p ${wlsPassword} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt weblogic@${wlsPublicIP} 'bash -s' < arm-oraclelinux-wls-cluster/test/scripts/verify-services.sh $wls_admin_services          
+          sshpass -p ${wlsPassword} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt weblogic@${wlsPublicIP} 'bash -s' < arm-oraclelinux-wls-cluster/test/scripts/verify-services.sh $wls_admin_services
 
       - name: Verify wls managed server services
         id: veriy-msservice
