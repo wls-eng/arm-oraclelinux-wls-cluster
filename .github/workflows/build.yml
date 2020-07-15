@@ -12,7 +12,7 @@ env:
   adminVMName: adminServerVM
   azCliVersion: 2.6.0
   dbName: wlsdb${{ github.run_id }}${{ github.run_number }}
-  gitToken: ${{ secrets.GIT_TOKEN }} 
+  gitToken: ${{ secrets.GIT_TOKEN }}
   location: eastus
   managedServerPrefix : managedServer
   managedServerVM: "managedServerVM1"
@@ -21,8 +21,8 @@ env:
   numberOfInstances : 2
   refArmttk: e2fbdcb93a4b2004c9ea953956b85248e0ef8c1c
   refJavaee: 6807e2ae3e8a8492edf211b9f4f0b7ed3a2a29e7
-  resourceGroupForDB: db-${{ github.run_id }}-${{ github.run_number }}
-  resourceGroupPrefix: wls-${{ github.run_id }}-${{ github.run_number }}
+  resourceGroupForDependency: wlsd-${{ github.run_id }}-${{ github.run_number }}
+  resourceGroupPrefix: ${{ github.run_id }}-${{ github.run_number }}
   testbranchName: cicd-${{ github.run_id }}-${{ github.run_number }}
   userEmail: ${{ secrets.USER_EMAIL }}
   userName: ${{ secrets.USER_NAME }}
@@ -151,18 +151,32 @@ jobs:
           name: ${{steps.addnode_artifact_file.outputs.addnode_artifactName}}
           path: ${{steps.addnode_artifact_path.outputs.addnode_artifactPath}}
 
+  deploy-dependencies:
+    needs: preflight
+    runs-on: ubuntu-latest
+    steps:
+      - uses: azure/login@v1
+        id: azure-login
+        with:
+         creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Create Resource Group
+        id: create-resource-group
+        uses: azure/CLI@v1
+        with:
+          azcliversion: ${{ env.azCliVersion }}
+          inlineScript: |
+            echo "create resource group" ${{ env.resourceGroupForDependency }}
+            az group create --verbose --name ${{ env.resourceGroupForDependency }} --location ${location}
+
       - name: Set Up Azure Postgresql to Test dbTemplate
         id: setup-postgresql
         uses: azure/CLI@v1
         with:
           azcliversion: ${{ env.azCliVersion }}
           inlineScript: |
-            echo "create resource group" ${{ env.resourceGroupForDB }}
-            az group create --verbose --name ${{ env.resourceGroupForDB }} --location ${location}
-
             echo "Deploy DB with name " ${{ env.dbName }}
             az postgres server create \
-            --resource-group ${{ env.resourceGroupForDB }} \
+            --resource-group ${{ env.resourceGroupForDependency }} \
             --name ${{ env.dbName }}  \
             --location ${location} \
             --admin-user weblogic \
@@ -171,8 +185,8 @@ jobs:
             --admin-password ${{ env.wlsPassword }} \
             --sku-name B_Gen5_1
 
-  deploy:
-    needs: preflight
+  deploy-weblogic-cluster:
+    needs: deploy-dependencies
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 1
@@ -270,7 +284,7 @@ jobs:
               --name wls-cluster-node \
               --parameters @arm-oraclelinux-wls-cluster/test/data/parameters-test.json \
               --template-file arm-oraclelinux-wls-cluster-$version-arm-assembly/mainTemplate.json
-      
+
       - name: Verify Network Security Group
         id: verify-nsg
         uses: azure/CLI@v1
@@ -408,6 +422,43 @@ jobs:
             --parameters @arm-oraclelinux-wls-cluster/test/scripts/parameters-deploy-db.json \
             --template-file arm-oraclelinux-wls-cluster-$version-arm-assembly/nestedtemplates/dbTemplate.json
 
+      - name: Generate Application Gateway Certificate
+        id: gen-certificate-agw
+        run: |
+          echo "Generate SSL Certificate for Application Gateway"
+          openssl genrsa -passout pass:${{ env.wlsPassword }} -out privkey.pem 3072
+          openssl req -x509 -new -key privkey.pem -out privkey.pub -subj "/C=US"
+          openssl pkcs12 -passout pass:${{ env.wlsPassword }} -export -in privkey.pub -inkey privkey.pem -out mycert.pfx
+          agwCertificateBase64String=$(base64 mycert.pfx -w 0)
+          echo "##[set-env name=agwCertificateBase64String;]${agwCertificateBase64String}"
+      - name: Set up Application Gateway by Deploying Sub Template
+        id: enable-application-gateway
+        uses: azure/CLI@v1
+        with:
+          azcliversion: ${{ env.azCliVersion }}
+          inlineScript: |
+            # Generate parameters for application gateway template deployment
+            bash arm-oraclelinux-wls-cluster/test/scripts/gen-parameters-deploy-agw.sh \
+            arm-oraclelinux-wls-cluster/test/scripts/parameters-deploy-agw.json \
+            ${{ env.userName }} \
+            ${{ env.testbranchName }} \
+            ${{ env.adminVMName }} \
+            ${agwCertificateBase64String} \
+            ${{ env.wlsPassword }} \
+            ${{ env.numberOfInstances }} \
+            ${{ env.location }} \
+            ${{ env.wlsPassword }} \
+            ${{ env.wlsUserName }} \
+            ${{ env.wlsDomainName }}
+            echo "Deploy Application Gateway Template..."
+            az group deployment create \
+            --verbose \
+            --debug \
+            --resource-group ${resourceGroup} \
+            --name agw \
+            --parameters @arm-oraclelinux-wls-cluster/test/scripts/parameters-deploy-agw.json \
+            --template-file arm-oraclelinux-wls-cluster-$version-arm-assembly/nestedtemplates/appGatewayNestedTemplate.json
+
       - name: Delete Resource Group
         id: delete-resource-group
         if: always()
@@ -419,7 +470,7 @@ jobs:
             az group delete --yes --no-wait --verbose --name $resourceGroup
 
   cleanup:
-    needs: deploy
+    needs: deploy-weblogic-cluster
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -443,4 +494,4 @@ jobs:
           azcliversion: ${{ env.azCliVersion }}
           inlineScript: |
             echo "delete... " $resourceGroup
-            az group delete --yes --no-wait --verbose --name ${{ env.resourceGroupForDB }}
+            az group delete --yes --no-wait --verbose --name ${{ env.resourceGroupForDependency }}
