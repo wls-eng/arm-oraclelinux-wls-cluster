@@ -2,22 +2,56 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "adminUsername": {
-      "value": "GEN-UNIQUE"
+    "aadsSettings": {
+      "value": {
+        "enable": true,
+        "publicIP": "GEN-UNIQUE",
+        "serverHost": "GEN-UNIQUE",
+        "certificateBase64String": "GEN-UNIQUE"
+      }
     },
     "adminPasswordOrKey": {
       "value": "GEN-SSH-PUB-KEY"
     },
+    "adminURL": {
+      "value": "GEN-UNIQUE"
+    },
+    "adminUsername": {
+      "value": "GEN-UNIQUE"
+    },
+    "appGatewaySettings": {
+      "value": {
+        "enable": true,
+        "publicIPName": "GEN-UNIQUE",
+        "certificateBase64String": "GEN-UNIQUE",
+        "certificatePassword": "GEN-UNIQUE"
+      }
+    },
     "dnsLabelPrefix": {
       "value": "GEN-UNIQUE"
     },
-    "acceptOTNLicenseAgreement": {
+    "location": {
       "value": "GEN-UNIQUE"
     },
-    "otnAccountUsername": {
+    "managedServerPrefix": {
       "value": "GEN-UNIQUE"
     },
-    "otnAccountPassword": {
+    "numberOfExistingNodes": {
+      "value": "GEN-UNIQUE"
+    },
+    "numberOfNodes": {
+      "value": "GEN-UNIQUE"
+    },
+    "skuUrnVersion": {
+      "value": "GEN-UNIQUE"
+    },
+    "storageAccountName": {
+      "value": "GEN-UNIQUE"
+    },
+    "usePreviewImage": {
+      "value": "GEN-UNIQUE"
+    },
+    "vmSizeSelect": {
       "value": "GEN-UNIQUE"
     },
     "wlsDomainName": {
@@ -28,19 +62,6 @@
     },
     "wlsPassword": {
       "value": "GEN-UNIQUE"
-    },
-    "managedServerName":{
-      "value": "GEN-UNIQUE"
-    },
-    "vmName":{
-      "value": "GEN-UNIQUE"
-    },
-    "adminURL":{
-      "value": "GEN-UNIQUE"
-    },
-    "vmSizeSelect":{
-      "value": "GEN-UNIQUE"
-    } 
-	
+    }
   }
 }
