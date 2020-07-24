@@ -22,19 +22,22 @@ script="${BASH_SOURCE[0]}"
 scriptDir="$( cd "$( dirname "${script}" )" && pwd )"
 
 function usage {
-  echo usage: ${script} -g resource-group [-f template-file] [-u template-url] -p paramter-file [-h]
+  echo usage: ${script} -g resource-group [-f template-file] [-u template-url] -p paramter-file [-s silent-mode] [-h]
   echo "  -g Azure Resource Group of the Vitural Machines that host deleting manages servers, must be specified."
   echo "  -f Path of ARM template to delete nodes, must be specified -f option or -u option."
   echo "  -u URL of ARM template, must be specified -f option or -u option."
   echo "  -p Path of ARM parameter, must be specified. "
+  echo "  -s Execute the script in silent mode. The script will input y automatically for the prompt."
   echo "  -h Help"
   exit $1
 }
 
+silent=false
+
 #
 # Parse the command line options
 #
-while getopts "hg:f:u:p:" opt; do
+while getopts "shg:f:u:p:" opt; do
   case $opt in
     g) resourceGroup="${OPTARG}"
     ;;
@@ -43,6 +46,8 @@ while getopts "hg:f:u:p:" opt; do
     u) templateURL="${OPTARG}"
     ;;
     p) parametersFile="${OPTARG}"
+    ;;
+    s) silent=true
     ;;
     h) usage 0
     ;;
@@ -118,8 +123,12 @@ function removeManagedNodes {
     cat <<EOF >remove-azure-resource.sh
 ${commandsToDeleteAzureResource}
 EOF
+
     chmod ugo+x ./remove-azure-resource.sh
-    ./remove-azure-resource.sh
+    if [ $silent == true ];then
+        echo "y" | ./remove-azure-resource.sh
+    else ./remove-azure-resource.sh
+    fi
 
     if [ $? -eq 0 ]; then
         echo ""
