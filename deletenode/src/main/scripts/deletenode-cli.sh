@@ -118,7 +118,7 @@ function removeManagedNodes {
     cat <<EOF >remove-azure-resource.sh
 ${commandsToDeleteAzureResource}
 EOF
-
+    chmod ugo+x ./remove-azure-resource.sh
     ./remove-azure-resource.sh
 
     if [ $? -eq 0 ]; then
