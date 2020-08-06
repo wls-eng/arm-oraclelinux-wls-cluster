@@ -26,7 +26,7 @@ env:
   testbranchName: cicd-${{ github.run_id }}-${{ github.run_number }}
   userEmail: ${{ secrets.USER_EMAIL }}
   userName: ${{ secrets.USER_NAME }}
-  wlsDomainName : clusterDomain
+  wlsDomainName : wlsd
   wlsPassword: ${{ secrets.WLS_PASSWORD }}
   wlsUserName : weblogic
   wls_admin_services : "rngd wls_admin wls_nodemanager"
