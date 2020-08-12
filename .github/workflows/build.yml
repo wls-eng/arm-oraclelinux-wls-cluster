@@ -218,15 +218,17 @@ jobs:
           imageUrn="${{ matrix.images }}"
           sku=${imageUrn%%;*}
           echo "##[set-env name=sku;]${sku}"
+          echo ${resourceGroupPrefix}
+          resourceGroup=$(echo "${resourceGroupPrefix}-${sku}" | sed "s/_//g")          
+          echo "##[set-env name=resourceGroup;]${resourceGroup}"
+          
       - name: Create Resource Group
         id: create-resource-group
         uses: azure/CLI@v1
         with:
           azcliversion: ${{ env.azCliVersion }}
           inlineScript: |
-            resourceGroup=${{ env.resourceGroupPrefix }}-${sku}
             echo "create resource group" $resourceGroup
-            echo "##[set-env name=resourceGroup;]${resourceGroup}"
             az group create --verbose --name $resourceGroup --location ${location}
       
       - name: Prepare deployed parameters and test script
