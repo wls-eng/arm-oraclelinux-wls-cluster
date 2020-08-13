@@ -308,32 +308,50 @@ jobs:
 
       - name: Add ip address to security rule to access the wls machine
         id: add-ip-to-security-rule
-        timeout-minutes: 10
         uses: azure/CLI@v1
         with:
           azcliversion: ${{ env.azCliVersion }}
           inlineScript: |
             echo "query existing source address prefixes"
-            while [ -z `az network nsg show -g $resourceGroup -n ${nsg} | grep "NRMS-Rule-101"` ]
+            attempt=0
+            toCreateRule101=false
+            while [[ -z `az network nsg show -g $resourceGroup -n ${nsg} | grep "NRMS-Rule-101"` && $attempt -le 5 ]]
             do
+              if [ $attempt -eq 5 ]; then
+                toCreateRule101=true
+              fi
               echo "network security group rule NRMS-Rule-101 is not ready"
               sleep 1m
+              attempt=$((attempt + 1))
             done
-            sourceAddressPrefixes=$(az network nsg rule show \
-              --resource-group $resourceGroup \
-              --nsg-name ${nsg} \
-              --name NRMS-Rule-101 \
-              --query "sourceAddressPrefixes")
-            echo "IP of this machine: " ${myIP}
-            sourceAddressPrefixes=$(echo ${myIP} ${sourceAddressPrefixes} | \
-              sed 's/,/ /g; s/\[//g; s/\]//g; s/"//g')
-            echo ${sourceAddressPrefixes}
-            az network nsg rule update \
-              --resource-group $resourceGroup \
-              --nsg-name ${nsg} \
-              --name NRMS-Rule-101 \
-              --source-address-prefixes $sourceAddressPrefixes \
-              --destination-port-ranges 443 22
+            if [ $toCreateRule101 == true ]; then
+              az network nsg rule create --name NRMS-Rule-101 \
+                           --nsg-name ${nsg} \
+                           --priority 101 \
+                           --resource-group $resourceGroup \
+                           --access Allow \
+                           --destination-address-prefixes "*" \
+                           --destination-port-ranges 22 43 \
+                           --direction Inbound \
+                           --protocol Tcp \
+                           --source-address-prefixes $myIP
+            else
+              sourceAddressPrefixes=$(az network nsg rule show \
+                --resource-group $resourceGroup \
+                --nsg-name ${nsg} \
+                --name NRMS-Rule-101 \
+                --query "sourceAddressPrefixes")
+              echo "IP of this machine: " ${myIP}
+              sourceAddressPrefixes=$(echo ${myIP} ${sourceAddressPrefixes} | \
+                sed 's/,/ /g; s/\[//g; s/\]//g; s/"//g')
+              echo ${sourceAddressPrefixes}
+              az network nsg rule update \
+                --resource-group $resourceGroup \
+                --nsg-name ${nsg} \
+                --name NRMS-Rule-101 \
+                --source-address-prefixes $sourceAddressPrefixes \
+                --destination-port-ranges 443 22
+            fi
 
       - name: Restart wls VM
         id: restart-wls-wm
