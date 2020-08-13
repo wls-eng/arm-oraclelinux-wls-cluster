@@ -308,6 +308,7 @@ jobs:
 
       - name: Add ip address to security rule to access the wls machine
         id: add-ip-to-security-rule
+        timeout-minutes: 10
         uses: azure/CLI@v1
         with:
           azcliversion: ${{ env.azCliVersion }}
