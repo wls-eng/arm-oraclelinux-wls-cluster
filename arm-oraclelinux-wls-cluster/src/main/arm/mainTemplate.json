@@ -296,7 +296,7 @@
     "resources": [
         {
             "apiVersion": "2019-10-01",
-            "name": "${cluster.start}",
+            "name": "pid-ca5e3350-ff62-5d92-83a3-acaaeae87c03",
             "type": "Microsoft.Resources/deployments",
             "properties": {
                 "mode": "Incremental",
@@ -565,7 +565,7 @@
         },
         {
             "apiVersion": "2019-10-01",
-            "name": "${cluster.end}",
+            "name": "pid-55160205-2f03-52c5-ae30-507952c0c4ea",
             "type": "Microsoft.Resources/deployments",
             "dependsOn": [
                 "[resourceId('Microsoft.Resources/deployments', 'aadLinkedTemplate')]",
