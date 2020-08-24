@@ -366,7 +366,9 @@
 				"settings": {
 					"fileUris": [
 						"[uri(parameters('_artifactsLocationAGWTemplate'), concat('../scripts/', variables('name_scriptAGWConfiguration'), parameters('_artifactsLocationSasToken')))]"
-					],
+					]
+				},
+				"protectedSettings": {
 					"commandToExecute": "[concat('sh',' ',variables('name_scriptAGWConfiguration'),' ', variables('const_adminServerName'),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',parameters('adminVMName'),' ',variables('const_wlsAdminPort'),' ', reference(variables('ref_appGatewayPublicIP'), '2019-11-01').dnsSettings.fqdn, ' ',variables('const_wlsHome'))]"
 				}
 			}
