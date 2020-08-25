@@ -95,7 +95,7 @@
     "resources": [
         {
             "apiVersion": "2019-10-01",
-            "name": "pid-d3bbfd0e-c6f1-5bc5-a4ca-4656260bf049",
+            "name": "${cluster.database.start}",
             "type": "Microsoft.Resources/deployments",
             "properties": {
                 "mode": "Incremental",
@@ -131,7 +131,7 @@
         },
         {
             "apiVersion": "2019-10-01",
-            "name": "pid-33dbeec4-3997-5759-9086-558c5e38974d",
+            "name": "${cluster.database.end}",
             "type": "Microsoft.Resources/deployments",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('adminVMName'), 'newuserscript')]"
@@ -148,7 +148,7 @@
         },
         {
             "apiVersion": "2019-10-01",
-            "name": "pid-692b2d84-72f5-5992-a15d-0d5bcfef040d",
+            "name": "${database.oracle}",
             "type": "Microsoft.Resources/deployments",
             "condition": "[if(contains(parameters('databaseType'), 'oracle'), bool('true'), bool('false'))]",
             "dependsOn": [
@@ -166,7 +166,7 @@
         },
         {
             "apiVersion": "2019-10-01",
-            "name": "pid-935df06e-a5d5-5bf1-af66-4c1eb71dac7a",
+            "name": "${database.postgresql}",
             "type": "Microsoft.Resources/deployments",
             "condition": "[if(contains(parameters('databaseType'), 'postgresql'), bool('true'), bool('false'))]",
             "dependsOn": [
@@ -184,7 +184,7 @@
         },
         {
             "apiVersion": "2019-10-01",
-            "name": "pid-3569588c-b89d-5567-84ee-a2c633c7204c",
+            "name": "${database.sqlserver}",
             "type": "Microsoft.Resources/deployments",
             "condition": "[if(contains(parameters('databaseType'), 'sqlserver'), bool('true'), bool('false'))]",
             "dependsOn": [
