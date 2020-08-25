@@ -85,6 +85,8 @@ jobs:
           cp -r -f $current/arm-oraclelinux-wls-cluster/arm-oraclelinux-wls-cluster/target/arm/nestedtemplates/* $current/arm-oraclelinux-wls-cluster-dev/arm-oraclelinux-wls-cluster/src/main/arm/nestedtemplates/
           echo "debug: edburns: grep pid $current/arm-oraclelinux-wls-cluster-dev/arm-oraclelinux-wls-cluster/src/main/arm/nestedtemplates/clusterTemplate.json"
           grep pid $current/arm-oraclelinux-wls-cluster-dev/arm-oraclelinux-wls-cluster/src/main/arm/nestedtemplates/clusterTemplate.json
+          echo "debug: edburns: pwd $PWD"
+          pwd
           git status
           git commit -a -m "hard code pids"
           git push https://$gitToken@github.com/$userName/arm-oraclelinux-wls-cluster.git -f
