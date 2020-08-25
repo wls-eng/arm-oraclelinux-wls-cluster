@@ -150,7 +150,7 @@
     "resources": [
         {
             "apiVersion": "2019-10-01",
-            "name": "${cluster.aad.start}",
+            "name": "pid-a714884a-c4a6-5cfd-b014-97e7618b79c1",
             "type": "Microsoft.Resources/deployments",
             "properties": {
                 "mode": "Incremental",
@@ -179,7 +179,9 @@
                 "settings": {
                     "fileUris": [
                         "[uri(parameters('_artifactsLocationAADTemplate'), concat('../scripts/', variables('name_scriptAADConfiguration'), parameters('_artifactsLocationSasToken')))]"
-                    ],
+                    ]
+                },
+                "protectedSettings": {
                     "commandToExecute": "[concat('sh',' ',variables('name_scriptAADConfiguration'),' ', variables('const_aadParameters'),' ', add(copyIndex(),1))]"
                 }
             }
@@ -200,14 +202,16 @@
                 "settings": {
                     "fileUris": [
                         "[uri(parameters('_artifactsLocationAADTemplate'), concat('../scripts/', variables('name_scriptAADConfiguration'), parameters('_artifactsLocationSasToken')))]"
-                    ],
+                    ]
+                },
+                "protectedSettings": {
                     "commandToExecute": "[concat('sh',' ',variables('name_scriptAADConfiguration'),' ', variables('const_aadParameters'),' ', 0)]"
                 }
             }
         },
         {
             "apiVersion": "2019-10-01",
-            "name": "${cluster.aad.end}",
+            "name": "pid-3fa6990d-1fcb-54e3-95b2-1ccd1ec50e37",
             "type": "Microsoft.Resources/deployments",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('adminVMName'), 'newuserscript')]"

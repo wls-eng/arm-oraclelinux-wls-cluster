@@ -95,7 +95,7 @@
     "resources": [
         {
             "apiVersion": "2019-10-01",
-            "name": "${cluster.database.start}",
+            "name": "pid-d3bbfd0e-c6f1-5bc5-a4ca-4656260bf049",
             "type": "Microsoft.Resources/deployments",
             "properties": {
                 "mode": "Incremental",
@@ -122,14 +122,16 @@
                         "[uri(parameters('_artifactsLocationDbTemplate'), concat('../scripts/', variables('name_scriptFilePrefix'), variables('name_scriptFileSuffix-sqlserver'), parameters('_artifactsLocationSasToken')))]",
                         "[uri(parameters('_artifactsLocationDbTemplate'), concat('../scripts/', variables('name_scriptFilePrefix'), variables('name_scriptFileSuffix-oracle'), parameters('_artifactsLocationSasToken')))]",
                         "[uri(parameters('_artifactsLocationDbTemplate'), concat('../scripts/', variables('name_scriptFilePrefix'), variables('name_scriptFileSuffix-postgresql'), parameters('_artifactsLocationSasToken')))]"
-                    ],
+                    ]
+                },
+                "protectedSettings": {
                     "commandToExecute": "[concat('sh',' ',variables('name_scriptFilePrefix'),parameters('databaseType'),'.sh ',variables('const_wlsHome'),' ',parameters('adminVMName'),' ',variables('const_wlsAdminPort'),' ',parameters('wlsUserName'),' ',variables('const_singleQuote'),parameters('wlsPassword'),variables('const_singleQuote'),' ',parameters('jdbcDataSourceName'),' ',variables('const_singleQuote'),parameters('dsConnectionURL'),variables('const_singleQuote'),' ',parameters('dbUser'),' ',variables('const_singleQuote'),parameters('dbPassword'),variables('const_singleQuote'))]"
                 }
             }
         },
         {
             "apiVersion": "2019-10-01",
-            "name": "${cluster.database.end}",
+            "name": "pid-33dbeec4-3997-5759-9086-558c5e38974d",
             "type": "Microsoft.Resources/deployments",
             "dependsOn": [
                 "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('adminVMName'), 'newuserscript')]"
@@ -146,7 +148,7 @@
         },
         {
             "apiVersion": "2019-10-01",
-            "name": "${database.oracle}",
+            "name": "pid-692b2d84-72f5-5992-a15d-0d5bcfef040d",
             "type": "Microsoft.Resources/deployments",
             "condition": "[if(contains(parameters('databaseType'), 'oracle'), bool('true'), bool('false'))]",
             "dependsOn": [
@@ -164,7 +166,7 @@
         },
         {
             "apiVersion": "2019-10-01",
-            "name": "${database.postgresql}",
+            "name": "pid-935df06e-a5d5-5bf1-af66-4c1eb71dac7a",
             "type": "Microsoft.Resources/deployments",
             "condition": "[if(contains(parameters('databaseType'), 'postgresql'), bool('true'), bool('false'))]",
             "dependsOn": [
@@ -182,7 +184,7 @@
         },
         {
             "apiVersion": "2019-10-01",
-            "name": "${database.sqlserver}",
+            "name": "pid-3569588c-b89d-5567-84ee-a2c633c7204c",
             "type": "Microsoft.Resources/deployments",
             "condition": "[if(contains(parameters('databaseType'), 'sqlserver'), bool('true'), bool('false'))]",
             "dependsOn": [
