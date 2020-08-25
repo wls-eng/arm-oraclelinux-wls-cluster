@@ -133,7 +133,7 @@
 	"resources": [
 		{
 			"apiVersion": "2019-10-01",
-			"name": "pid-391adcc9-6421-5bf8-8960-aec850ef7b0e",
+			"name": "${cluster.appgateway.start}",
 			"type": "Microsoft.Resources/deployments",
 			"properties": {
 				"mode": "Incremental",
@@ -375,7 +375,7 @@
 		},
 		{
 			"apiVersion": "2019-10-01",
-			"name": "pid-36deb858-08fe-5c07-bc77-ba957a59a080",
+			"name": "${cluster.appgateway.end}",
 			"type": "Microsoft.Resources/deployments",
 			"dependsOn": [
                 "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('adminVMName'), 'newuserscript')]"
