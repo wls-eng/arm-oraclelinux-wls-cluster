@@ -77,6 +77,8 @@ jobs:
           git config --global core.longpaths true
           git config --global user.email $userEmail
           git config --global user.name $userName
+          echo "debug: edburns: grep pid $current/arm-oraclelinux-wls-cluster/arm-oraclelinux-wls-cluster/target/arm/nestedtemplates/clusterTemplate.json"
+          grep pid $current/arm-oraclelinux-wls-cluster/arm-oraclelinux-wls-cluster/target/arm/nestedtemplates/clusterTemplate.json
           echo "create branch $testbranchName"
           git checkout -b $testbranchName
           rm -r -f $current/arm-oraclelinux-wls-cluster-dev/arm-oraclelinux-wls-cluster/src/main/arm/nestedtemplates/*
