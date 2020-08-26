@@ -218,9 +218,9 @@
                         "type": "Microsoft.Common.InfoBox",
                         "options": {
                             "icon": "None",
-                            "text": "Template version 1.0.310000"
+                            "text": "Template version ${project.version}"
                         },
-                        "visible": "[bool('true')]"
+                        "visible": "[bool('${template.version.visible}')]"
                     }
                 ],
                 "visible": true
