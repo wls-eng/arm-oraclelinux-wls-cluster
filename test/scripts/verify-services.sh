@@ -2,7 +2,7 @@
 function verifyServiceStatus()
 {
   serviceName=$1
-  systemctl status rngd | grep "active (running)"    
+  systemctl status $serviceName | grep "active (running)"     
   if [[ $? != 0 ]]; then
      echo "$serviceName is not in active (running) state"
      exit 1
