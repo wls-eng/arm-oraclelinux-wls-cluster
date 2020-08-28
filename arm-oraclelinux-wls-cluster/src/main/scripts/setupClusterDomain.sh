@@ -302,6 +302,7 @@ function create_nodemanager_service()
  fi
  sudo chown -R $username:$groupname $DOMAIN_PATH/$wlsDomainName/nodemanager/nodemanager.properties*
  echo "Creating NodeManager service"
+ # Added waiting for network-online service and restart service 
  cat <<EOF >/etc/systemd/system/wls_nodemanager.service
  [Unit]
 Description=WebLogic nodemanager service
@@ -330,6 +331,7 @@ EOF
 # This function to create adminserver service
 function create_adminserver_service()
 {
+# Added waiting for network-online service and restart service   
  echo "Creating admin server service"
  cat <<EOF >/etc/systemd/system/wls_admin.service
 [Unit]
