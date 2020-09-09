@@ -619,7 +619,7 @@ export nmPort=5556
 export channelPort=8501
 export AppGWHttpPort=80
 export AppGWHttpsPort=443
-export WEBLOGIC_DEPLOY_TOOL=https://github.com/oracle/weblogic-deploy-tooling/releases/download/weblogic-deploy-tooling-1.1.1/weblogic-deploy.zip
+export WEBLOGIC_DEPLOY_TOOL=https://github.com/oracle/weblogic-deploy-tooling/releases/download/weblogic-deploy-tooling-1.8.1/weblogic-deploy.zip
 export username="oracle"
 export groupname="oracle"
 
