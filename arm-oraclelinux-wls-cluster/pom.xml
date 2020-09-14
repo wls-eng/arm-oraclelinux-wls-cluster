@@ -26,7 +26,7 @@
 
     <groupId>com.oracle.weblogic.azure</groupId>
     <artifactId>arm-oraclelinux-wls-cluster</artifactId>
-    <version>1.0.330000</version>
+    <version>1.0.340000</version>
     
     <parent>
         <groupId>com.microsoft.azure.iaas</groupId>

@@ -77,6 +77,21 @@
             "description": "Unique DNS Name for the Public IP used to access the Virtual Machine."
          }
       },
+      "elkSettings": {
+         "type": "object",
+         "defaultValue": {
+            "enable": false,
+            "elasticsearchPassword": "null",
+            "elasticsearchPort": "null",
+            "elasticsearchURI": "null",
+            "elasticsearchUserName": "null",
+            "logIndex": "null",
+            "logsToIntegrate": [ "HTTPAccessLog", "ServerLog", "DomainLog", "DataSourceLog", "StandardErrorAndOutput", "NodeManagerLog" ]
+         },
+         "metadata": {
+            "description": "If enable is true, must specify all the properties of elkSettings. logsToIntegrate must be value of an array."
+         }
+      },
       "guidValue": {
          "type": "string",
          "defaultValue": "[newGuid()]"
@@ -205,6 +220,7 @@
       "name_nic": "_NIC",
       "name_probe": "HTTPhealthProbe",
       "name_publicIPAddress": "_PublicIP",
+      "name_scriptELKConfiguration": "elkIntegration.sh",
       "name_scriptFile": "addnode.sh",
       "name_share": "wlsshare",
       "name_subnet": "Subnet",
@@ -221,6 +237,25 @@
       "ref_sslCertificate": "[resourceId('Microsoft.Network/applicationGateways/sslCertificates', variables('name_appGateway'),variables('name_appGatewayCertificate'))]",
       "ref_subnet": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('name_virtualNetwork'), variables('name_subnet'))]"
    },
+   "functions": [
+      {
+         "namespace": "array",
+         "members": {
+            "join": {
+               "parameters": [
+                  {
+                     "name": "items",
+                     "type": "array"
+                  }
+               ],
+               "output": {
+                  "type": "string",
+                  "value": "[replace(replace(replace(string(parameters('items')), '[\"', ''), '\"]', ''), '\",\"', ',')]"
+               }
+            }
+         }
+      }
+   ],
    "resources": [
       {
          "apiVersion": "2019-10-01",
@@ -565,11 +600,12 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
                "fileUris": [
-                  "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('name_scriptFile'), parameters('_artifactsLocationSasToken')))]"
+                  "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('name_scriptFile'), parameters('_artifactsLocationSasToken')))]",
+                  "[uri(parameters('_artifactsLocation'), concat('../../../arm-oraclelinux-wls-cluster/src/main/scripts/', variables('name_scriptELKConfiguration'), parameters('_artifactsLocationSasToken')))]"
                ]
             },
             "protectedSettings": {
-               "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ',parameters('wlsDomainName'),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',concat(parameters('managedServerPrefix'), copyIndex(parameters('numberOfExistingNodes'))),' ', parameters('adminURL'),' ',variables('const_wlsHome'),' ',variables('const_wlsDomainPath'),' ',parameters('storageAccountName'), ' ', listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-04-01').keys[0].value,' ', variables('const_mountPointPath'),' ', if(parameters('aadsSettings').enable, parameters('aadsSettings').certificateBase64String, 'null'),' ',if(parameters('aadsSettings').enable, parameters('aadsSettings').publicIP, 'null'),' ', if(parameters('aadsSettings').enable, parameters('aadsSettings').serverHost, 'null'),' ', parameters('adminPasswordOrKey'), ' ', if(parameters('appGatewaySettings').enable, reference(resourceId('Microsoft.Network/publicIPAddresses', parameters('appGatewaySettings').publicIPName),'2019-11-01').dnsSettings.fqdn, 'null'))]"
+               "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ',parameters('wlsDomainName'),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',parameters('managedServerPrefix'),' ', copyIndex(parameters('numberOfExistingNodes')),' ', parameters('adminURL'),' ',variables('const_wlsHome'),' ',variables('const_wlsDomainPath'),' ',parameters('storageAccountName'), ' ', listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-04-01').keys[0].value,' ', variables('const_mountPointPath'),' ', if(parameters('aadsSettings').enable, parameters('aadsSettings').certificateBase64String, 'null'),' ',if(parameters('aadsSettings').enable, parameters('aadsSettings').publicIP, 'null'),' ', if(parameters('aadsSettings').enable, parameters('aadsSettings').serverHost, 'null'),' ', parameters('adminPasswordOrKey'), ' ', if(parameters('appGatewaySettings').enable, reference(resourceId('Microsoft.Network/publicIPAddresses', parameters('appGatewaySettings').publicIPName),'2019-11-01').dnsSettings.fqdn, 'null'), ' ',parameters('elkSettings').enable, ' ', concat(parameters('elkSettings').elasticsearchURI,':',parameters('elkSettings').elasticsearchPort),' ', parameters('elkSettings').elasticsearchUserName,' ', parameters('elkSettings').elasticsearchPassword, ' ', array.join(parameters('elkSettings').logsToIntegrate), ' ',parameters('elkSettings').logIndex)]"
             }
          }
       },
@@ -594,6 +630,10 @@
       "wlsDomainLocation": {
          "type": "string",
          "value": "[concat('/u01/domains/', parameters('wlsDomainName'))]"
+      },
+      "logIndex": {
+         "type": "string",
+         "value": "[if(parameters('elkSettings').enable, parameters('elkSettings').logIndex, '')]"
       }
    }
 }

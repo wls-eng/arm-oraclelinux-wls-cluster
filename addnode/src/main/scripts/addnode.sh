@@ -9,7 +9,7 @@ function echo_stderr ()
 #Function to display usage message
 function usage()
 {
-  echo_stderr "./addnode.sh <wlsDomainName> <wlsUserName> <wlsPassword> <managedServerName> <wlsAdminURL> <oracleHome> <wlsDomainPath> <storageAccountName> <storageAccountKey> <mountpointPath> <wlsADSSLCer> <wlsLDAPPublicIP> <adServerHost> <vituralMachinePassword> <appGWHostName>"
+  echo_stderr "./addnode.sh <wlsDomainName> <wlsUserName> <wlsPassword> <managedServerPrefix> <serverIndex> <wlsAdminURL> <oracleHome> <wlsDomainPath> <storageAccountName> <storageAccountKey> <mountpointPath> <wlsADSSLCer> <wlsLDAPPublicIP> <adServerHost> <vituralMachinePassword> <appGWHostName> <enableELK> <elasticURI> <elasticUserName> <elasticPassword> <logsToIntegrate> <logIndex>"
 }
 
 function installUtilities()
@@ -47,12 +47,17 @@ function validateInput()
         exit 1
     fi
 
-    if [ -z "$managedServerName" ];
+    if [ -z "$managedServerPrefix" ];
     then
-        echo_stderr "managedServerName is required. "
+        echo_stderr "managedServerPrefix is required. "
     fi
 
-    export wlsServerName=$managedServerName
+    if [ -z "$serverIndex" ];
+    then
+        echo_stderr "serverIndex is required. "
+    fi
+
+    export wlsServerName=${managedServerPrefix}${serverIndex}
 
     if [ -z "$wlsAdminURL" ];
     then
@@ -103,6 +108,36 @@ function validateInput()
     if [ -z "$appGWHostName" ];
     then
         echo_stderr "appGWHostName is required. "
+    fi
+
+    if [ -z "$enableELK" ];
+    then
+        echo_stderr "enableELK is required. "
+    fi
+
+    if [ -z "$elasticURI" ];
+    then
+        echo_stderr "elasticURI is required. "
+    fi
+
+    if [ -z "$elasticUserName" ];
+    then
+        echo_stderr "elasticUserName is required. "
+    fi
+
+    if [ -z "$elasticPassword" ];
+    then
+        echo_stderr "elasticPassword is required. "
+    fi
+
+    if [ -z "$logsToIntegrate" ];
+    then
+        echo_stderr "logsToIntegrate is required. "
+    fi
+
+    if [ -z "$logIndex" ];
+    then
+        echo_stderr "logIndex is required. "
     fi
 }
 
@@ -190,7 +225,7 @@ cmo.setListenPort(int($wlsManagedPort))
 cmo.setListenPortEnabled(true)
 EOF
 
-if [ "$appGWHostName" != "null" ]; then
+    if [ "$appGWHostName" != "null" ]; then
     cat <<EOF >>$wlsDomainPath/add-server.py
 cd('/Servers/$wlsServerName')
 create('T3Channel','NetworkAccessPoint')
@@ -212,23 +247,23 @@ set('PublicAddress', '$appGWHostName')
 set('PublicPort', $channelPort)
 set('Enabled','true')
 EOF
-fi
+    fi
 
 cat <<EOF >>$wlsDomainPath/add-server.py
 cd('/Servers/$wlsServerName/SSL/$wlsServerName')
 cmo.setEnabled(false)
 EOF
 
-if [ "${enableAAD}" == "true" ]; then
+    if [ "${enableAAD}" == "true" ]; then
     cat <<EOF >>$wlsDomainPath/add-server.py
 cmo.setHostnameVerificationIgnored(true)
 EOF
-fi
+    fi
 
-. $oracleHome/oracle_common/common/bin/setWlstEnv.sh
-${JAVA_HOME}/bin/java -version  2>&1  | grep -e "1[.]8[.][0-9]*_"  > /dev/null 
-java8Status=$?
-if [ "${java8Status}" == "0" ]; then
+    . $oracleHome/oracle_common/common/bin/setWlstEnv.sh
+    ${JAVA_HOME}/bin/java -version  2>&1  | grep -e "1[.]8[.][0-9]*_"  > /dev/null 
+    java8Status=$?
+    if [ "${java8Status}" == "0" ]; then
     cat <<EOF >>$wlsDomainPath/add-server.py
 cd('/Servers/$wlsServerName//ServerStart/$wlsServerName')
 arguments = '-Dweblogic.Name=$wlsServerName  -Dweblogic.management.server=http://$wlsAdminURL -Djdk.tls.client.protocols=TLSv1.2'
@@ -238,7 +273,20 @@ else
 cd('/Servers/$wlsServerName//ServerStart/$wlsServerName')
 arguments = '-Dweblogic.Name=$wlsServerName  -Dweblogic.management.server=http://$wlsAdminURL'
 EOF
-fi
+    fi
+
+    if [ "${enableELK}" == "true" ]; then
+    cat <<EOF >>$wlsDomainPath/add-server.py
+cd('/Servers/$wlsServerName/WebServer/$wlsServerName/WebServerLog/$wlsServerName')
+cmo.setLogFileFormat('extended')
+cmo.setELFFields('date time time-taken bytes c-ip  s-ip c-dns s-dns  cs-method cs-uri sc-status sc-comment ctx-ecid ctx-rid') 
+
+cd('/Servers/$wlsServerName/Log/$wlsServerName')
+cmo.setRedirectStderrToServerLogEnabled(true)
+cmo.setRedirectStdoutToServerLogEnabled(true)
+cmo.setStdoutLogStack(true)
+EOF
+    fi
 
     cat <<EOF >>$wlsDomainPath/add-server.py
 cmo.setArguments(arguments)
@@ -520,8 +568,7 @@ function importAADCertificate()
 
 #main script starts here
 
-CURR_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-export BASE_DIR="$(readlink -f ${CURR_DIR})"
+export SCRIPT_PWD=`pwd`
 
 # store arguments in a special array 
 args=("$@") 
@@ -534,7 +581,7 @@ for (( i=0;i<$ELEMENTS;i++)); do
     echo "ARG[${args[${i}]}]"
 done
 
-if [ $# -ne 15 ]
+if [ $# -ne 22 ]
 then
     usage
     exit 1
@@ -543,23 +590,27 @@ fi
 export wlsDomainName=$1
 export wlsUserName=$2
 export wlsPassword=$3
-export managedServerName=$4
-export wlsAdminURL=$5
-export oracleHome=${6}
-export wlsDomainPath=${7}
-export storageAccountName=${8}
-export storageAccountKey=${9}
-export mountpointPath=${10}
-export wlsADSSLCer="${11}"
-export wlsLDAPPublicIP="${12}"
-export adServerHost="${13}"
-export vituralMachinePassword="${14}"
-export appGWHostName=${15}
+export managedServerPrefix=$4
+export serverIndex=$5
+export wlsAdminURL=$6
+export oracleHome=$7
+export wlsDomainPath=$8
+export storageAccountName=$9
+export storageAccountKey=${10}
+export mountpointPath=${11}
+export wlsADSSLCer="${12}"
+export wlsLDAPPublicIP="${13}"
+export adServerHost="${14}"
+export vituralMachinePassword="${15}"
+export appGWHostName=${16}
+export enableELK=${17}
+export elasticURI=${18}
+export elasticUserName=${19}
+export elasticPassword=${20}
+export logsToIntegrate=${21}
+export logIndex=${22}
 
 export enableAAD="false"
-
-validateInput
-
 export wlsAdminPort=7001
 export wlsManagedPort=8001
 export wlsClusterName="cluster1"
@@ -568,12 +619,13 @@ export nmPort=5556
 export channelPort=8501
 export AppGWHttpPort=80
 export AppGWHttpsPort=443
-export WEBLOGIC_DEPLOY_TOOL=https://github.com/oracle/weblogic-deploy-tooling/releases/download/weblogic-deploy-tooling-1.1.1/weblogic-deploy.zip
+export WEBLOGIC_DEPLOY_TOOL=https://github.com/oracle/weblogic-deploy-tooling/releases/download/weblogic-deploy-tooling-1.8.1/weblogic-deploy.zip
 export username="oracle"
 export groupname="oracle"
 
-export SCRIPT_PWD=`pwd`
+chmod ugo+x ${SCRIPT_PWD}/elkIntegration.sh
 
+validateInput
 cleanup
 installUtilities
 mountFileShare
@@ -583,8 +635,30 @@ if [ "$enableAAD" == "true" ];then
     parseLDAPCertificate
     importAADCertificate
 fi
+
 create_managedSetup
 create_nodemanager_service
 enabledAndStartNodeManagerService
 start_managed
+
+echo "enable ELK? ${enableELK}"
+if [[ "${enableELK,,}" == "true" ]];then
+    echo "Set up ELK..."
+    ${SCRIPT_PWD}/elkIntegration.sh \
+        ${oracleHome} \
+        ${wlsAdminURL} \
+        ${wlsUserName} \
+        ${wlsPassword} \
+        "admin" \
+        ${elasticURI} \
+        ${elasticUserName} \
+        ${elasticPassword} \
+        ${wlsDomainName} \
+        ${wlsDomainPath}/${wlsDomainName} \
+        ${logsToIntegrate} \
+        ${serverIndex} \
+        ${logIndex} \
+        ${managedServerPrefix}
+fi
+
 cleanup
