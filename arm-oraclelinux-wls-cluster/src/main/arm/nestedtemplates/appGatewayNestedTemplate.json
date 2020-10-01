@@ -132,9 +132,9 @@
 	},
 	"resources": [
 		{
-			"apiVersion": "2019-10-01",
-			"name": "${cluster.appgateway.start}",
 			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "${azure.apiVersion}",
+			"name": "${cluster.appgateway.start}",
 			"properties": {
 				"mode": "Incremental",
 				"template": {
@@ -147,7 +147,7 @@
 		},
 		{
 			"type": "Microsoft.Network/publicIPAddresses",
-			"apiVersion": "2019-11-01",
+			"apiVersion": "${azure.apiVersion}",
 			"name": "[parameters('gatewayPublicIPAddressName')]",
 			"sku": {
 				"name": "Standard"
@@ -162,7 +162,7 @@
 		},
 		{
 			"type": "Microsoft.Network/applicationGateways",
-			"apiVersion": "2019-06-01",
+			"apiVersion": "${azure.apiVersion}",
 			"name": "[variables('name_appGateway')]",
 			"location": "[parameters('location')]",
 			"dependsOn": [
@@ -352,8 +352,8 @@
 		},
 		{
 			"type": "Microsoft.Compute/virtualMachines/extensions",
+			"apiVersion": "${azure.apiVersion}",
 			"name": "[concat(parameters('adminVMName'),'/newuserscript')]",
-			"apiVersion": "2019-07-01",
 			"location": "[parameters('location')]",
 			"dependsOn": [
 				"[resourceId('Microsoft.Network/applicationGateways', variables('name_appGateway'))]"
@@ -374,9 +374,9 @@
 			}
 		},
 		{
-			"apiVersion": "2019-10-01",
-			"name": "${cluster.appgateway.end}",
 			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "${azure.apiVersion}",
+			"name": "${cluster.appgateway.end}",
 			"dependsOn": [
                 "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('adminVMName'), 'newuserscript')]"
             ],
