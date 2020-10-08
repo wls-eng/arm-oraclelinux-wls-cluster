@@ -125,15 +125,5 @@
 			 "sourceAddressPrefix": "Internet"
 			}
 		}
-	],
-	"outputs": {
-		"nsg": {
-			"type": "string",
-			"value": "[resourceId('Microsoft.Network/networkSecurityGroups').name]"
-		},
-		"subnet" : {
-			"type": "string",
-			"value": "[resourceId('Microsoft.Network/virtualNetworks').name]"
-		}
-	}
+	]
 }
