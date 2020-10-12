@@ -92,6 +92,13 @@
             "description": "If enable is true, must specify all the properties of elkSettings. logsToIntegrate must be value of an array."
          }
       },
+      "enableCoherence": {
+            "defaultValue": false,
+            "type": "bool",
+            "metadata": {
+                "description": "If true, create Coherence Cluster with data tier for caches."
+            }
+        },
       "guidValue": {
          "type": "string",
          "defaultValue": "[newGuid()]"
@@ -608,7 +615,7 @@
                ]
             },
             "protectedSettings": {
-               "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ',parameters('wlsDomainName'),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',parameters('managedServerPrefix'),' ', copyIndex(parameters('numberOfExistingNodes')),' ', parameters('adminURL'),' ',variables('const_wlsHome'),' ',variables('const_wlsDomainPath'),' ',parameters('storageAccountName'), ' ', listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-04-01').keys[0].value,' ', variables('const_mountPointPath'),' ', if(parameters('aadsSettings').enable, parameters('aadsSettings').certificateBase64String, 'null'),' ',if(parameters('aadsSettings').enable, parameters('aadsSettings').publicIP, 'null'),' ', if(parameters('aadsSettings').enable, parameters('aadsSettings').serverHost, 'null'),' ', parameters('adminPasswordOrKey'), ' ', if(parameters('appGatewaySettings').enable, reference(resourceId('Microsoft.Network/publicIPAddresses', parameters('appGatewaySettings').publicIPName),'2019-11-01').dnsSettings.fqdn, 'null'), ' ',parameters('elkSettings').enable, ' ', concat(parameters('elkSettings').elasticsearchURI,':',parameters('elkSettings').elasticsearchPort),' ', parameters('elkSettings').elasticsearchUserName,' ', parameters('elkSettings').elasticsearchPassword, ' ', array.join(parameters('elkSettings').logsToIntegrate), ' ',parameters('elkSettings').logIndex)]"
+               "commandToExecute": "[concat('sh',' ',variables('name_scriptFile'),' ',parameters('wlsDomainName'),' ',parameters('wlsUserName'),' ',parameters('wlsPassword'),' ',parameters('managedServerPrefix'),' ', copyIndex(parameters('numberOfExistingNodes')),' ', parameters('adminURL'),' ',variables('const_wlsHome'),' ',variables('const_wlsDomainPath'),' ',parameters('storageAccountName'), ' ', listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2019-04-01').keys[0].value,' ', variables('const_mountPointPath'),' ', if(parameters('aadsSettings').enable, parameters('aadsSettings').certificateBase64String, 'null'),' ',if(parameters('aadsSettings').enable, parameters('aadsSettings').publicIP, 'null'),' ', if(parameters('aadsSettings').enable, parameters('aadsSettings').serverHost, 'null'),' ', parameters('adminPasswordOrKey'), ' ', if(parameters('appGatewaySettings').enable, reference(resourceId('Microsoft.Network/publicIPAddresses', parameters('appGatewaySettings').publicIPName),'2019-11-01').dnsSettings.fqdn, 'null'), ' ',parameters('elkSettings').enable, ' ', concat(parameters('elkSettings').elasticsearchURI,':',parameters('elkSettings').elasticsearchPort),' ', parameters('elkSettings').elasticsearchUserName,' ', parameters('elkSettings').elasticsearchPassword, ' ', array.join(parameters('elkSettings').logsToIntegrate), ' ',parameters('elkSettings').logIndex, ' ', parameters('enableCoherence'))]"
             }
          }
       },

@@ -623,6 +623,10 @@
         "wlsDomainLocation": {
             "type": "string",
             "value": "[concat('/u01/domains/', parameters('wlsDomainName'))]"
+        },
+        "storageAccountName": {
+            "type": "string",
+            "value": "[variables('name_storageAccount')]"
         }
     }
 }

@@ -474,6 +474,13 @@ function updateNetworkRules()
         echo "update network rules for managed server"
         sudo firewall-cmd --zone=public --add-port=$wlsManagedPort/tcp
         sudo firewall-cmd --zone=public --add-port=$nmPort/tcp
+
+        # open ports for coherence
+        sudo firewall-cmd --zone=public --add-port=$coherenceListenPort/tcp
+        sudo firewall-cmd --zone=public --add-port=$coherenceListenPort/udp
+        sudo firewall-cmd --zone=public --add-port=$coherenceLocalport-$coherenceLocalportAdjust/tcp
+        sudo firewall-cmd --zone=public --add-port=$coherenceLocalport-$coherenceLocalportAdjust/udp
+        sudo firewall-cmd --zone=public --add-port=7/tcp
     fi
 
     sudo firewall-cmd --runtime-to-permanent
@@ -591,6 +598,9 @@ export stopWebLogicScript="${DOMAIN_PATH}/${wlsDomainName}/bin/customStopWebLogi
 
 validateInput
 
+export coherenceListenPort=7574
+export coherenceLocalport=42000
+export coherenceLocalportAdjust=42200
 export wlsAdminPort=7001
 export wlsSSLAdminPort=7002
 export wlsManagedPort=8001
