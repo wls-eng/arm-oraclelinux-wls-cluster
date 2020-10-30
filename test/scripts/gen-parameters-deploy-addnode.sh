@@ -16,6 +16,9 @@ gitUserName=${12}
 testbranchName=${13}
 managedServerPrefix=${14}
 
+# do not include admin node.
+numberOfExistingNodes=$((numberOfExistingNodes - 1))
+
 cat <<EOF > ${parametersPath}
 {
      "adminPasswordOrKey":{
