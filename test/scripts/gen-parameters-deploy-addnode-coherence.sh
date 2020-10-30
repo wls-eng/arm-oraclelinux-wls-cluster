@@ -3,9 +3,9 @@
 
 parametersPath=$1
 adminPasswordOrKey=$2
-adminURL=$3
+adminVMName=$3
 adminUsername=$4
-numberOfExistingNodes=$5
+numberOfExistingCacheNodes=$5
 skuUrnVersion=$6
 storageAccountName=${7}
 wlsDomainName=${8}
@@ -21,19 +21,16 @@ cat <<EOF > ${parametersPath}
      "adminPasswordOrKey":{
         "value": "${adminPasswordOrKey}"
       },
-      "adminURL": {
-        "value": "${adminURL}"
+      "adminVMName": {
+        "value": "${adminVMName}"
       },
       "adminUsername": {
         "value": "${adminUsername}"
       },
-      "enableCoherence": {
-        "value": true
+      "numberOfExistingCacheNodes": {
+        "value": ${numberOfExistingCacheNodes}
       },
-      "numberOfExistingNodes": {
-        "value": ${numberOfExistingNodes}
-      },
-      "numberOfNewNodes": {
+      "numberOfNewCacheNodes": {
         "value": 1
       },
       "location": {
@@ -55,7 +52,7 @@ cat <<EOF > ${parametersPath}
         "value": "${wlsUserName}"
       },
       "_artifactsLocation":{
-        "value": "https://raw.githubusercontent.com/${gitUserName}/arm-oraclelinux-wls-cluster/${testbranchName}/addnode/src/main/"
+        "value": "https://raw.githubusercontent.com/${gitUserName}/arm-oraclelinux-wls-cluster/${testbranchName}/addnode-coherence/src/main/"
       },
       "managedServerPrefix": {
         "value": "${managedServerPrefix}"
