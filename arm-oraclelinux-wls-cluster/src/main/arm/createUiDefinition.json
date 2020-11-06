@@ -526,8 +526,7 @@
                                     "required": true,
                                     "regex": "(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]",
                                     "validationMessage": "The value must be a valid host name."
-                                },
-                                "required": true
+                                }
                             },
                             {
                                 "name": "aadsPublicIP",
@@ -538,8 +537,7 @@
                                     "required": true,
                                     "regex": "\\b((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\\.|$)){4}\\b",
                                     "validationMessage": "The value must be a valid IP address."
-                                },
-                                "required": true
+                                }
                             },
                             {
                                 "name": "aadsPortNumber",
@@ -551,8 +549,7 @@
                                     "required": true,
                                     "regex": "^[0-9]+$",
                                     "validationMessage": "The value must be numbers."
-                                },
-                                "required": true
+                                }
                             },
                             {
                                 "name": "wlsLDAPProviderName",
@@ -564,8 +561,7 @@
                                     "required": true,
                                     "regex": "^[a-z0-9A-Z]{3,50}$",
                                     "validationMessage": "The Provider Name must be between 3 and 50 characters long and contain letters, numbers only."
-                                },
-                                "required": true
+                                }
                             },
                             {
                                 "name": "wlsLDAPPrincipal",
@@ -576,8 +572,7 @@
                                     "required": true,
                                     "regex": ".+,dc|DC=([^,]+),dc|DC=([^,]+)$",
                                     "validationMessage": "The value must be valid LDAP user distinguished name."
-                                },
-                                "required": true
+                                }
                             },
                             {
                                 "name": "wlsLDAPPrincipalPassword",
@@ -589,8 +584,7 @@
                                 "toolTip": "The credential (usually a password) used to connect to the LDAP server.",
                                 "constraints": {
                                     "required": true
-                                },
-                                "required": true
+                                }
                             },
                             {
                                 "name": "wlsLDAPUserBaseDN",
@@ -601,8 +595,7 @@
                                     "required": true,
                                     "regex": ".+,dc|DC=([^,]+),dc|DC=([^,]+)$",
                                     "validationMessage": "The value must be valid LDAP user based distinguished name."
-                                },
-                                "required": true
+                                }
                             },
                             {
                                 "name": "wlsLDAPGroupBaseDN",
@@ -613,8 +606,7 @@
                                     "required": true,
                                     "regex": ".+,dc|DC=([^,]+),dc|DC=([^,]+)$",
                                     "validationMessage": "The value must be valid LDAP group based distinguished name."
-                                },
-                                "required": true
+                                }
                             },
                             {
                                 "name": "wlsLDAPSSLCertificate",
@@ -627,11 +619,9 @@
                                 },
                                 "options": {
                                     "multiple": false,
-                                    "uploadMode": "binary",
-                                    "openMode": "binary",
-                                    "encoding": "base64"
-                                },
-                                "required": true
+                                    "uploadMode": "file",
+                                    "openMode": "binary"
+                                }
                             }
                         ],
                         "visible": "[bool(steps('section_aad').enableAAD)]"
