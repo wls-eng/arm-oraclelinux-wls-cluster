@@ -96,25 +96,18 @@
                 "description": "DNS for ApplicationGateway"
             }
         },
+        "elasticsearchEndpoint": {
+            "type": "string",
+            "defaultValue": "",
+            "metadata": {
+                "description": "Endpoint of the Elasticsearch instance."
+            }
+        },
         "elasticsearchPassword": {
             "type": "securestring",
             "defaultValue": "[newGuid()]",
             "metadata": {
                 "description": "The credentials to distribute message to Elasticsearch instance with REST API."
-            }
-        },
-        "elasticsearchPort": {
-            "type": "string",
-            "defaultValue": "9243",
-            "metadata": {
-                "description": "Port of the Elasticsearch instance."
-            }
-        },
-        "elasticsearchURI": {
-            "type": "string",
-            "defaultValue": "",
-            "metadata": {
-                "description": "Host name of the Elasticsearch instance."
             }
         },
         "elasticsearchUserName": {
@@ -625,14 +618,11 @@
                "adminVMName": {
                   "value": "[parameters('adminVMName')]"
                },
+               "elasticsearchEndpoint": {
+                  "value": "[parameters('elasticsearchEndpoint')]"
+               },
                "elasticsearchPassword": {
                   "value": "[parameters('elasticsearchPassword')]"
-               },
-               "elasticsearchPort": {
-                  "value": "[parameters('elasticsearchPort')]"
-               },
-               "elasticsearchURI": {
-                  "value": "[parameters('elasticsearchURI')]"
                },
                "elasticsearchUserName": {
                   "value": "[parameters('elasticsearchUserName')]"
@@ -646,8 +636,8 @@
                "managedServerPrefix": {
                    "value": "[parameters('managedServerPrefix')]"
                },
-               "numberOfInstances": {
-                   "value": "[parameters('numberOfInstances')]"
+               "numberOfManagedApplicationInstances": {
+                   "value": "[add(parameters('numberOfInstances'),-1)]"
                },
                "wlsDomainName": {
                   "value": "[parameters('wlsDomainName')]"

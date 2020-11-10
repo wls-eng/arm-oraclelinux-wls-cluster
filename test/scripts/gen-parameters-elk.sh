@@ -24,10 +24,7 @@ cat <<EOF >${parametersPath}
         "elasticsearchPassword": {
             "value": "GEN-UNIQUE"
         },
-        "elasticsearchPort": {
-            "value": "GEN-UNIQUE"
-        },
-        "elasticsearchURI": {
+        "elasticsearchEndpoint": {
             "value": "GEN-UNIQUE"
         },
         "elasticsearchUserName": {
@@ -44,9 +41,6 @@ cat <<EOF >${parametersPath}
         },
         "enableELK": {
             "value": true
-        },
-        "numberOfInstances": {
-            "value": 4
         },
         "wlsPassword": {
             "value": "GEN-UNIQUE"

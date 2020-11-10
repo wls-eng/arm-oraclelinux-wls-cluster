@@ -15,11 +15,7 @@ gitUserName=${11}
 testbranchName=${12}
 managedServerPrefix=${13}
 
-elasticsearchPort=${elasticsearchURI#*:}
-elasticsearchURI=${elasticsearchURI%%:*}
-echo "elasticsearchPort: ${elasticsearchPort}"
-echo "elasticsearchURI: ${elasticsearchURI}"
-
+numberOfInstances=$((numberOfInstances-1))
 
 cat <<EOF > ${parametersPath}
 {
@@ -29,10 +25,7 @@ cat <<EOF > ${parametersPath}
       "elasticsearchPassword": {
         "value": "elasticsearchPassword"
       },
-      "elasticsearchPort": {
-        "value": "${elasticsearchPort}"
-      },
-      "elasticsearchURI": {
+      "elasticsearchEndpoint": {
         "value": "${elasticsearchURI}"
       },
       "elasticsearchUserName": {
@@ -41,7 +34,7 @@ cat <<EOF > ${parametersPath}
       "location": {
         "value": "${location}"
       },
-      "numberOfInstances": {
+      "numberOfManagedApplicationInstances": {
         "value": ${numberOfInstances}
       },
       "wlsDomainName": {
