@@ -112,7 +112,7 @@
         },
         "elasticsearchUserName": {
             "type": "string",
-            "defaultValue": "",
+            "defaultValue": "elastic",
             "metadata": {
                 "description": "The credentials to distribute message to Elasticsearch instance with REST API."
             }
@@ -211,7 +211,7 @@
         "logsToIntegrate": {
             "type": "array",
             "defaultValue": [ "HTTPAccessLog", "ServerLog", "DomainLog", "DataSourceLog", "StandardErrorAndOutput", "NodeManagerLog" ],
-            "allowedValues": [ "HTTPAccessLog", "ServerLog", "DomainLog", "DataSourceLog", "StandardErrorAndOutput","NodeManagerLog" ],
+            "allowedValues": [ "HTTPAccessLog", "ServerLog", "DomainLog", "DataSourceLog", "StandardErrorAndOutput", "NodeManagerLog" ],
             "metadata": {
                 "description": "Specify the expeted logs to integrate, you must input at least one log."
             }
@@ -626,62 +626,61 @@
             }
         },
         {
-         "name": "elkLinkedTemplate",
-         "type": "Microsoft.Resources/deployments",
-         "dependsOn": [
-            "[resourceId('Microsoft.Resources/deployments', 'aadLinkedTemplate')]"
-         ],
-         "apiVersion": "2019-10-01",
-         "condition": "[parameters('enableELK')]",
-         "properties": {
-            "mode": "Incremental",
-            "templateLink": {
-               "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/', variables('name_elkLinkedTemplateName')))]",
-               "contentVersion": "1.0.0.0"
-            },
-            "parameters": {
-               "_artifactsLocation": {
-                  "value": "[parameters('_artifactsLocation')]"
-               },
-               "_artifactsLocationSasToken": {
-                  "value": "[parameters('_artifactsLocationSasToken')]"
-               },
-               "adminVMName": {
-                  "value": "[parameters('adminVMName')]"
-               },
-               "elasticsearchEndpoint": {
-                  "value": "[parameters('elasticsearchEndpoint')]"
-               },
-               "elasticsearchPassword": {
-                  "value": "[parameters('elasticsearchPassword')]"
-               },
-               "elasticsearchUserName": {
-                  "value": "[parameters('elasticsearchUserName')]"
-               },
-               "location": {
-                  "value": "[parameters('location')]"
-               },
-               "logsToIntegrate": {
-                  "value": "[parameters('logsToIntegrate')]"
-               },
-               "managedServerPrefix": {
-                   "value": "[parameters('managedServerPrefix')]"
-               },
-               "numberOfManagedApplicationInstances": {
-                   "value": "[add(parameters('numberOfInstances'),-1)]"
-               },
-               "wlsDomainName": {
-                  "value": "[parameters('wlsDomainName')]"
-               },
-               "wlsPassword": {
-                  "value": "[parameters('wlsPassword')]"
-               },
-               "wlsUserName": {
-                  "value": "[parameters('wlsUserName')]"
-               }
+            "name": "elkLinkedTemplate",
+            "type": "Microsoft.Resources/deployments",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'aadLinkedTemplate')]"
+            ],
+            "apiVersion": "${azure.apiVersion}",
+            "condition": "[parameters('enableELK')]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/', variables('name_elkLinkedTemplateName')))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    },
+                    "adminVMName": {
+                        "value": "[parameters('adminVMName')]"
+                    },
+                    "elasticsearchEndpoint": {
+                        "value": "[parameters('elasticsearchEndpoint')]"
+                    },
+                    "elasticsearchPassword": {
+                        "value": "[parameters('elasticsearchPassword')]"
+                    },
+                    "elasticsearchUserName": {
+                        "value": "[parameters('elasticsearchUserName')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "logsToIntegrate": {
+                        "value": "[parameters('logsToIntegrate')]"
+                    },
+                    "managedServerPrefix": {
+                        "value": "[parameters('managedServerPrefix')]"
+                    },
+                    "numberOfManagedApplicationInstances": {
+                        "value": "[add(parameters('numberOfInstances'),-1)]"
+                    },
+                    "wlsDomainName": {
+                        "value": "[parameters('wlsDomainName')]"
+                    },
+                    "wlsPassword": {
+                        "value": "[parameters('wlsPassword')]"
+                    },
+                    "wlsUserName": {
+                        "value": "[parameters('wlsUserName')]"
+                    }
+                }
             }
-         }
-      },
         },
         {
             "name": "coherenceTemplate",
@@ -716,11 +715,29 @@
                     "dnsLabelPrefix": {
                         "value": "[parameters('dnsLabelPrefix')]"
                     },
+                    "elasticsearchEndpoint": {
+                        "value": "[parameters('elasticsearchEndpoint')]"
+                    },
+                    "elasticsearchPassword": {
+                        "value": "[parameters('elasticsearchPassword')]"
+                    },
+                    "elasticsearchUserName": {
+                        "value": "[parameters('elasticsearchUserName')]"
+                    },
                     "enableCoherenceWebLocalStorage": {
                         "value": "[parameters('enableCoherenceWebLocalStorage')]"
                     },
+                    "enableELK": {
+                        "value": "[parameters('enableELK')]"
+                    },
                     "location": {
                         "value": "[parameters('location')]"
+                    },
+                    "logIndex": {
+                        "value": "[if(parameters('enableELK'), reference('elkLinkedTemplate', '${azure.apiVersion}').outputs.logIndex.value, '')]"
+                    },
+                    "logsToIntegrate": {
+                        "value": "[parameters('logsToIntegrate')]"
                     },
                     "managedServerPrefix": {
                         "value": "[parameters('managedServerPrefix')]"
