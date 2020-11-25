@@ -112,7 +112,7 @@
         },
         "elasticsearchUserName": {
             "type": "string",
-            "defaultValue": "",
+            "defaultValue": "elastic",
             "metadata": {
                 "description": "The credentials to distribute message to Elasticsearch instance with REST API."
             }
@@ -129,6 +129,20 @@
             "type": "bool",
             "metadata": {
                 "description": "If true, deploy an Azure App Gateway in front of the nodes of the cluster"
+            }
+        },
+        "enableCoherence": {
+            "defaultValue": false,
+            "type": "bool",
+            "metadata": {
+                "description": "If true, create Coherence Cluster with data tier for caches."
+            }
+        },
+        "enableCoherenceWebLocalStorage": {
+            "defaultValue": true,
+            "type": "bool",
+            "metadata": {
+                "description": "Specifies whether Local Storage is enabled for the Coherence*Web cluster tier."
             }
         },
         "enableDB": {
@@ -197,7 +211,7 @@
         "logsToIntegrate": {
             "type": "array",
             "defaultValue": [ "HTTPAccessLog", "ServerLog", "DomainLog", "DataSourceLog", "StandardErrorAndOutput", "NodeManagerLog" ],
-            "allowedValues": [ "HTTPAccessLog", "ServerLog", "DomainLog", "DataSourceLog", "StandardErrorAndOutput","NodeManagerLog" ],
+            "allowedValues": [ "HTTPAccessLog", "ServerLog", "DomainLog", "DataSourceLog", "StandardErrorAndOutput", "NodeManagerLog" ],
             "metadata": {
                 "description": "Specify the expeted logs to integrate, you must input at least one log."
             }
@@ -216,6 +230,15 @@
             "maxValue": 5,
             "metadata": {
                 "description": "Number of VMs to deploy, limit 5 since this sample is using a single storage account"
+            }
+        },
+        "numberOfCoherenceCacheInstances": {
+            "defaultValue": 1,
+            "type": "int",
+            "minValue": 1,
+            "maxValue": 10,
+            "metadata": {
+                "description": "Number of Coherence cache instances, used to create Virtual Machines and Managed Server for storage."
             }
         },
         "portsToExpose": {
@@ -251,6 +274,13 @@
             "type": "string",
             "metadata": {
                 "description": "Select appropriate VM Size as per requirement"
+            }
+        },
+        "vmSizeSelectForCoherence": {
+            "defaultValue": "Standard_A3",
+            "type": "string",
+            "metadata": {
+                "description": "Select appropriate VM Size for Coherence"
             }
         },
         "wlsDomainName": {
@@ -322,11 +352,12 @@
         "name_clusterLinkedTemplateName": "clusterTemplate.json",
         "name_dbLinkedTemplateName": "dbTemplate.json",
         "name_keyVaultLinkedTemplateName": "appGatewayNestedTemplate.json",
-        "name_elkLinkedTemplateName": "elkNestedTemplate.json"
+        "name_elkLinkedTemplateName": "elkNestedTemplate.json",
+        "name_coherenceTemplateName": "coherenceTemplate.json"
     },
     "resources": [
         {
-            "apiVersion": "2019-10-01",
+            "apiVersion": "${azure.apiVersion}",
             "name": "${cluster.start}",
             "type": "Microsoft.Resources/deployments",
             "properties": {
@@ -341,7 +372,7 @@
         },
         {
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2019-10-01",
+            "apiVersion": "${azure.apiVersion}",
             "name": "clusterLinkedTemplate",
             "properties": {
                 "mode": "Incremental",
@@ -403,7 +434,7 @@
         },
         {
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2019-10-01",
+            "apiVersion": "${azure.apiVersion}",
             "name": "keyVaultLinkedAppGatewayTemplate",
             "condition": "[parameters('enableAppGateway')]",
             "properties": {
@@ -470,7 +501,7 @@
         },
         {
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2019-10-01",
+            "apiVersion": "${azure.apiVersion}",
             "name": "dbLinkedTemplate",
             "condition": "[parameters('enableDB')]",
             "dependsOn": [
@@ -525,7 +556,7 @@
             "dependsOn": [
                 "[resourceId('Microsoft.Resources/deployments', 'dbLinkedTemplate')]"
             ],
-            "apiVersion": "2019-10-01",
+            "apiVersion": "${azure.apiVersion}",
             "condition": "[parameters('enableAAD')]",
             "properties": {
                 "mode": "Incremental",
@@ -595,71 +626,159 @@
             }
         },
         {
-         "name": "elkLinkedTemplate",
-         "type": "Microsoft.Resources/deployments",
-         "dependsOn": [
-            "[resourceId('Microsoft.Resources/deployments', 'aadLinkedTemplate')]"
-         ],
-         "apiVersion": "2019-10-01",
-         "condition": "[parameters('enableELK')]",
-         "properties": {
-            "mode": "Incremental",
-            "templateLink": {
-               "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/', variables('name_elkLinkedTemplateName')))]",
-               "contentVersion": "1.0.0.0"
-            },
-            "parameters": {
-               "_artifactsLocation": {
-                  "value": "[parameters('_artifactsLocation')]"
-               },
-               "_artifactsLocationSasToken": {
-                  "value": "[parameters('_artifactsLocationSasToken')]"
-               },
-               "adminVMName": {
-                  "value": "[parameters('adminVMName')]"
-               },
-               "elasticsearchEndpoint": {
-                  "value": "[parameters('elasticsearchEndpoint')]"
-               },
-               "elasticsearchPassword": {
-                  "value": "[parameters('elasticsearchPassword')]"
-               },
-               "elasticsearchUserName": {
-                  "value": "[parameters('elasticsearchUserName')]"
-               },
-               "location": {
-                  "value": "[parameters('location')]"
-               },
-               "logsToIntegrate": {
-                  "value": "[parameters('logsToIntegrate')]"
-               },
-               "managedServerPrefix": {
-                   "value": "[parameters('managedServerPrefix')]"
-               },
-               "numberOfManagedApplicationInstances": {
-                   "value": "[add(parameters('numberOfInstances'),-1)]"
-               },
-               "wlsDomainName": {
-                  "value": "[parameters('wlsDomainName')]"
-               },
-               "wlsPassword": {
-                  "value": "[parameters('wlsPassword')]"
-               },
-               "wlsUserName": {
-                  "value": "[parameters('wlsUserName')]"
-               }
+            "name": "elkLinkedTemplate",
+            "type": "Microsoft.Resources/deployments",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'aadLinkedTemplate')]"
+            ],
+            "apiVersion": "${azure.apiVersion}",
+            "condition": "[parameters('enableELK')]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/', variables('name_elkLinkedTemplateName')))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    },
+                    "adminVMName": {
+                        "value": "[parameters('adminVMName')]"
+                    },
+                    "elasticsearchEndpoint": {
+                        "value": "[parameters('elasticsearchEndpoint')]"
+                    },
+                    "elasticsearchPassword": {
+                        "value": "[parameters('elasticsearchPassword')]"
+                    },
+                    "elasticsearchUserName": {
+                        "value": "[parameters('elasticsearchUserName')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "logsToIntegrate": {
+                        "value": "[parameters('logsToIntegrate')]"
+                    },
+                    "managedServerPrefix": {
+                        "value": "[parameters('managedServerPrefix')]"
+                    },
+                    "numberOfManagedApplicationInstances": {
+                        "value": "[add(parameters('numberOfInstances'),-1)]"
+                    },
+                    "wlsDomainName": {
+                        "value": "[parameters('wlsDomainName')]"
+                    },
+                    "wlsPassword": {
+                        "value": "[parameters('wlsPassword')]"
+                    },
+                    "wlsUserName": {
+                        "value": "[parameters('wlsUserName')]"
+                    }
+                }
             }
-         }
-      },
+        },
         {
-            "apiVersion": "2019-10-01",
+            "name": "coherenceTemplate",
+            "type": "Microsoft.Resources/deployments",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'elkLinkedTemplate')]"
+            ],
+            "apiVersion": "${azure.apiVersion}",
+            "condition": "[parameters('enableCoherence')]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/', variables('name_coherenceTemplateName')))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "_artifactsLocation": {
+                        "value": "[parameters('_artifactsLocation')]"
+                    },
+                    "_artifactsLocationSasToken": {
+                        "value": "[parameters('_artifactsLocationSasToken')]"
+                    },
+                    "adminPasswordOrKey": {
+                        "value": "[parameters('adminPasswordOrKey')]"
+                    },
+                    "adminUsername": {
+                        "value": "[parameters('adminUsername')]"
+                    },
+                    "adminVMName": {
+                        "value": "[parameters('adminVMName')]"
+                    },
+                    "dnsLabelPrefix": {
+                        "value": "[parameters('dnsLabelPrefix')]"
+                    },
+                    "elasticsearchEndpoint": {
+                        "value": "[parameters('elasticsearchEndpoint')]"
+                    },
+                    "elasticsearchPassword": {
+                        "value": "[parameters('elasticsearchPassword')]"
+                    },
+                    "elasticsearchUserName": {
+                        "value": "[parameters('elasticsearchUserName')]"
+                    },
+                    "enableCoherenceWebLocalStorage": {
+                        "value": "[parameters('enableCoherenceWebLocalStorage')]"
+                    },
+                    "enableELK": {
+                        "value": "[parameters('enableELK')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "logIndex": {
+                        "value": "[if(parameters('enableELK'), reference('elkLinkedTemplate', '${azure.apiVersion}').outputs.logIndex.value, '')]"
+                    },
+                    "logsToIntegrate": {
+                        "value": "[parameters('logsToIntegrate')]"
+                    },
+                    "managedServerPrefix": {
+                        "value": "[parameters('managedServerPrefix')]"
+                    },
+                    "numberOfCoherenceCacheInstances": {
+                        "value": "[parameters('numberOfCoherenceCacheInstances')]"
+                    },
+                    "skuUrnVersion": {
+                        "value": "[parameters('skuUrnVersion')]"
+                    },
+                    "storageAccountName": {
+                        "value": "[reference('clusterLinkedTemplate', '${azure.apiVersion}').outputs.storageAccountName.value]"
+                    },
+                    "usePreviewImage": {
+                        "value": "[parameters('usePreviewImage')]"
+                    },
+                    "vmSizeSelectForCoherence": {
+                        "value": "[parameters('vmSizeSelectForCoherence')]"
+                    },
+                    "wlsDomainName": {
+                        "value": "[parameters('wlsDomainName')]"
+                    },
+                    "wlsPassword": {
+                        "value": "[parameters('wlsPassword')]"
+                    },
+                    "wlsUserName": {
+                        "value": "[parameters('wlsUserName')]"
+                    }
+                }
+            }
+        },
+        {
+            "apiVersion": "${azure.apiVersion}",
             "name": "${cluster.end}",
             "type": "Microsoft.Resources/deployments",
             "dependsOn": [
                 "[resourceId('Microsoft.Resources/deployments', 'aadLinkedTemplate')]",
                 "[resourceId('Microsoft.Resources/deployments', 'clusterLinkedTemplate')]",
                 "[resourceId('Microsoft.Resources/deployments', 'keyVaultLinkedAppGatewayTemplate')]",
-                "[resourceId('Microsoft.Resources/deployments', 'elkLinkedTemplate')]"
+                "[resourceId('Microsoft.Resources/deployments', 'elkLinkedTemplate')]",
+                "[resourceId('Microsoft.Resources/deployments', 'coherenceTemplate')]"
             ],
             "properties": {
                 "mode": "Incremental",
@@ -675,27 +794,27 @@
     "outputs": {
         "wlsDomainLocation": {
             "type": "string",
-            "value": "[reference('clusterLinkedTemplate', '2019-10-01').outputs.wlsDomainLocation.value]"
+            "value": "[reference('clusterLinkedTemplate', '${azure.apiVersion}').outputs.wlsDomainLocation.value]"
         },
         "adminHostName": {
             "type": "string",
-            "value": "[reference('clusterLinkedTemplate', '2019-10-01').outputs.adminHostName.value]"
+            "value": "[reference('clusterLinkedTemplate', '${azure.apiVersion}').outputs.adminHostName.value]"
         },
         "adminConsole": {
             "type": "string",
-            "value": "[reference('clusterLinkedTemplate', '2019-10-01').outputs.adminConsole.value]"
+            "value": "[reference('clusterLinkedTemplate', '${azure.apiVersion}').outputs.adminConsole.value]"
         },
         "adminSecuredConsole": {
             "type": "string",
-            "value": "[reference('clusterLinkedTemplate', '2019-10-01').outputs.adminSecuredConsole.value]"
+            "value": "[reference('clusterLinkedTemplate', '${azure.apiVersion}').outputs.adminSecuredConsole.value]"
         },
         "appGatewayURL": {
             "type": "string",
-            "value": "[if(parameters('enableAppGateway'), reference('keyVaultLinkedAppGatewayTemplate', '2019-10-01').outputs.appGatewayURL.value, '')]"
+            "value": "[if(parameters('enableAppGateway'), reference('keyVaultLinkedAppGatewayTemplate', '${azure.apiVersion}').outputs.appGatewayURL.value, '')]"
         },
         "logIndex": {
-         "type": "string",
-         "value": "[if(parameters('enableELK'), reference('elkLinkedTemplate', '2019-10-01').outputs.logIndex.value, '')]"
-      }
+            "type": "string",
+            "value": "[if(parameters('enableELK'), reference('elkLinkedTemplate', '${azure.apiVersion}').outputs.logIndex.value, '')]"
+        }
     }
 }

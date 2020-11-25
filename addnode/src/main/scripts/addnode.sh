@@ -9,7 +9,7 @@ function echo_stderr ()
 #Function to display usage message
 function usage()
 {
-  echo_stderr "./addnode.sh <wlsDomainName> <wlsUserName> <wlsPassword> <managedServerPrefix> <serverIndex> <wlsAdminURL> <oracleHome> <wlsDomainPath> <storageAccountName> <storageAccountKey> <mountpointPath> <wlsADSSLCer> <wlsLDAPPublicIP> <adServerHost> <vituralMachinePassword> <appGWHostName> <enableELK> <elasticURI> <elasticUserName> <elasticPassword> <logsToIntegrate> <logIndex>"
+  echo_stderr "./addnode.sh <wlsDomainName> <wlsUserName> <wlsPassword> <managedServerPrefix> <serverIndex> <wlsAdminURL> <oracleHome> <wlsDomainPath> <storageAccountName> <storageAccountKey> <mountpointPath> <wlsADSSLCer> <wlsLDAPPublicIP> <adServerHost> <vituralMachinePassword> <appGWHostName> <enableELK> <elasticURI> <elasticUserName> <elasticPassword> <logsToIntegrate> <logIndex> <enableCoherence>"
 }
 
 function installUtilities()
@@ -139,6 +139,11 @@ function validateInput()
     then
         echo_stderr "logIndex is required. "
     fi
+    
+    if [ -z "$enableCoherence" ];
+    then
+        echo_stderr "enableCoherence is required. "
+    fi
 }
 
 #Function to cleanup all temporary files
@@ -265,17 +270,15 @@ EOF
     java8Status=$?
     if [ "${java8Status}" == "0" ]; then
     cat <<EOF >>$wlsDomainPath/add-server.py
-cd('/Servers/$wlsServerName//ServerStart/$wlsServerName')
 arguments = '-Dweblogic.Name=$wlsServerName  -Dweblogic.management.server=http://$wlsAdminURL -Djdk.tls.client.protocols=TLSv1.2'
 EOF
 else
     cat <<EOF >>$wlsDomainPath/add-server.py
-cd('/Servers/$wlsServerName//ServerStart/$wlsServerName')
 arguments = '-Dweblogic.Name=$wlsServerName  -Dweblogic.management.server=http://$wlsAdminURL'
 EOF
     fi
 
-    if [ "${enableELK}" == "true" ]; then
+    if [[ "${enableELK,,}" == "true" ]]; then
     cat <<EOF >>$wlsDomainPath/add-server.py
 cd('/Servers/$wlsServerName/WebServer/$wlsServerName/WebServerLog/$wlsServerName')
 cmo.setLogFileFormat('extended')
@@ -288,7 +291,14 @@ cmo.setStdoutLogStack(true)
 EOF
     fi
 
+    if [[ "${enableCoherence,,}" == "true" ]]; then
+        cat <<EOF >>$wlsDomainPath/add-server.py
+arguments = arguments + ' -Dcoherence.localport=$coherenceLocalport -Dcoherence.localport.adjust=$coherenceLocalportAdjust'
+EOF
+    fi
+
     cat <<EOF >>$wlsDomainPath/add-server.py
+cd('/Servers/$wlsServerName//ServerStart/$wlsServerName')
 cmo.setArguments(arguments)
 save()
 resolve()
@@ -461,6 +471,13 @@ function updateNetworkRules()
         echo "update network rules for managed server"
         sudo firewall-cmd --zone=public --add-port=$wlsManagedPort/tcp
         sudo firewall-cmd --zone=public --add-port=$nmPort/tcp
+
+        # open ports for coherence
+        sudo firewall-cmd --zone=public --add-port=$coherenceListenPort/tcp
+        sudo firewall-cmd --zone=public --add-port=$coherenceListenPort/udp
+        sudo firewall-cmd --zone=public --add-port=$coherenceLocalport-$coherenceLocalportAdjust/tcp
+        sudo firewall-cmd --zone=public --add-port=$coherenceLocalport-$coherenceLocalportAdjust/udp
+        sudo firewall-cmd --zone=public --add-port=7/tcp
     fi
 
     sudo firewall-cmd --runtime-to-permanent
@@ -581,7 +598,7 @@ for (( i=0;i<$ELEMENTS;i++)); do
     echo "ARG[${args[${i}]}]"
 done
 
-if [ $# -ne 22 ]
+if [ $# -ne 23 ]
 then
     usage
     exit 1
@@ -609,7 +626,11 @@ export elasticUserName=${19}
 export elasticPassword=${20}
 export logsToIntegrate=${21}
 export logIndex=${22}
+export enableCoherence=${23}
 
+export coherenceListenPort=7574
+export coherenceLocalport=42000
+export coherenceLocalportAdjust=42200
 export enableAAD="false"
 export wlsAdminPort=7001
 export wlsManagedPort=8001

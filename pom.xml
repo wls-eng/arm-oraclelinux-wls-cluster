@@ -51,6 +51,7 @@
 
     <modules>
       <module>addnode</module>
+      <module>addnode-coherence</module>
       <module>deletenode</module>
       <module>arm-oraclelinux-wls-cluster</module>
     </modules>

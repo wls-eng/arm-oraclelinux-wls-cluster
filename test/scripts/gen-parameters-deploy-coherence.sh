@@ -1,41 +1,41 @@
 #!/bin/bash
-#Generate parameters with value for deploying elk template independently
+#Generate parameters with value for deploying coherence template independently
 
 parametersPath=$1
 adminVMName=$2
-elasticsearchPassword=$3
-elasticsearchURI=$4
-elasticsearchUserName=$5
-location=$6
-numberOfInstances=$7
-wlsDomainName=$8
-wlsusername=$9
-wlspassword=${10}
-gitUserName=${11}
-testbranchName=${12}
-managedServerPrefix=${13}
-
-numberOfInstances=$((numberOfInstances-1))
+adminPasswordOrKey=$3
+skuUrnVersion=$4
+location=$5
+storageAccountName=$6
+wlsDomainName=$7
+wlsusername=$8
+wlspassword=$9
+gitUserName=${10}
+testbranchName=${11}
+managedServerPrefix=${12}
 
 cat <<EOF > ${parametersPath}
 {
      "adminVMName":{
         "value": "${adminVMName}"
       },
-      "elasticsearchPassword": {
-        "value": "${elasticsearchPassword}"
+      "adminPasswordOrKey": {
+        "value": "${adminPasswordOrKey}"
       },
-      "elasticsearchEndpoint": {
-        "value": "${elasticsearchURI}"
+      "enableCoherenceWebLocalStorage": {
+        "value": true
       },
-      "elasticsearchUserName": {
-        "value": "${elasticsearchUserName}"
+      "numberOfCoherenceCacheInstances": {
+        "value": 1
+      },
+      "skuUrnVersion": {
+        "value": "${skuUrnVersion}"
       },
       "location": {
         "value": "${location}"
       },
-      "numberOfManagedApplicationInstances": {
-        "value": ${numberOfInstances}
+      "storageAccountName": {
+        "value": "${storageAccountName}"
       },
       "wlsDomainName": {
         "value": "${wlsDomainName}"

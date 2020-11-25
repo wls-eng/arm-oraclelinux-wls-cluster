@@ -16,10 +16,10 @@ cat <<EOF > ${parametersPath}
         "value": "${adminVMName}"
       },
       "deletingManagedServerNames": {
-        "value": ["${managedServerPrefix}2"]
+        "value": ["${managedServerPrefix}2","${managedServerPrefix}Storage2"]
       },
       "deletingManagedServerMachineNames": {
-        "value": ["${managedServerPrefix}VM2"]
+        "value": ["${managedServerPrefix}VM2","${managedServerPrefix}StorageVM2"]
       },
       "location": {
         "value": "${location}"
