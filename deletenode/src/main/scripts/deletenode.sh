@@ -55,8 +55,7 @@ function validateInput()
 function cleanup()
 {
     echo "Cleaning up temporary files..."
-    rm -f delete-server.py
-    rm -f delete-machine.py
+    rm -f -r ${scriptPath}
     echo "Cleanup completed."
 }
 
@@ -64,7 +63,7 @@ function cleanup()
 function delete_machine_model()
 {
     echo "Deleting managed server name model for $managedServerNames"
-    cat <<EOF >delete-server.py
+    cat <<EOF >${scriptPath}/delete-server.py
 connect('$wlsUserName','$wlsPassword','t3://$wlsAdminURL')
 try:
     edit()
@@ -75,7 +74,7 @@ arrServerNames=$(echo $managedServerNames | tr "," "\n")
 for server in $arrServerNames
 do
     echo "deleting name model for $server"
-    cat <<EOF >>delete-server.py
+    cat <<EOF >>${scriptPath}/delete-server.py
     shutdown('$server', 'Server',ignoreSessions='true',force='$wlsForceShutDown')
     editService.getConfigurationManager().removeReferencesToBean(getMBean('/MigratableTargets/$server (migratable)'))
     cd('/')
@@ -89,7 +88,7 @@ do
 EOF
 done
 
-cat <<EOF >>delete-server.py
+cat <<EOF >>${scriptPath}/delete-server.py
     save()
     activate()
 except:
@@ -104,7 +103,7 @@ EOF
 function delete_ms_server_model()
 {
     echo "Deleting managed server machine name model for $managedVMNames"
-    cat <<EOF >delete-machine.py
+    cat <<EOF >${scriptPath}/delete-machine.py
 connect('$wlsUserName','$wlsPassword','t3://$wlsAdminURL')
 try:
     edit()
@@ -115,13 +114,13 @@ EOF
     for machine in $arrServerMachineNames
     do
     echo "deleting name model for $machine"
-    cat <<EOF >>delete-machine.py
+    cat <<EOF >>${scriptPath}/delete-machine.py
     editService.getConfigurationManager().removeReferencesToBean(getMBean('/Machines/$machine'))
     cmo.destroyMachine(getMBean('/Machines/$machine'))
 EOF
     done
 
-    cat <<EOF >>delete-machine.py
+    cat <<EOF >>${scriptPath}/delete-machine.py
     save()
     activate()
 except:
@@ -162,10 +161,9 @@ function wait_for_admin()
 
 function delete_managed_server()
 {
-    . $oracleHome/oracle_common/common/bin/setWlstEnv.sh
-
     echo "Start to delete managed server $managedServerNames"
-    java $WLST_ARGS weblogic.WLST delete-server.py
+    sudo chown -R oracle:oracle ${scriptPath}
+    runuser -l oracle -c ". $oracleHome/oracle_common/common/bin/setWlstEnv.sh; java $WLST_ARGS weblogic.WLST ${scriptPath}/delete-server.py"
     if [[ $? != 0 ]]; then
             echo "Error : Deleting server $managedServerNames failed"
             exit 1
@@ -173,12 +171,20 @@ function delete_managed_server()
     echo "Complete deleting managed server $managedServerNames"
 
     echo "Start to delete managed server machine $managedServerNames"
-    java $WLST_ARGS weblogic.WLST delete-machine.py
+    runuser -l oracle -c ". $oracleHome/oracle_common/common/bin/setWlstEnv.sh; java $WLST_ARGS weblogic.WLST ${scriptPath}/delete-machine.py"
     if [[ $? != 0 ]]; then
             echo "Error : Deleting machine for managed server $managedServerNames failed"
             exit 1
     fi
     echo "Complete deleting managed server machine $managedServerNames"
+}
+
+function createTempFolder()
+{
+    export scriptPath="/u01/tmp"
+    sudo rm -f -r ${scriptPath}
+    sudo mkdir ${scriptPath}
+    sudo rm -rf $scriptPath/*
 }
 
 #main script starts here
@@ -200,9 +206,9 @@ export oracleHome=$8
 export wlsAdminURL=$wlsAdminHost:$wlsAdminPort
 export hostName=`hostname`
 
-validateInput
+createTempFolder
 
-cleanup
+validateInput
 
 wait_for_admin
 
