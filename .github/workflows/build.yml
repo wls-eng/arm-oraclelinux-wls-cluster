@@ -25,6 +25,7 @@ env:
   numberOfInstances: 2
   refArmttk: 8e08a92dbb0a22b8560ec854a60e9a8a7b71c68f
   refJavaee: 6807e2ae3e8a8492edf211b9f4f0b7ed3a2a29e7
+  repoName: arm-oraclelinux-wls-cluster
   resourceGroupForDependency: wlsd-${{ github.run_id }}-${{ github.run_number }}
   resourceGroupPrefix: ${{ github.run_id }}-${{ github.run_number }}
   testbranchName: cicd-${{ github.run_id }}-${{ github.run_number }}
@@ -52,44 +53,44 @@ jobs:
           repository: Azure/arm-ttk
           path: arm-ttk
           ref: ${{ env.refArmttk }}
-      - name: Checkout arm-oraclelinux-wls-cluster
+      - name: Checkout ${{ env.repoName }}
         uses: actions/checkout@v2
         with:
-          path: arm-oraclelinux-wls-cluster
+          path: ${{ env.repoName }}
       - name: Set up JDK 1.8
         uses: actions/setup-java@v1
         with:
           java-version: 1.8
       - name: Build azure-javaee-iaas
         run: mvn -DskipTests clean install --file azure-javaee-iaas/pom.xml
-      - name: Build and test arm-oraclelinux-wls-cluster
-        run: mvn -Ptemplate-validation-tests clean install --file arm-oraclelinux-wls-cluster/pom.xml
+      - name: Build and test ${{ env.repoName }}
+        run: mvn -Ptemplate-validation-tests clean install --file ${{ env.repoName }}/pom.xml
 
-      - name: Checkout arm-oraclelinux-wls-cluster for test
+      - name: Checkout ${{ env.repoName }} for test
         uses: actions/checkout@v2
         with:
-          path: arm-oraclelinux-wls-cluster-dev
+          path: ${{ env.repoName }}-dev
       - name: Create a new branch with development pids in nestedtemplates
         run: |
           current=`pwd`
           echo "current=${current}" >> $GITHUB_ENV
-          cd arm-oraclelinux-wls-cluster-dev/arm-oraclelinux-wls-cluster/src/main/arm/nestedtemplates
+          cd ${{ env.repoName }}-dev/${{ env.repoName }}/src/main/arm/nestedtemplates
           git config --global core.longpaths true
           git config --global user.email $userEmail
           git config --global user.name $userName
-          echo "debug: edburns: grep pid $current/arm-oraclelinux-wls-cluster/arm-oraclelinux-wls-cluster/target/arm/nestedtemplates/clusterTemplate.json"
-          grep pid $current/arm-oraclelinux-wls-cluster/arm-oraclelinux-wls-cluster/target/arm/nestedtemplates/clusterTemplate.json
+          echo "debug: edburns: grep pid $current/${{ env.repoName }}/${{ env.repoName }}/target/arm/nestedtemplates/clusterTemplate.json"
+          grep pid $current/${{ env.repoName }}/${{ env.repoName }}/target/arm/nestedtemplates/clusterTemplate.json
           echo "create branch $testbranchName"
           git checkout -b $testbranchName
-          rm -r -f $current/arm-oraclelinux-wls-cluster-dev/arm-oraclelinux-wls-cluster/src/main/arm/nestedtemplates/*
-          cp -r -f $current/arm-oraclelinux-wls-cluster/arm-oraclelinux-wls-cluster/target/arm/nestedtemplates/* $current/arm-oraclelinux-wls-cluster-dev/arm-oraclelinux-wls-cluster/src/main/arm/nestedtemplates/
-          echo "debug: edburns: grep pid $current/arm-oraclelinux-wls-cluster-dev/arm-oraclelinux-wls-cluster/src/main/arm/nestedtemplates/clusterTemplate.json"
-          grep pid $current/arm-oraclelinux-wls-cluster-dev/arm-oraclelinux-wls-cluster/src/main/arm/nestedtemplates/clusterTemplate.json
+          rm -r -f $current/${{ env.repoName }}-dev/${{ env.repoName }}/src/main/arm/nestedtemplates/*
+          cp -r -f $current/${{ env.repoName }}/${{ env.repoName }}/target/arm/nestedtemplates/* $current/${{ env.repoName }}-dev/${{ env.repoName }}/src/main/arm/nestedtemplates/
+          echo "debug: edburns: grep pid $current/${{ env.repoName }}-dev/${{ env.repoName }}/src/main/arm/nestedtemplates/clusterTemplate.json"
+          grep pid $current/${{ env.repoName }}-dev/${{ env.repoName }}/src/main/arm/nestedtemplates/clusterTemplate.json
           echo "debug: edburns: pwd $PWD"
           pwd
           git status
           git commit -a -m "hard code pids"
-          git push https://$gitToken@github.com/$userName/arm-oraclelinux-wls-cluster.git -f
+          git push https://$gitToken@github.com/$userName/${{ env.repoName }}.git -f
 
       - uses: azure/login@v1
         id: azure-login
@@ -98,20 +99,20 @@ jobs:
       - name: Validate deployment templates for different combinations of service integration
         id: validate-deployment-templates
         run: |
-          bash arm-oraclelinux-wls-cluster/test/scripts/verify-deployments.sh \
+          bash ${{ env.repoName }}/test/scripts/verify-deployments.sh \
             ${{ github.run_id }}${{ github.run_number }} ${location} \
-            arm-oraclelinux-wls-cluster/arm-oraclelinux-wls-cluster/target/arm/mainTemplate.json \
-            ${userName} ${testbranchName} arm-oraclelinux-wls-cluster/test/scripts
+            ${{ env.repoName }}/${{ env.repoName }}/target/arm/mainTemplate.json \
+            ${userName} ${testbranchName} ${{ env.repoName }}/test/scripts
 
       - name: Generate artifact file name and path
         id: artifact_file
         run: |
-          version=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' arm-oraclelinux-wls-cluster/arm-oraclelinux-wls-cluster/pom.xml)
-          artifactName=arm-oraclelinux-wls-cluster-$version-arm-assembly
-          unzip arm-oraclelinux-wls-cluster/arm-oraclelinux-wls-cluster/target/$artifactName.zip -d arm-oraclelinux-wls-cluster/arm-oraclelinux-wls-cluster/target/$artifactName
+          version=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' ${{ env.repoName }}/${{ env.repoName }}/pom.xml)
+          artifactName=${{ env.repoName }}-$version-arm-assembly
+          unzip ${{ env.repoName }}/${{ env.repoName }}/target/$artifactName.zip -d ${{ env.repoName }}/${{ env.repoName }}/target/$artifactName
           echo "##[set-output name=artifactName;]${artifactName}"
-          echo "##[set-output name=artifactPath;]arm-oraclelinux-wls-cluster/arm-oraclelinux-wls-cluster/target/$artifactName"
-      - name: Archive arm-oraclelinux-wls-cluster template
+          echo "##[set-output name=artifactPath;]${{ env.repoName }}/${{ env.repoName }}/target/$artifactName"
+      - name: Archive ${{ env.repoName }} template
         uses: actions/upload-artifact@v1
         if: success()
         with:
@@ -121,12 +122,12 @@ jobs:
       - name: Generate addnode artifact file name and path
         id: addnode_artifact_file
         run: |
-          addnode_version=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' arm-oraclelinux-wls-cluster/addnode/pom.xml)
-          addnode_artifactName=arm-oraclelinux-wls-cluster-addnode-$addnode_version-arm-assembly
-          unzip arm-oraclelinux-wls-cluster/addnode/target/$addnode_artifactName.zip -d arm-oraclelinux-wls-cluster/addnode/target/$addnode_artifactName
+          addnode_version=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' ${{ env.repoName }}/addnode/pom.xml)
+          addnode_artifactName=${{ env.repoName }}-addnode-$addnode_version-arm-assembly
+          unzip ${{ env.repoName }}/addnode/target/$addnode_artifactName.zip -d ${{ env.repoName }}/addnode/target/$addnode_artifactName
           echo "##[set-output name=addnode_artifactName;]${addnode_artifactName}"
-          echo "##[set-output name=addnode_artifactPath;]arm-oraclelinux-wls-cluster/addnode/target/$addnode_artifactName"
-      - name: Archive arm-oraclelinux-wls-cluster addnode template
+          echo "##[set-output name=addnode_artifactPath;]${{ env.repoName }}/addnode/target/$addnode_artifactName"
+      - name: Archive ${{ env.repoName }} addnode template
         uses: actions/upload-artifact@v1
         if: success()
         with:
@@ -136,13 +137,13 @@ jobs:
       - name: Generate delete node artifact file name and path
         id: deletenode_artifact_file
         run: |
-          deletenode_version=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' arm-oraclelinux-wls-cluster/deletenode/pom.xml)
-          deletenode_artifactName=arm-oraclelinux-wls-cluster-deletenode-$deletenode_version-arm-assembly
-          unzip arm-oraclelinux-wls-cluster/deletenode/target/$deletenode_artifactName.zip -d arm-oraclelinux-wls-cluster/deletenode/target/$deletenode_artifactName
+          deletenode_version=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' ${{ env.repoName }}/deletenode/pom.xml)
+          deletenode_artifactName=${{ env.repoName }}-deletenode-$deletenode_version-arm-assembly
+          unzip ${{ env.repoName }}/deletenode/target/$deletenode_artifactName.zip -d ${{ env.repoName }}/deletenode/target/$deletenode_artifactName
           echo "##[set-output name=deletenode_artifactName;]${deletenode_artifactName}"
-          echo "##[set-output name=deletenode_artifactPath;]arm-oraclelinux-wls-cluster/deletenode/target/$deletenode_artifactName"
+          echo "##[set-output name=deletenode_artifactPath;]${{ env.repoName }}/deletenode/target/$deletenode_artifactName"
 
-      - name: Archive arm-oraclelinux-wls-cluster deletenode template
+      - name: Archive ${{ env.repoName }} deletenode template
         uses: actions/upload-artifact@v1
         if: success()
         with:
@@ -152,13 +153,13 @@ jobs:
       - name: Generate addnode-coherence artifact file name and path
         id: addnode_coherence_artifact_file
         run: |
-          addnode_coherence_version=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' arm-oraclelinux-wls-cluster/addnode-coherence/pom.xml)
-          addnode_coherence_artifactName=arm-oraclelinux-wls-cluster-addnode-coherence-$addnode_coherence_version-arm-assembly
-          unzip arm-oraclelinux-wls-cluster/addnode-coherence/target/$addnode_coherence_artifactName.zip -d arm-oraclelinux-wls-cluster/addnode-coherence/target/$addnode_coherence_artifactName
+          addnode_coherence_version=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' ${{ env.repoName }}/addnode-coherence/pom.xml)
+          addnode_coherence_artifactName=${{ env.repoName }}-addnode-coherence-$addnode_coherence_version-arm-assembly
+          unzip ${{ env.repoName }}/addnode-coherence/target/$addnode_coherence_artifactName.zip -d ${{ env.repoName }}/addnode-coherence/target/$addnode_coherence_artifactName
           echo "##[set-output name=addnode_coherence_artifactName;]${addnode_coherence_artifactName}"
-          echo "##[set-output name=addnode_coherence_artifactPath;]arm-oraclelinux-wls-cluster/addnode-coherence/target/$addnode_coherence_artifactName"
+          echo "##[set-output name=addnode_coherence_artifactPath;]${{ env.repoName }}/addnode-coherence/target/$addnode_coherence_artifactName"
 
-      - name: Archive arm-oraclelinux-wls-cluster addnode-coherence template
+      - name: Archive ${{ env.repoName }} addnode-coherence template
         uses: actions/upload-artifact@v1
         if: success()
         with:
@@ -223,19 +224,19 @@ jobs:
             "owls-141100-11_07-ol76;Oracle:weblogic-141100-jdk11_07-ol76:owls-141100-11_07-ol7;latest",
           ]
     steps:
-      - name: Checkout arm-oraclelinux-wls-cluster
+      - name: Checkout ${{ env.repoName }}
         uses: actions/checkout@v2
         with:
-          path: arm-oraclelinux-wls-cluster
-      - name: Get version information from arm-oraclelinux-wls-cluster/pom.xml
+          path: ${{ env.repoName }}
+      - name: Get version information from ${{ env.repoName }}/pom.xml
         id: version
         run: |
-          version=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' arm-oraclelinux-wls-cluster/arm-oraclelinux-wls-cluster/pom.xml)
+          version=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' ${{ env.repoName }}/${{ env.repoName }}/pom.xml)
           echo "version=${version}" >> $GITHUB_ENV
       - name: Output artifact name for Download action
         id: artifact_file
         run: |
-          artifactName=arm-oraclelinux-wls-cluster-$version-arm-assembly
+          artifactName=${{ env.repoName }}-$version-arm-assembly
           echo "artifactName=${artifactName}" >> $GITHUB_ENV
           echo "##[set-output name=artifactName;]${artifactName}"
       - name: Download artifact for deployment
@@ -280,17 +281,17 @@ jobs:
            s/#skuUrnVersion#/${{ matrix.images }}/g; \
            s/#testbranchName#/$testbranchName/g; \
            s/#gitUserName#/$userName/g" \
-            arm-oraclelinux-wls-cluster/test/data/parameters-test.json
+            ${{ env.repoName }}/test/data/parameters-test.json
 
           sed -i "s/#adminPasswordOrKey#/$wlsPassword/g" \
-          arm-oraclelinux-wls-cluster/test/scripts/verify-wls-path.sh
+          ${{ env.repoName }}/test/scripts/verify-wls-path.sh
 
           sed -i "s/#adminVMName#/$adminVMName/g; \
           s/#adminPasswordOrKey#/$wlsPassword/g; \
           s/#managedServers#/$managedServers/g; \
           s/#wlsUserName#/$wlsUserName/g; \
           s/#wlspassword#/$wlsPassword/g" \
-          arm-oraclelinux-wls-cluster/test/scripts/verify-servers-lifecycle.sh
+          ${{ env.repoName }}/test/scripts/verify-servers-lifecycle.sh
 
       - name: Accept Image Terms
         id: accept-terms
@@ -314,7 +315,7 @@ jobs:
               --verbose \
               --resource-group $resourceGroup \
               --name wls-cluster-node \
-              --parameters @arm-oraclelinux-wls-cluster/test/data/parameters-test.json \
+              --parameters @${{ env.repoName }}/test/data/parameters-test.json \
               --template-file ${artifactName}/mainTemplate.json
 
       - name: Verify Network Security Group
@@ -426,7 +427,7 @@ jobs:
           echo "pubilc IP of wls machine: ${wlsPublicIP}"
           echo "Verifying Weblgic server installation"
           timeout 6m sh -c 'until nc -zv $0 $1; do echo "nc rc: $?"; sleep 5; done' ${wlsPublicIP} 22
-          sshpass -p ${wlsPassword} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt weblogic@${wlsPublicIP} 'bash -s' < arm-oraclelinux-wls-cluster/test/scripts/verify-wls-path.sh
+          sshpass -p ${wlsPassword} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt weblogic@${wlsPublicIP} 'bash -s' < ${{ env.repoName }}/test/scripts/verify-wls-path.sh
       
       # Fix failure that caused by remote server closed.
       - name: Restart remote SSH agent
@@ -443,7 +444,7 @@ jobs:
         id: veriy-admin-service
         run: |
           echo "Verifying WebLogic services at admin server"
-          sshpass -p ${wlsPassword} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt weblogic@${wlsPublicIP} 'bash -s' < arm-oraclelinux-wls-cluster/test/scripts/verify-services.sh $wls_admin_services
+          sshpass -p ${wlsPassword} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt weblogic@${wlsPublicIP} 'bash -s' < ${{ env.repoName }}/test/scripts/verify-services.sh $wls_admin_services
       
       # Fix failure that caused by remote server closed.
       - name: Restart remote SSH agent
@@ -460,13 +461,13 @@ jobs:
         id: veriy-msservice
         run: |
           echo "Verifying WebLogic services at managed server"
-          sshpass -p ${wlsPassword} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt weblogic@${ms1PublicIP} 'bash -s' < arm-oraclelinux-wls-cluster/test/scripts/verify-services.sh $wls_managedServer_services
+          sshpass -p ${wlsPassword} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt weblogic@${ms1PublicIP} 'bash -s' < ${{ env.repoName }}/test/scripts/verify-services.sh $wls_managedServer_services
 
       - name: Verify WebLogic Server Access
         id: verify-wls-access
         run: |
           echo "Verifying Weblogic Server Access"
-          bash arm-oraclelinux-wls-cluster/test/scripts/verify-wls-access.sh "$wlsPublicIP" ${adminConsolePort} $wlsUserName $wlsPassword "$managedServers"
+          bash ${{ env.repoName }}/test/scripts/verify-wls-access.sh "$wlsPublicIP" ${adminConsolePort} $wlsUserName $wlsPassword "$managedServers"
 
       # Fix failure that caused by remote server closed.
       - name: Restart remote SSH agent
@@ -483,7 +484,7 @@ jobs:
         id: verify-server-lifecycle
         run: |
           echo "Verifying Weblogic managed server lifecycle"
-          sshpass -p ${wlsPassword} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt weblogic@${wlsPublicIP} 'bash -s' < arm-oraclelinux-wls-cluster/test/scripts/verify-servers-lifecycle.sh
+          sshpass -p ${wlsPassword} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt weblogic@${wlsPublicIP} 'bash -s' < ${{ env.repoName }}/test/scripts/verify-servers-lifecycle.sh
 
       - name: Deploy DB Template to Connect to Azure Postgresql Database
         id: enable-postgresql-db
@@ -492,8 +493,8 @@ jobs:
           azcliversion: ${{ env.azCliVersion }}
           inlineScript: |
             # Generate parameters for db template deployment
-            bash arm-oraclelinux-wls-cluster/test/scripts/gen-parameters-deploy-db.sh \
-            arm-oraclelinux-wls-cluster/test/scripts/ \
+            bash ${{ env.repoName }}/test/scripts/gen-parameters-deploy-db.sh \
+            ${{ env.repoName }}/test/scripts/ \
             ${{ env.adminVMName }} \
             ${{ env.wlsPassword}} \
             ${{ env.dbName }} \
@@ -507,7 +508,7 @@ jobs:
             --verbose \
             --resource-group ${resourceGroup} \
             --name db \
-            --parameters @arm-oraclelinux-wls-cluster/test/scripts/parameters-deploy-db.json \
+            --parameters @${{ env.repoName }}/test/scripts/parameters-deploy-db.json \
             --template-file ${artifactName}/nestedtemplates/dbTemplate.json
 
       - name: Generate Application Gateway Certificate
@@ -526,8 +527,8 @@ jobs:
           azcliversion: ${{ env.azCliVersion }}
           inlineScript: |
             # Generate parameters for application gateway template deployment
-            bash arm-oraclelinux-wls-cluster/test/scripts/gen-parameters-deploy-agw.sh \
-            arm-oraclelinux-wls-cluster/test/scripts/parameters-deploy-agw.json \
+            bash ${{ env.repoName }}/test/scripts/gen-parameters-deploy-agw.sh \
+            ${{ env.repoName }}/test/scripts/parameters-deploy-agw.json \
             ${{ env.userName }} \
             ${{ env.testbranchName }} \
             ${{ env.adminVMName }} \
@@ -544,7 +545,7 @@ jobs:
             --debug \
             --resource-group ${resourceGroup} \
             --name agw \
-            --parameters @arm-oraclelinux-wls-cluster/test/scripts/parameters-deploy-agw.json \
+            --parameters @${{ env.repoName }}/test/scripts/parameters-deploy-agw.json \
             --template-file ${artifactName}/nestedtemplates/appGatewayNestedTemplate.json
 
       - name: Set up ELK by deploying sub template
@@ -554,8 +555,8 @@ jobs:
           azcliversion: ${{ env.azCliVersion }}
           inlineScript: |
             # Generate parameters for ELK template deployment
-            bash arm-oraclelinux-wls-cluster/test/scripts/gen-parameters-deploy-elk.sh \
-            arm-oraclelinux-wls-cluster/test/scripts/parameters-deploy-elk.json \
+            bash ${{ env.repoName }}/test/scripts/gen-parameters-deploy-elk.sh \
+            ${{ env.repoName }}/test/scripts/parameters-deploy-elk.json \
             ${{ env.adminVMName }} \
             ${{ env.elkPassword }} \
             ${{ env.elkURI }} \
@@ -574,7 +575,7 @@ jobs:
             --debug \
             --resource-group ${resourceGroup} \
             --name elk \
-            --parameters @arm-oraclelinux-wls-cluster/test/scripts/parameters-deploy-elk.json \
+            --parameters @${{ env.repoName }}/test/scripts/parameters-deploy-elk.json \
             --template-file ${artifactName}/nestedtemplates/elkNestedTemplate.json
 
       - name: Get storage account name
@@ -592,8 +593,8 @@ jobs:
           azcliversion: ${{ env.azCliVersion }}
           inlineScript: |
             # Generate parameters for Coherence template deployment
-            bash arm-oraclelinux-wls-cluster/test/scripts/gen-parameters-deploy-coherence.sh \
-            arm-oraclelinux-wls-cluster/test/scripts/parameters-deploy-coherence.json \
+            bash ${{ env.repoName }}/test/scripts/gen-parameters-deploy-coherence.sh \
+            ${{ env.repoName }}/test/scripts/parameters-deploy-coherence.json \
             ${{ env.adminVMName }} \
             ${{ env.wlsPassword }} \
             "${{ matrix.images }}" \
@@ -611,14 +612,14 @@ jobs:
             --debug \
             --resource-group ${resourceGroup} \
             --name coherence \
-            --parameters @arm-oraclelinux-wls-cluster/test/scripts/parameters-deploy-coherence.json \
+            --parameters @${{ env.repoName }}/test/scripts/parameters-deploy-coherence.json \
             --template-file ${artifactName}/nestedtemplates/coherenceTemplate.json
 
       - name: Output addnode artifact name
         id: artifact_file_addnode
         run: |
-          addnodeVersion=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' arm-oraclelinux-wls-cluster/addnode/pom.xml)
-          artifactNameOfAddnode=arm-oraclelinux-wls-cluster-addnode-$addnodeVersion-arm-assembly
+          addnodeVersion=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' ${{ env.repoName }}/addnode/pom.xml)
+          artifactNameOfAddnode=${{ env.repoName }}-addnode-$addnodeVersion-arm-assembly
           echo "artifactNameOfAddnode=${artifactNameOfAddnode}" >> $GITHUB_ENV
           echo "##[set-output name=artifactNameOfAddnode;]${artifactNameOfAddnode}"
       - name: Download artifact for deployment
@@ -634,8 +635,8 @@ jobs:
           inlineScript: |
             echo "add two new nodes and enable app gateway"
             echo "generate add-node parameters"
-            bash arm-oraclelinux-wls-cluster/test/scripts/gen-parameters-deploy-addnode.sh \
-            arm-oraclelinux-wls-cluster/test/scripts/parameters-deploy-addnode.json \
+            bash ${{ env.repoName }}/test/scripts/gen-parameters-deploy-addnode.sh \
+            ${{ env.repoName }}/test/scripts/parameters-deploy-addnode.json \
               ${{ env.wlsPassword }} \
               ${{ env.adminVMName }}:${adminConsolePort} \
               weblogic \
@@ -653,13 +654,13 @@ jobs:
             az group deployment validate \
               -g ${resourceGroup} \
               -f ${artifactNameOfAddnode}/mainTemplate.json \
-              -p @arm-oraclelinux-wls-cluster/test/scripts/parameters-deploy-addnode.json \
+              -p @${{ env.repoName }}/test/scripts/parameters-deploy-addnode.json \
               --no-prompt
             az group deployment create \
               --debug \
               --resource-group ${resourceGroup} \
               --name addnode \
-              --parameters @arm-oraclelinux-wls-cluster/test/scripts/parameters-deploy-addnode.json \
+              --parameters @${{ env.repoName }}/test/scripts/parameters-deploy-addnode.json \
               --template-file ${artifactNameOfAddnode}/mainTemplate.json
       - name: Verify new nodes
         id: verify-new-nodes
@@ -673,8 +674,8 @@ jobs:
       - name: Output addnode-coherence artifact name
         id: artifact_file_addnode_coherence
         run: |
-          addnodeCoherenceVersion=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' arm-oraclelinux-wls-cluster/addnode-coherence/pom.xml)
-          artifactNameOfAddnodeCo=arm-oraclelinux-wls-cluster-addnode-coherence-$addnodeCoherenceVersion-arm-assembly
+          addnodeCoherenceVersion=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' ${{ env.repoName }}/addnode-coherence/pom.xml)
+          artifactNameOfAddnodeCo=${{ env.repoName }}-addnode-coherence-$addnodeCoherenceVersion-arm-assembly
           echo "artifactNameOfAddnodeCo=${artifactNameOfAddnodeCo}" >> $GITHUB_ENV
           echo "##[set-output name=artifactNameOfAddnodeCo;]${artifactNameOfAddnodeCo}"
       - name: Download artifact for deployment
@@ -690,8 +691,8 @@ jobs:
           inlineScript: |
             echo "add new cache server"
             echo "generate parameters"
-            bash arm-oraclelinux-wls-cluster/test/scripts/gen-parameters-deploy-addnode-coherence.sh \
-            arm-oraclelinux-wls-cluster/test/scripts/parameters-deploy-addnode-coherence.json \
+            bash ${{ env.repoName }}/test/scripts/gen-parameters-deploy-addnode-coherence.sh \
+            ${{ env.repoName }}/test/scripts/parameters-deploy-addnode-coherence.json \
               ${{ env.wlsPassword }} \
               ${{ env.adminVMName }} \
               weblogic \
@@ -709,13 +710,13 @@ jobs:
             az group deployment validate \
               -g ${resourceGroup} \
               -f ${artifactNameOfAddnodeCo}/mainTemplate.json \
-              -p @arm-oraclelinux-wls-cluster/test/scripts/parameters-deploy-addnode-coherence.json \
+              -p @${{ env.repoName }}/test/scripts/parameters-deploy-addnode-coherence.json \
               --no-prompt
             az group deployment create \
               --debug \
               --resource-group ${resourceGroup} \
               --name addnode \
-              --parameters @arm-oraclelinux-wls-cluster/test/scripts/parameters-deploy-addnode-coherence.json \
+              --parameters @${{ env.repoName }}/test/scripts/parameters-deploy-addnode-coherence.json \
               --template-file ${artifactNameOfAddnodeCo}/mainTemplate.json
       - name: Verify new nodes
         id: verify-new-nodes-coherence
@@ -729,8 +730,8 @@ jobs:
       - name: Output delete-node artifact name
         id: artifact_file_deletenode
         run: |
-          deleteNodeVersion=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' arm-oraclelinux-wls-cluster/deletenode/pom.xml)
-          artifactNameOfDeleteNode=arm-oraclelinux-wls-cluster-deletenode-$deleteNodeVersion-arm-assembly
+          deleteNodeVersion=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' ${{ env.repoName }}/deletenode/pom.xml)
+          artifactNameOfDeleteNode=${{ env.repoName }}-deletenode-$deleteNodeVersion-arm-assembly
           echo "artifactNameOfDeleteNode=${artifactNameOfDeleteNode}" >> $GITHUB_ENV
           echo "##[set-output name=artifactNameOfDeleteNode;]${artifactNameOfDeleteNode}"
       - name: Download artifact for deployment
@@ -744,8 +745,8 @@ jobs:
           azcliversion: ${{ env.azCliVersion }}
           inlineScript: |
             echo "generate delete-node parameters"
-            bash arm-oraclelinux-wls-cluster/test/scripts/gen-parameters-deploy-deletenode.sh \
-            arm-oraclelinux-wls-cluster/test/scripts/parameters-deploy-deletenode.json \
+            bash ${{ env.repoName }}/test/scripts/gen-parameters-deploy-deletenode.sh \
+            ${{ env.repoName }}/test/scripts/parameters-deploy-deletenode.json \
               ${{ env.adminVMName }} \
               ${{ env.location }} \
               ${{ env.wlsUserName }} \
@@ -758,7 +759,7 @@ jobs:
             ${artifactNameOfDeleteNode}/scripts/deletenode-cli.sh \
               -g ${resourceGroup} \
               -f ${artifactNameOfDeleteNode}/mainTemplate.json \
-              -p arm-oraclelinux-wls-cluster/test/scripts/parameters-deploy-deletenode.json \
+              -p ${{ env.repoName }}/test/scripts/parameters-deploy-deletenode.json \
               -s
       - name: Verify deleted nodes
         id: verify-deleted-nodes
@@ -784,14 +785,14 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout arm-oraclelinux-wls-cluster
+      - name: Checkout ${{ env.repoName }}
         uses: actions/checkout@v2
         with:
-          path: arm-oraclelinux-wls-cluster
+          path: ${{ env.repoName }}
       - name: Delete testing branch
         run: |
-          cd arm-oraclelinux-wls-cluster
-          git push https://$gitToken@github.com/$userName/arm-oraclelinux-wls-cluster.git -f --delete $testbranchName
+          cd ${{ env.repoName }}
+          git push https://$gitToken@github.com/$userName/${{ env.repoName }}.git -f --delete $testbranchName
 
       - uses: azure/login@v1
         id: azure-login
