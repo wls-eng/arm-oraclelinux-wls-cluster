@@ -8,6 +8,7 @@ on:
   repository_dispatch:
 
 env:
+  adminConsolePort: 7001
   adminPassword: ${{ secrets.WLS_PASSWORD }}
   adminVMName: adminServerVM
   azCliVersion: 2.6.0
@@ -102,67 +103,35 @@ jobs:
             arm-oraclelinux-wls-cluster/arm-oraclelinux-wls-cluster/target/arm/mainTemplate.json \
             ${userName} ${testbranchName} arm-oraclelinux-wls-cluster/test/scripts
 
-      - name: Get version information from arm-oraclelinux-wls-cluster/pom.xml
-        id: version
+      - name: Generate artifact file name and path
+        id: artifact_file
         run: |
           version=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' arm-oraclelinux-wls-cluster/arm-oraclelinux-wls-cluster/pom.xml)
-          echo "version=${version}" >> $GITHUB_ENV
-      - name: Print version
-        run: echo $version
-      - name: Generate artifact name
-        run: echo "artifactName=arm-oraclelinux-wls-cluster-$version-arm-assembly" >> $GITHUB_ENV
-      - name: Print artifact name
-        run: echo $artifactName
-      - name: Output artifact name
-        id: artifact_file
-        run: echo "##[set-output name=artifactName;]arm-oraclelinux-wls-cluster-$version-arm-assembly"
-      - name: Generate zip package path
-        id: artifact_path
-        run: echo "##[set-output name=artifactPath;]arm-oraclelinux-wls-cluster/arm-oraclelinux-wls-cluster/target/$artifactName"
-      - name: Output artifact path
-        run: echo $artifactPath
-        env:
-          artifactPath: ${{steps.artifact_path.outputs.artifactPath}}
-      - name: Unzip the package as upload action will zip again
-        run: unzip arm-oraclelinux-wls-cluster/arm-oraclelinux-wls-cluster/target/$artifactName.zip -d arm-oraclelinux-wls-cluster/arm-oraclelinux-wls-cluster/target/$artifactName
-
+          artifactName=arm-oraclelinux-wls-cluster-$version-arm-assembly
+          unzip arm-oraclelinux-wls-cluster/arm-oraclelinux-wls-cluster/target/$artifactName.zip -d arm-oraclelinux-wls-cluster/arm-oraclelinux-wls-cluster/target/$artifactName
+          echo "##[set-output name=artifactName;]${artifactName}"
+          echo "##[set-output name=artifactPath;]arm-oraclelinux-wls-cluster/arm-oraclelinux-wls-cluster/target/$artifactName"
       - name: Archive arm-oraclelinux-wls-cluster template
         uses: actions/upload-artifact@v1
         if: success()
         with:
           name: ${{steps.artifact_file.outputs.artifactName}}
-          path: ${{steps.artifact_path.outputs.artifactPath}}
+          path: ${{steps.artifact_file.outputs.artifactPath}}
 
-      - name: Get version information from addnode/pom.xml
-        id: addnode_version
-        run: |
-          version=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' arm-oraclelinux-wls-cluster/addnode/pom.xml)
-          echo "addnode_version=${version}" >> $GITHUB_ENV
-      - name: Print addnode template version
-        run: echo $addnode_version
-      - name: Generate addnode template artifact name
-        run: echo "addnode_artifactName=arm-oraclelinux-wls-cluster-addnode-$addnode_version-arm-assembly" >> $GITHUB_ENV
-      - name: Print addnode template artifact name
-        run: echo $addnode_artifactName
-      - name: Output addnode template artifact name
+      - name: Generate addnode artifact file name and path
         id: addnode_artifact_file
-        run: echo "##[set-output name=addnode_artifactName;]arm-oraclelinux-wls-cluster-addnode-$addnode_version-arm-assembly"
-      - name: Generate addnode template zip package path
-        id: addnode_artifact_path
-        run: echo "##[set-output name=addnode_artifactPath;]arm-oraclelinux-wls-cluster/addnode/target/$addnode_artifactName"
-      - name: Output addnode template artifact path
-        run: echo $addnode_artifactPath
-        env:
-          addnode_artifactPath: ${{steps.addnode_artifact_path.outputs.addnode_artifactPath}}
-      - name: Unzip the package as upload action will zip again
-        run: unzip arm-oraclelinux-wls-cluster/addnode/target/$addnode_artifactName.zip -d arm-oraclelinux-wls-cluster/addnode/target/$addnode_artifactName
-
+        run: |
+          addnode_version=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' arm-oraclelinux-wls-cluster/addnode/pom.xml)
+          addnode_artifactName=arm-oraclelinux-wls-cluster-addnode-$addnode_version-arm-assembly
+          unzip arm-oraclelinux-wls-cluster/addnode/target/$addnode_artifactName.zip -d arm-oraclelinux-wls-cluster/addnode/target/$addnode_artifactName
+          echo "##[set-output name=addnode_artifactName;]${addnode_artifactName}"
+          echo "##[set-output name=addnode_artifactPath;]arm-oraclelinux-wls-cluster/addnode/target/$addnode_artifactName"
       - name: Archive arm-oraclelinux-wls-cluster addnode template
         uses: actions/upload-artifact@v1
         if: success()
         with:
           name: ${{steps.addnode_artifact_file.outputs.addnode_artifactName}}
-          path: ${{steps.addnode_artifact_path.outputs.addnode_artifactPath}}
+          path: ${{steps.addnode_artifact_file.outputs.addnode_artifactPath}}
 
       - name: Generate delete node artifact file name and path
         id: deletenode_artifact_file
@@ -312,14 +281,10 @@ jobs:
            s/#testbranchName#/$testbranchName/g; \
            s/#gitUserName#/$userName/g" \
             arm-oraclelinux-wls-cluster/test/data/parameters-test.json
+
           sed -i "s/#adminPasswordOrKey#/$wlsPassword/g" \
           arm-oraclelinux-wls-cluster/test/scripts/verify-wls-path.sh
-          sed -i "s/#adminVMName#/$adminVMName/g; \
-          s/#adminPasswordOrKey#/$wlsPassword/g; \
-          s/#managedServers#/$managedServers/g; \
-          s/#wlsUserName#/$wlsUserName/g; \
-          s/#wlspassword#/$wlsPassword/g" \
-          arm-oraclelinux-wls-cluster/test/scripts/verify-wls-access.sh
+
           sed -i "s/#adminVMName#/$adminVMName/g; \
           s/#adminPasswordOrKey#/$wlsPassword/g; \
           s/#managedServers#/$managedServers/g; \
@@ -411,7 +376,7 @@ jobs:
                 --nsg-name ${nsg} \
                 --name NRMS-Rule-101 \
                 --source-address-prefixes $sourceAddressPrefixes \
-                --destination-port-ranges 443 22
+                --destination-port-ranges 443 22 ${adminConsolePort}
             fi
 
       - name: Restart wls VM
@@ -462,12 +427,34 @@ jobs:
           echo "Verifying Weblgic server installation"
           timeout 6m sh -c 'until nc -zv $0 $1; do echo "nc rc: $?"; sleep 5; done' ${wlsPublicIP} 22
           sshpass -p ${wlsPassword} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt weblogic@${wlsPublicIP} 'bash -s' < arm-oraclelinux-wls-cluster/test/scripts/verify-wls-path.sh
+      
+      # Fix failure that caused by remote server closed.
+      - name: Restart remote SSH agent
+        uses: azure/CLI@v1
+        with:
+          azcliversion: ${{ env.azCliVersion }}
+          inlineScript: |
+            echo "Restart remote SSH agent"
+            az vm user reset-ssh \
+              --resource-group $resourceGroup \
+              --name ${{ env.adminVMName }}
 
       - name: Verify wls admin services
         id: veriy-admin-service
         run: |
           echo "Verifying WebLogic services at admin server"
           sshpass -p ${wlsPassword} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt weblogic@${wlsPublicIP} 'bash -s' < arm-oraclelinux-wls-cluster/test/scripts/verify-services.sh $wls_admin_services
+      
+      # Fix failure that caused by remote server closed.
+      - name: Restart remote SSH agent
+        uses: azure/CLI@v1
+        with:
+          azcliversion: ${{ env.azCliVersion }}
+          inlineScript: |
+            echo "Restart remote SSH agent"
+            az vm user reset-ssh \
+              --resource-group $resourceGroup \
+              --name ${{ env.adminVMName }}
 
       - name: Verify wls managed server services
         id: veriy-msservice
@@ -479,7 +466,18 @@ jobs:
         id: verify-wls-access
         run: |
           echo "Verifying Weblogic Server Access"
-          sshpass -p ${wlsPassword} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt weblogic@${wlsPublicIP} 'bash -s' < arm-oraclelinux-wls-cluster/test/scripts/verify-wls-access.sh
+          bash arm-oraclelinux-wls-cluster/test/scripts/verify-wls-access.sh "$wlsPublicIP" ${adminConsolePort} $wlsUserName $wlsPassword "$managedServers"
+
+      # Fix failure that caused by remote server closed.
+      - name: Restart remote SSH agent
+        uses: azure/CLI@v1
+        with:
+          azcliversion: ${{ env.azCliVersion }}
+          inlineScript: |
+            echo "Restart remote SSH agent"
+            az vm user reset-ssh \
+              --resource-group $resourceGroup \
+              --name ${{ env.adminVMName }}
 
       - name: Verify WebLogic Managed Server LifeCycle check
         id: verify-server-lifecycle
@@ -639,7 +637,7 @@ jobs:
             bash arm-oraclelinux-wls-cluster/test/scripts/gen-parameters-deploy-addnode.sh \
             arm-oraclelinux-wls-cluster/test/scripts/parameters-deploy-addnode.json \
               ${{ env.wlsPassword }} \
-              ${{ env.adminVMName }}:7001 \
+              ${{ env.adminVMName }}:${adminConsolePort} \
               weblogic \
               ${{ env.numberOfInstances }} \
               "${{ matrix.images }}" \
