@@ -4,4 +4,4 @@ target
 .settings
 *.versionsBackup
 *.classpath
-.vscode/*
+.vscode/

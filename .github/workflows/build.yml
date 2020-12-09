@@ -2,9 +2,7 @@ name: Build and Test
 on:
   push:
     branches:
-      - develop
-  schedule:
-    - cron: "0 7 * * *"
+      - master
   repository_dispatch:
 
 env:
@@ -13,16 +11,13 @@ env:
   adminVMName: adminServerVM
   azCliVersion: 2.6.0
   dbName: wlsdb${{ github.run_id }}${{ github.run_number }}
-  elkURI: ${{ secrets.ELK_URI }}
-  elkUser: ${{ secrets.ELK_USER_NAME }}
-  elkPassword: ${{ secrets.ELK_PSW }}
   gitToken: ${{ secrets.GIT_TOKEN }}
   location: eastus
   managedServerPrefix: managedServer
   managedServerVM: "managedServerVM1"
   managedServers: "managedServer1"
   nsg: wls-nsg
-  numberOfInstances: 2
+  numberOfInstances: 3
   refArmttk: 8e08a92dbb0a22b8560ec854a60e9a8a7b71c68f
   refJavaee: 6807e2ae3e8a8492edf211b9f4f0b7ed3a2a29e7
   repoName: arm-oraclelinux-wls-cluster
@@ -119,69 +114,6 @@ jobs:
           name: ${{steps.artifact_file.outputs.artifactName}}
           path: ${{steps.artifact_file.outputs.artifactPath}}
 
-      - name: Get version information from addnode/pom.xml
-        id: addnode_version
-        run: |
-          version=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' arm-oraclelinux-wls-cluster/addnode/pom.xml)
-          echo "addnode_version=${version}" >> $GITHUB_ENV
-      - name: Print addnode template version
-        run: echo $addnode_version
-      - name: Generate addnode template artifact name
-        run: echo "addnode_artifactName=arm-oraclelinux-wls-cluster-addnode-$addnode_version-arm-assembly" >> $GITHUB_ENV
-      - name: Print addnode template artifact name
-        run: echo $addnode_artifactName
-      - name: Output addnode template artifact name
-        id: addnode_artifact_file
-        run: echo "##[set-output name=addnode_artifactName;]arm-oraclelinux-wls-cluster-addnode-$addnode_version-arm-assembly"
-      - name: Generate addnode template zip package path
-        id: addnode_artifact_path
-        run: echo "##[set-output name=addnode_artifactPath;]arm-oraclelinux-wls-cluster/addnode/target/$addnode_artifactName"
-      - name: Output addnode template artifact path
-        run: echo $addnode_artifactPath
-        env:
-          addnode_artifactPath: ${{steps.addnode_artifact_path.outputs.addnode_artifactPath}}
-      - name: Unzip the package as upload action will zip again
-        run: unzip arm-oraclelinux-wls-cluster/addnode/target/$addnode_artifactName.zip -d arm-oraclelinux-wls-cluster/addnode/target/$addnode_artifactName
-
-      - name: Archive arm-oraclelinux-wls-cluster addnode template
-        uses: actions/upload-artifact@v1
-        if: success()
-        with:
-          name: ${{steps.addnode_artifact_file.outputs.addnode_artifactName}}
-          path: ${{steps.addnode_artifact_path.outputs.addnode_artifactPath}}
-
-      - name: Generate delete node artifact file name and path
-        id: deletenode_artifact_file
-        run: |
-          deletenode_version=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' arm-oraclelinux-wls-cluster/deletenode/pom.xml)
-          deletenode_artifactName=arm-oraclelinux-wls-cluster-deletenode-$deletenode_version-arm-assembly
-          unzip arm-oraclelinux-wls-cluster/deletenode/target/$deletenode_artifactName.zip -d arm-oraclelinux-wls-cluster/deletenode/target/$deletenode_artifactName
-          echo "##[set-output name=deletenode_artifactName;]${deletenode_artifactName}"
-          echo "##[set-output name=deletenode_artifactPath;]arm-oraclelinux-wls-cluster/deletenode/target/$deletenode_artifactName"
-
-      - name: Archive arm-oraclelinux-wls-cluster deletenode template
-        uses: actions/upload-artifact@v1
-        if: success()
-        with:
-          name: ${{steps.deletenode_artifact_file.outputs.deletenode_artifactName}}
-          path: ${{steps.deletenode_artifact_file.outputs.deletenode_artifactPath}}
-
-      - name: Generate addnode-coherence artifact file name and path
-        id: addnode_coherence_artifact_file
-        run: |
-          addnode_coherence_version=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' arm-oraclelinux-wls-cluster/addnode-coherence/pom.xml)
-          addnode_coherence_artifactName=arm-oraclelinux-wls-cluster-addnode-coherence-$addnode_coherence_version-arm-assembly
-          unzip arm-oraclelinux-wls-cluster/addnode-coherence/target/$addnode_coherence_artifactName.zip -d arm-oraclelinux-wls-cluster/addnode-coherence/target/$addnode_coherence_artifactName
-          echo "##[set-output name=addnode_coherence_artifactName;]${addnode_coherence_artifactName}"
-          echo "##[set-output name=addnode_coherence_artifactPath;]arm-oraclelinux-wls-cluster/addnode-coherence/target/$addnode_coherence_artifactName"
-
-      - name: Archive arm-oraclelinux-wls-cluster addnode-coherence template
-        uses: actions/upload-artifact@v1
-        if: success()
-        with:
-          name: ${{steps.addnode_coherence_artifact_file.outputs.addnode_coherence_artifactName}}
-          path: ${{steps.addnode_coherence_artifact_file.outputs.addnode_coherence_artifactPath}}
-
   deploy-dependencies:
     needs: preflight
     runs-on: ubuntu-latest
@@ -216,8 +148,6 @@ jobs:
             --admin-password ${{ env.wlsPassword }} \
             --sku-name B_Gen5_1
 
-<<<<<<< HEAD
-=======
             echo "Allow Access To Azure Services"
             az postgres server firewall-rule create \
             -g ${{ env.resourceGroupForDependency }} \
@@ -226,7 +156,6 @@ jobs:
             --start-ip-address "0.0.0.0" \
             --end-ip-address "0.0.0.0"
 
->>>>>>> f4ab0e8... Fix WLST py script. (#97)
   deploy-weblogic-cluster:
     needs: deploy-dependencies
     runs-on: ubuntu-latest
@@ -377,7 +306,7 @@ jobs:
                            --resource-group $resourceGroup \
                            --access Allow \
                            --destination-address-prefixes "*" \
-                           --destination-port-ranges 22 43 \
+                           --destination-port-ranges 22 43 ${adminConsolePort}\
                            --direction Inbound \
                            --protocol Tcp \
                            --source-address-prefixes $myIP
@@ -396,11 +325,7 @@ jobs:
                 --nsg-name ${nsg} \
                 --name NRMS-Rule-101 \
                 --source-address-prefixes $sourceAddressPrefixes \
-<<<<<<< HEAD
-                --destination-port-ranges 443 22
-=======
                 --destination-port-ranges 443 22 ${adminConsolePort}
->>>>>>> f4ab0e8... Fix WLST py script. (#97)
             fi
 
       - name: Restart wls VM
@@ -571,227 +496,104 @@ jobs:
             --parameters @${{ env.repoName }}/test/scripts/parameters-deploy-agw.json \
             --template-file ${artifactName}/nestedtemplates/appGatewayNestedTemplate.json
 
-      - name: Set up ELK by deploying sub template
-        id: enable-elk
+      - name: Query appGatewayURL of appgateway deployment
+        id: query-agwurl
         uses: azure/CLI@v1
         with:
           azcliversion: ${{ env.azCliVersion }}
           inlineScript: |
-            # Generate parameters for ELK template deployment
-            bash arm-oraclelinux-wls-cluster/test/scripts/gen-parameters-deploy-elk.sh \
-            arm-oraclelinux-wls-cluster/test/scripts/parameters-deploy-elk.json \
-            ${{ env.adminVMName }} \
-            ${{ env.elkPassword }} \
-            ${{ env.elkURI }} \
-            ${{ env.elkUser }} \
-            ${{ env.location }} \
-            ${{ env.numberOfInstances }} \
-            ${{ env.wlsDomainName }} \
-            ${{ env.wlsUserName }} \
-            ${{ env.wlsPassword }} \
-            ${{ env.userName }} \
-            ${{ env.testbranchName }} \
-            ${{ env.managedServerPrefix }}
-
-            echo "Deploy ELK Template..."
-            az group deployment create \
-            --debug \
-            --resource-group ${resourceGroup} \
-            --name elk \
-            --parameters @arm-oraclelinux-wls-cluster/test/scripts/parameters-deploy-elk.json \
-            --template-file ${artifactName}/nestedtemplates/elkNestedTemplate.json
-
-      - name: Get storage account name
-        id: query-storage-account-name
+            echo "query appgatewayURL"
+            appGatewayURL=$(az network public-ip show \
+              --resource-group $resourceGroup \
+              --name gwip \
+              --query dnsSettings.fqdn -o tsv)
+            echo "##[set-output name=appGatewayURL;]${appGatewayURL}"
+      - name: Save appGatewayURL for app deployement verification
+        id: save-appgatewayurl
         run: |
-          echo "query storage account name"
-          storageAccount=$(az resource list -g $resourceGroup --resource-type Microsoft.Storage/storageAccounts --query [0].name -o tsv)
-          echo "Storage account name: ${storageAccount}"
-          echo "storageAccount=${storageAccount}" >> $GITHUB_ENV
+          echo ${{steps.query-agwurl.outputs.appGatewayURL}}
+          echo "appGatewayURL=${{steps.query-agwurl.outputs.appGatewayURL}}" >> $GITHUB_ENV
+          echo ${appGatewayURL}
 
-      - name: Set up Coherence by deploying sub template
-        id: enable-coherence
+      - name: Checkout WebLogic-Cafe
+        id: checkout-webapp
+        uses: actions/checkout@v2
+        with:
+          repository: microsoft/weblogic-on-azure
+          path: weblogic-on-azure
+
+      - name: Maven build the web app
+        id: maven-build-webapp
+        run: |
+          echo "build the WebLogic Cafe web app"
+          mvn -DskipTests clean install --file weblogic-on-azure/javaee/weblogic-cafe/pom.xml
+
+      - name: Query adminVMsver DNS
+        id: query-adminvmdns
+        uses: azure/CLI@v1
+        with: 
+          azcliversion: ${{ env.azCliVersion }}
+          inlineScript: |
+            echo "query adminVMsver DNS for $adminVMName"
+            adminVMDNS=$(az network public-ip show \
+              --resource-group $resourceGroup \
+              --name "${adminVMName}_PublicIP" \
+              --query dnsSettings.fqdn -o tsv)
+            echo "##[set-output name=adminVMDNS;]${adminVMDNS}"
+
+      - name: Save adminVMsver DNS for app deployement
+        id: save-adminvmdns
+        run: |
+          echo ${{steps.query-adminvmdns.outputs.adminVMDNS}}
+          echo "adminVMDNS=${{steps.query-adminvmdns.outputs.adminVMDNS}}" >> $GITHUB_ENV
+          echo ${adminVMDNS}
+
+      - name: Prepare the webapp deployment script
+        id: prepare-webapp-deployement-script
+        run: |
+          echo ${adminVMDNS} ${wlsUserName}
+          sed -i "s/#adminVMDNS#/${adminVMDNS}/g; \
+              s/#wlsUserName#/$wlsUserName/g; \
+              s/#wlsPassword#/$wlsPassword/g" \
+              arm-oraclelinux-wls-cluster/test/scripts/deploy-webapp.sh
+
+          echo ${appGatewayURL}
+          sed -i "s|#appGatewayURL#|${appGatewayURL}|g;" \
+              arm-oraclelinux-wls-cluster/test/scripts/verify-webapp-deployment.sh
+
+      - name: Add ip address to security rule to access the wls machine
+        id: add-ip-to-security-rule-105
         uses: azure/CLI@v1
         with:
           azcliversion: ${{ env.azCliVersion }}
           inlineScript: |
-            # Generate parameters for Coherence template deployment
-            bash arm-oraclelinux-wls-cluster/test/scripts/gen-parameters-deploy-coherence.sh \
-            arm-oraclelinux-wls-cluster/test/scripts/parameters-deploy-coherence.json \
-            ${{ env.adminVMName }} \
-            ${{ env.wlsPassword }} \
-            "${{ matrix.images }}" \
-            ${{ env.location }} \
-            ${storageAccount} \
-            ${{ env.wlsDomainName }} \
-            ${{ env.wlsUserName }} \
-            ${{ env.wlsPassword }} \
-            ${{ env.userName }} \
-            ${{ env.testbranchName }} \
-            ${{ env.managedServerPrefix }}
+              az network nsg rule update \
+                --resource-group $resourceGroup \
+                --nsg-name ${nsg} \
+                --name NRMS-Rule-105 \
+                --destination-port-ranges 1433 1434 3306 4333 5432 6379 7000 7199 9042 9160 9300 16379 26379 27017
 
-            echo "Deploy Coherence Template..."
-            az group deployment create \
-            --debug \
-            --resource-group ${resourceGroup} \
-            --name coherence \
-            --parameters @arm-oraclelinux-wls-cluster/test/scripts/parameters-deploy-coherence.json \
-            --template-file ${artifactName}/nestedtemplates/coherenceTemplate.json
-
-      - name: Output addnode artifact name
-        id: artifact_file_addnode
-        run: |
-          addnodeVersion=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' arm-oraclelinux-wls-cluster/addnode/pom.xml)
-          artifactNameOfAddnode=arm-oraclelinux-wls-cluster-addnode-$addnodeVersion-arm-assembly
-          echo "artifactNameOfAddnode=${artifactNameOfAddnode}" >> $GITHUB_ENV
-          echo "##[set-output name=artifactNameOfAddnode;]${artifactNameOfAddnode}"
-      - name: Download artifact for deployment
-        uses: actions/download-artifact@v1
-        with:
-          name: ${{steps.artifact_file_addnode.outputs.artifactNameOfAddnode}}
-
-      - name: Add new nodes to existing cluster
-        id: add-node
+      - name: Restart wls VM
+        id: restart-wls-admin-vm
         uses: azure/CLI@v1
         with:
           azcliversion: ${{ env.azCliVersion }}
           inlineScript: |
-            echo "add two new nodes and enable app gateway"
-            echo "generate add-node parameters"
-            bash arm-oraclelinux-wls-cluster/test/scripts/gen-parameters-deploy-addnode.sh \
-            arm-oraclelinux-wls-cluster/test/scripts/parameters-deploy-addnode.json \
-              ${{ env.wlsPassword }} \
-              ${{ env.adminVMName }}:7001 \
-              weblogic \
-              ${{ env.numberOfInstances }} \
-              "${{ matrix.images }}" \
-              ${storageAccount} \
-              ${{ env.wlsDomainName }} \
-              ${{ env.location }} \
-              ${{ env.wlsUserName }} \
-              ${{ env.wlsPassword }} \
-              ${{ env.userName }} \
-              ${{ env.testbranchName }} \
-              ${{ env.managedServerPrefix }}
-            echo "deploy add-node template to create new nodes"
-            az group deployment validate \
-              -g ${resourceGroup} \
-              -f ${artifactNameOfAddnode}/mainTemplate.json \
-              -p @arm-oraclelinux-wls-cluster/test/scripts/parameters-deploy-addnode.json \
-              --no-prompt
-            az group deployment create \
-              --debug \
-              --resource-group ${resourceGroup} \
-              --name addnode \
-              --parameters @arm-oraclelinux-wls-cluster/test/scripts/parameters-deploy-addnode.json \
-              --template-file ${artifactNameOfAddnode}/mainTemplate.json
-      - name: Verify new nodes
-        id: verify-new-nodes
-        run: |
-          mspVM2=$(az resource list -g ${resourceGroup} --resource-type Microsoft.Compute/virtualMachines --name ${{ env.managedServerPrefix }}VM2 --query [0].name -o tsv)
-          if [ -z "$mspVM2" ]; then
-            echo "Add-node failure: new machine ${{ env.managedServerPrefix }}VM2 does not exist."
-            exit 1
-          fi
+            echo "restart vm to make sure security rule work."
+            az vm restart -g $resourceGroup -n $adminVMName
 
-      - name: Output addnode-coherence artifact name
-        id: artifact_file_addnode_coherence
+      - name: Deploy WebLogicCafe app using WebLogic Management Services
+        id: deploy-webapp
         run: |
-          addnodeCoherenceVersion=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' arm-oraclelinux-wls-cluster/addnode-coherence/pom.xml)
-          artifactNameOfAddnodeCo=arm-oraclelinux-wls-cluster-addnode-coherence-$addnodeCoherenceVersion-arm-assembly
-          echo "artifactNameOfAddnodeCo=${artifactNameOfAddnodeCo}" >> $GITHUB_ENV
-          echo "##[set-output name=artifactNameOfAddnodeCo;]${artifactNameOfAddnodeCo}"
-      - name: Download artifact for deployment
-        uses: actions/download-artifact@v1
-        with:
-          name: ${{steps.artifact_file_addnode_coherence.outputs.artifactNameOfAddnodeCo}}
+          echo "Deploy WebLogic Cafe to server"          
+          timeout 6m sh -c 'until nc -zv $0 $1; do echo "nc rc: $?"; sleep 5; done' ${adminVMDNS} 22
+          bash arm-oraclelinux-wls-cluster/test/scripts/deploy-webapp.sh
 
-      - name: Add new cache node to coherence cluster
-        id: add-node-coherence
-        uses: azure/CLI@v1
-        with:
-          azcliversion: ${{ env.azCliVersion }}
-          inlineScript: |
-            echo "add new cache server"
-            echo "generate parameters"
-            bash arm-oraclelinux-wls-cluster/test/scripts/gen-parameters-deploy-addnode-coherence.sh \
-            arm-oraclelinux-wls-cluster/test/scripts/parameters-deploy-addnode-coherence.json \
-              ${{ env.wlsPassword }} \
-              ${{ env.adminVMName }} \
-              weblogic \
-              1 \
-              "${{ matrix.images }}" \
-              ${storageAccount} \
-              ${{ env.wlsDomainName }} \
-              ${{ env.location }} \
-              ${{ env.wlsUserName }} \
-              ${{ env.wlsPassword }} \
-              ${{ env.userName }} \
-              ${{ env.testbranchName }} \
-              ${{ env.managedServerPrefix }}
-            echo "deploy add-node template to create new nodes"
-            az group deployment validate \
-              -g ${resourceGroup} \
-              -f ${artifactNameOfAddnodeCo}/mainTemplate.json \
-              -p @arm-oraclelinux-wls-cluster/test/scripts/parameters-deploy-addnode-coherence.json \
-              --no-prompt
-            az group deployment create \
-              --debug \
-              --resource-group ${resourceGroup} \
-              --name addnode \
-              --parameters @arm-oraclelinux-wls-cluster/test/scripts/parameters-deploy-addnode-coherence.json \
-              --template-file ${artifactNameOfAddnodeCo}/mainTemplate.json
-      - name: Verify new nodes
-        id: verify-new-nodes-coherence
+      - name: Verify WebLogicCafe app is successfully deployed
+        id: verify-webapp-deployment
         run: |
-          mspVM2=$(az resource list -g ${resourceGroup} --resource-type Microsoft.Compute/virtualMachines --name ${{ env.managedServerPrefix }}StorageVM2 --query [0].name -o tsv)
-          if [ -z "$mspVM2" ]; then
-            echo "Add-node failure: new machine ${{ env.managedServerPrefix }}StorageVM2 does not exist."
-            exit 1
-          fi
-
-      - name: Output delete-node artifact name
-        id: artifact_file_deletenode
-        run: |
-          deleteNodeVersion=$(awk '/<version>[^<]+<\/version>/{gsub(/<version>|<\/version>/,"",$1);print $1;exit;}' arm-oraclelinux-wls-cluster/deletenode/pom.xml)
-          artifactNameOfDeleteNode=arm-oraclelinux-wls-cluster-deletenode-$deleteNodeVersion-arm-assembly
-          echo "artifactNameOfDeleteNode=${artifactNameOfDeleteNode}" >> $GITHUB_ENV
-          echo "##[set-output name=artifactNameOfDeleteNode;]${artifactNameOfDeleteNode}"
-      - name: Download artifact for deployment
-        uses: actions/download-artifact@v1
-        with:
-          name: ${{steps.artifact_file_deletenode.outputs.artifactNameOfDeleteNode}}
-      - name: Delete nodes from existing cluster
-        id: delete-node
-        uses: azure/CLI@v1
-        with:
-          azcliversion: ${{ env.azCliVersion }}
-          inlineScript: |
-            echo "generate delete-node parameters"
-            bash arm-oraclelinux-wls-cluster/test/scripts/gen-parameters-deploy-deletenode.sh \
-            arm-oraclelinux-wls-cluster/test/scripts/parameters-deploy-deletenode.json \
-              ${{ env.adminVMName }} \
-              ${{ env.location }} \
-              ${{ env.wlsUserName }} \
-              ${{ env.wlsPassword }} \
-              ${{ env.userName }} \
-              ${{ env.testbranchName }} \
-              ${{ env.managedServerPrefix }}
-            echo "Run deletenode-cli.sh to remove nodes"
-            chmod ugo+x ${artifactNameOfDeleteNode}/scripts/deletenode-cli.sh
-            ${artifactNameOfDeleteNode}/scripts/deletenode-cli.sh \
-              -g ${resourceGroup} \
-              -f ${artifactNameOfDeleteNode}/mainTemplate.json \
-              -p arm-oraclelinux-wls-cluster/test/scripts/parameters-deploy-deletenode.json \
-              -s
-      - name: Verify deleted nodes
-        id: verify-deleted-nodes
-        run: |
-          mspVM2=$(az resource list -g ${resourceGroup} --resource-type Microsoft.Compute/virtualMachines --name ${{ env.managedServerPrefix }}VM2 --query [0].name -o tsv)
-          if [ -n "$mspVM2" ]; then
-            echo "Delete-node failure: machine ${{ env.managedServerPrefix }}VM2 is not removed."
-            exit 1
-          fi
+          echo "Verify WebLogicCafe app is successfully deployed"
+          bash arm-oraclelinux-wls-cluster/test/scripts/verify-webapp-deployment.sh
 
       - name: Delete Resource Group
         id: delete-resource-group

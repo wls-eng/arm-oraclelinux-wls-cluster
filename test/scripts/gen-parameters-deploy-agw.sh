@@ -43,6 +43,9 @@ cat <<EOF > ${parametersPath}
         },
         "wlsUserName": {
             "value": "${wlsUserName}"
+        },
+        "managedServerPrefix": {
+            "value": "${managedServerPrefix}"
         }
     }
 }

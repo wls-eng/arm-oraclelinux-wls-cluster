@@ -26,10 +26,10 @@ cat <<EOF > ${parametersPath}/parameters-deploy-db.json
         "value": "weblogic@${dbName}"
       },
       "dsConnectionURL": {
-        "value": "jdbc:postgresql://${dbName}.postgres.database.azure.com:5432/postgres"
+        "value": "jdbc:postgresql://${dbName}.postgres.database.azure.com:5432/postgres?sslmode=require"
       },
       "jdbcDataSourceName": {
-        "value": "jdbc/WebLogicDB"
+        "value": "jdbc/WebLogicCafeDB"
       },
       "location": {
         "value": "${location}"
