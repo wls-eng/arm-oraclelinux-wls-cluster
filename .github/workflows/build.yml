@@ -2,6 +2,7 @@ name: Build and Test
 on:
   push:
     branches:
+      - develop
       - 20201202-hotfix
   schedule:
     - cron: "0 7 * * *"
@@ -215,7 +216,14 @@ jobs:
       max-parallel: 1
       fail-fast: false
       matrix:
-          images: ["owls-122130-jdk8-ol73;Oracle:weblogic-122130-jdk8-ol73:owls-122130-jdk8-ol7;latest", "owls-122130-jdk8-ol74;Oracle:weblogic-122130-jdk8-ol74:owls-122130-jdk8-ol7;latest", "owls-122140-jdk8-ol76;Oracle:weblogic-122140-jdk8-ol76:owls-122140-jdk8-ol7;latest", "owls-141100-jdk8-ol76;Oracle:weblogic-141100-jdk8-ol76:owls-141100-jdk8-ol7;latest", "owls-141100-jdk11-ol76;Oracle:weblogic-141100-jdk11-ol76:owls-141100-jdk11-ol7;latest"]    
+        images:
+          [
+            "owls-122130-jdk8-ol73;Oracle:weblogic-122130-jdk8-ol73:owls-122130-jdk8-ol7;latest",
+            "owls-122130-jdk8-ol74;Oracle:weblogic-122130-jdk8-ol74:owls-122130-jdk8-ol7;latest",
+            "owls-122140-jdk8-ol76;Oracle:weblogic-122140-jdk8-ol76:owls-122140-jdk8-ol7;latest",
+            "owls-141100-jdk8-ol76;Oracle:weblogic-141100-jdk8-ol76:owls-141100-jdk8-ol7;latest",
+            "owls-141100-jdk11-ol76;Oracle:weblogic-141100-jdk11-ol76:owls-141100-jdk11-ol7;latest",
+          ]
     steps:
       - name: Checkout ${{ env.repoName }}
         uses: actions/checkout@v2
@@ -420,7 +428,7 @@ jobs:
           echo "Verifying Weblgic server installation"
           timeout 6m sh -c 'until nc -zv $0 $1; do echo "nc rc: $?"; sleep 5; done' ${wlsPublicIP} 22
           sshpass -p ${wlsPassword} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt weblogic@${wlsPublicIP} 'bash -s' < ${{ env.repoName }}/test/scripts/verify-wls-path.sh
-      
+
       # Fix failure that caused by remote server closed.
       - name: Restart remote SSH agent
         uses: azure/CLI@v1
@@ -437,7 +445,7 @@ jobs:
         run: |
           echo "Verifying WebLogic services at admin server"
           sshpass -p ${wlsPassword} -v ssh -p 22 -o StrictHostKeyChecking=no -o ConnectTimeout=100 -v -tt weblogic@${wlsPublicIP} 'bash -s' < ${{ env.repoName }}/test/scripts/verify-services.sh $wls_admin_services
-      
+
       # Fix failure that caused by remote server closed.
       - name: Restart remote SSH agent
         uses: azure/CLI@v1
