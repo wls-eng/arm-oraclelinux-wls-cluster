@@ -2,7 +2,7 @@ name: Build and Test
 on:
   push:
     branches:
-      - master
+      - workflow-test
   repository_dispatch:
 
 env:
@@ -166,10 +166,10 @@ jobs:
         images:
           [
             "owls-122130-8u131-ol73;Oracle:weblogic-122130-jdk8u131-ol73:owls-122130-8u131-ol7;latest",
-            "owls-122130-8u131-ol74;Oracle:weblogic-122130-jdk8u131-ol74:owls-122130-8u131-ol7;latest",
-            "owls-122140-8u251-ol76;Oracle:weblogic-122140-jdk8u251-ol76:owls-122140-8u251-ol7;latest",
-            "owls-141100-8u251-ol76;Oracle:weblogic-141100-jdk8u251-ol76:owls-141100-8u251-ol7;latest",
-            "owls-141100-11_07-ol76;Oracle:weblogic-141100-jdk11_07-ol76:owls-141100-11_07-ol7;latest",
+            # "owls-122130-8u131-ol74;Oracle:weblogic-122130-jdk8u131-ol74:owls-122130-8u131-ol7;latest",
+            # "owls-122140-8u251-ol76;Oracle:weblogic-122140-jdk8u251-ol76:owls-122140-8u251-ol7;latest",
+            # "owls-141100-8u251-ol76;Oracle:weblogic-141100-jdk8u251-ol76:owls-141100-8u251-ol7;latest",
+            # "owls-141100-11_07-ol76;Oracle:weblogic-141100-jdk11_07-ol76:owls-141100-11_07-ol7;latest",
           ]
     steps:
       - name: Checkout ${{ env.repoName }}
@@ -595,39 +595,39 @@ jobs:
           echo "Verify WebLogicCafe app is successfully deployed"
           bash arm-oraclelinux-wls-cluster/test/scripts/verify-webapp-deployment.sh
 
-      - name: Delete Resource Group
-        id: delete-resource-group
-        if: always()
-        uses: azure/CLI@v1
-        with:
-          azcliversion: ${{ env.azCliVersion }}
-          inlineScript: |
-            echo "delete... " $resourceGroup
-            az group delete --yes --no-wait --verbose --name $resourceGroup
+      # - name: Delete Resource Group
+      #   id: delete-resource-group
+      #   if: always()
+      #   uses: azure/CLI@v1
+      #   with:
+      #     azcliversion: ${{ env.azCliVersion }}
+      #     inlineScript: |
+      #       echo "delete... " $resourceGroup
+      #       az group delete --yes --no-wait --verbose --name $resourceGroup
 
-  cleanup:
-    needs: deploy-weblogic-cluster
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout ${{ env.repoName }}
-        uses: actions/checkout@v2
-        with:
-          path: ${{ env.repoName }}
-      - name: Delete testing branch
-        run: |
-          cd ${{ env.repoName }}
-          git push https://$gitToken@github.com/$userName/${{ env.repoName }}.git -f --delete $testbranchName
+  # cleanup:
+  #   needs: deploy-weblogic-cluster
+  #   if: always()
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout ${{ env.repoName }}
+  #       uses: actions/checkout@v2
+  #       with:
+  #         path: ${{ env.repoName }}
+  #     - name: Delete testing branch
+  #       run: |
+  #         cd ${{ env.repoName }}
+  #         git push https://$gitToken@github.com/$userName/${{ env.repoName }}.git -f --delete $testbranchName
 
-      - uses: azure/login@v1
-        id: azure-login
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-      - name: Delete DB Resource Group
-        id: delete-db-resource-group
-        uses: azure/CLI@v1
-        with:
-          azcliversion: ${{ env.azCliVersion }}
-          inlineScript: |
-            echo "delete... " $resourceGroup
-            az group delete --yes --no-wait --verbose --name ${{ env.resourceGroupForDependency }}
+  #     - uses: azure/login@v1
+  #       id: azure-login
+  #       with:
+  #         creds: ${{ secrets.AZURE_CREDENTIALS }}
+  #     - name: Delete DB Resource Group
+  #       id: delete-db-resource-group
+  #       uses: azure/CLI@v1
+  #       with:
+  #         azcliversion: ${{ env.azCliVersion }}
+  #         inlineScript: |
+  #           echo "delete... " $resourceGroup
+  #           az group delete --yes --no-wait --verbose --name ${{ env.resourceGroupForDependency }}
