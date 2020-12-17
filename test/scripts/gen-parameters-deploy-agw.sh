@@ -11,6 +11,7 @@ location=$8
 wlsPassword=$9
 wlsUserName=${10}
 wlsDomainName=${11}
+managedServerPrefix=${12}
 
 cat <<EOF > ${parametersPath}
 {
@@ -43,6 +44,9 @@ cat <<EOF > ${parametersPath}
         },
         "wlsUserName": {
             "value": "${wlsUserName}"
+        },
+        "managedServerPrefix": {
+            "value": "${managedServerPrefix}"
         }
     }
 }

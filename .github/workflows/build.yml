@@ -538,7 +538,8 @@ jobs:
             ${{ env.location }} \
             ${{ env.wlsPassword }} \
             ${{ env.wlsUserName }} \
-            ${{ env.wlsDomainName }}
+            ${{ env.wlsDomainName }} \
+            ${{ env.managedServerPrefix }}
             echo "Deploy Application Gateway Template..."
             az group deployment create \
             --verbose \
@@ -547,6 +548,116 @@ jobs:
             --name agw \
             --parameters @${{ env.repoName }}/test/scripts/parameters-deploy-agw.json \
             --template-file ${artifactName}/nestedtemplates/appGatewayNestedTemplate.json
+
+      - name: Query appGatewayURL of appgateway deployment
+        id: query-agwurl
+        uses: azure/CLI@v1
+        with:
+          azcliversion: ${{ env.azCliVersion }}
+          inlineScript: |
+            echo "query appgatewayURL"
+            appGatewayURL=$(az network public-ip show \
+              --resource-group $resourceGroup \
+              --name gwip \
+              --query dnsSettings.fqdn -o tsv)
+            echo "##[set-output name=appGatewayURL;]${appGatewayURL}"
+      - name: Save appGatewayURL for app deployement verification
+        id: save-appgatewayurl
+        run: |
+          echo ${{steps.query-agwurl.outputs.appGatewayURL}}
+          echo "appGatewayURL=${{steps.query-agwurl.outputs.appGatewayURL}}" >> $GITHUB_ENV
+          echo ${appGatewayURL}
+
+      - name: Checkout WebLogic-Cafe
+        id: checkout-webapp
+        uses: actions/checkout@v2
+        with:
+          repository: microsoft/weblogic-on-azure
+          path: weblogic-on-azure
+
+      - name: Maven build the web app
+        id: maven-build-webapp
+        run: |
+          echo "build the WebLogic Cafe web app"
+          mvn -DskipTests clean install --file weblogic-on-azure/javaee/weblogic-cafe/pom.xml
+
+      - name: Query adminVMsver DNS
+        id: query-adminvmdns
+        uses: azure/CLI@v1
+        with: 
+          azcliversion: ${{ env.azCliVersion }}
+          inlineScript: |
+            echo "query adminVMsver DNS for $adminVMName"
+            adminVMDNS=$(az network public-ip show \
+              --resource-group $resourceGroup \
+              --name "${adminVMName}_PublicIP" \
+              --query dnsSettings.fqdn -o tsv)
+            echo "##[set-output name=adminVMDNS;]${adminVMDNS}"
+
+      - name: Save adminVMsver DNS for app deployement
+        id: save-adminvmdns
+        run: |
+          echo ${{steps.query-adminvmdns.outputs.adminVMDNS}}
+          echo "adminVMDNS=${{steps.query-adminvmdns.outputs.adminVMDNS}}" >> $GITHUB_ENV
+          echo ${adminVMDNS}
+
+      - name: Prepare the webapp deployment script
+        id: prepare-webapp-deployement-script
+        run: |
+          echo ${adminVMDNS} ${wlsUserName}
+          sed -i "s/#adminVMDNS#/${adminVMDNS}/g; \
+              s/#wlsUserName#/$wlsUserName/g; \
+              s/#wlsPassword#/$wlsPassword/g" \
+              arm-oraclelinux-wls-cluster/test/scripts/deploy-webapp.sh
+
+          echo ${appGatewayURL}
+          sed -i "s|#appGatewayURL#|${appGatewayURL}|g;" \
+              arm-oraclelinux-wls-cluster/test/scripts/verify-webapp-deployment.sh
+
+      - name: Add ip address to security rule to access the wls machine
+        id: add-ip-to-security-rule-105
+        uses: azure/CLI@v1
+        with:
+          azcliversion: ${{ env.azCliVersion }}
+          inlineScript: |
+              az network nsg rule update \
+                --resource-group $resourceGroup \
+                --nsg-name ${nsg} \
+                --name NRMS-Rule-105 \
+                --destination-port-ranges 1433 1434 3306 4333 5432 6379 7000 7199 9042 9160 9300 16379 26379 27017
+
+      - name: Restart wls VM
+        id: restart-wls-admin-vm
+        uses: azure/CLI@v1
+        with:
+          azcliversion: ${{ env.azCliVersion }}
+          inlineScript: |
+            echo "restart vm to make sure security rule work."
+            az vm restart -g $resourceGroup -n $adminVMName
+
+      # Fix failure that caused by remote server closed.
+      - name: Restart remote SSH agent
+        uses: azure/CLI@v1
+        with:
+          azcliversion: ${{ env.azCliVersion }}
+          inlineScript: |
+            echo "Restart remote SSH agent"
+            az vm user reset-ssh \
+              --resource-group $resourceGroup \
+              --name ${{ env.adminVMName }}
+
+      - name: Deploy WebLogicCafe app using WebLogic Management Services
+        id: deploy-webapp
+        run: |
+          echo "Deploy WebLogic Cafe to server"          
+          timeout 6m sh -c 'until nc -zv $0 $1; do echo "nc rc: $?"; sleep 5; done' ${adminVMDNS} 7001
+          bash arm-oraclelinux-wls-cluster/test/scripts/deploy-webapp.sh
+
+      - name: Verify WebLogicCafe app is successfully deployed
+        id: verify-webapp-deployment
+        run: |
+          echo "Verify WebLogicCafe app is successfully deployed"
+          bash arm-oraclelinux-wls-cluster/test/scripts/verify-webapp-deployment.sh
 
       - name: Set up ELK by deploying sub template
         id: enable-elk
