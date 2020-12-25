@@ -124,6 +124,13 @@
                 "description": "Bool value, if it's set to true, will enable Azure Active Directory after WebLogic Server starts."
             }
         },
+        "certificateOption": {
+            "defaultValue": "",
+            "type": "string",
+            "metadata": {
+                "description": "Three senarios we support for deploying app gateway"
+            }
+        },
         "enableAppGateway": {
             "defaultValue": false,
             "type": "bool",
@@ -180,11 +187,11 @@
                 "description": "KeyVault Name"
             }
         },
-        "keyVaultResourceGroup": {
-            "defaultValue": "",
+        "keyVaultSku": {
+            "defaultValue": "Standard",
             "type": "string",
             "metadata": {
-                "description": "Resource group name in current subscription containing the KeyVault"
+                "description": "Price tier for Key Vault."
             }
         },
         "keyVaultSSLCertDataSecretName": {
@@ -194,11 +201,25 @@
                 "description": "The name of the secret in the specified KeyVault whose value is the SSL Certificate Data"
             }
         },
+        "keyVaultSSLCertData": {
+            "defaultValue": "",
+            "type": "string",
+            "metadata": {
+                "description": "The value of the SSL Certificate Data"
+            }
+        },
         "keyVaultSSLCertPasswordSecretName": {
             "defaultValue": "",
             "type": "string",
             "metadata": {
                 "description": "The name of the secret in the specified KeyVault whose value is the password for the SSL Certificate"
+            }
+        },
+        "keyVaultSSLCertPassword": {
+            "defaultValue": "",
+            "type": "string",
+            "metadata": {
+                "description": "The value of the password for the SSL Certificate"
             }
         },
         "location": {
@@ -351,7 +372,8 @@
         "name_aadLinkedTemplateName": "aadNestedTemplate.json",
         "name_clusterLinkedTemplateName": "clusterTemplate.json",
         "name_dbLinkedTemplateName": "dbTemplate.json",
-        "name_keyVaultLinkedTemplateName": "appGatewayNestedTemplate.json",
+        "name_keyVaultTemplateName": "keyVaultTemplate.json",
+        "name_appGatewayLinkedTemplateName": "appGatewayNestedTemplate.json",
         "name_elkLinkedTemplateName": "elkNestedTemplate.json",
         "name_coherenceTemplateName": "coherenceTemplate.json"
     },
@@ -435,12 +457,54 @@
         {
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "${azure.apiVersion}",
+            "name": "keyVaultTemplate",
+            "condition": "[equals(parameters('certificateOption'), 'haveCert')]",
+            "properties": {
+                "mode": "Incremental",
+                "templateLink": {
+                    "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/', variables('name_keyVaultTemplateName')))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "name": {
+                        "value": "[parameters('keyVaultName')]"
+                    },
+                    "location": {
+                        "value": "[parameters('location')]"
+                    },
+                    "sku": {
+                        "value": "[parameters('keyVaultSku')]"
+                    },
+                    "enabledForTemplateDeployment": {
+                        "value": true
+                    },
+                    "certificateDataName": {
+                        "value": "[parameters('keyVaultSSLCertDataSecretName')]"
+                    },
+                    "certificateDataValue": {
+                        "value": "[parameters('keyVaultSSLCertData')]"
+                    },
+                    "certificatePasswordName": {
+                        "value": "[parameters('keyVaultSSLCertPasswordSecretName')]"
+                    },
+                    "certificatePasswordValue": {
+                        "value": "[parameters('keyVaultSSLCertPassword')]"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'clusterLinkedTemplate')]"
+            ]
+        },
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "${azure.apiVersion}",
             "name": "keyVaultLinkedAppGatewayTemplate",
             "condition": "[parameters('enableAppGateway')]",
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/', variables('name_keyVaultLinkedTemplateName')))]",
+                    "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/', variables('name_appGatewayLinkedTemplateName')))]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
@@ -456,7 +520,7 @@
                     "appGatewaySSLCertificateData": {
                         "reference": {
                             "keyVault": {
-                                "id": "[resourceId(variables('const_currentSubscription'),  parameters('keyVaultResourceGroup'), 'Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+                                "id": "[resourceId(variables('const_currentSubscription'),  reference('keyVaultTemplate').outputs.keyVaultResourceGroup.value, 'Microsoft.KeyVault/vaults', reference('keyVaultTemplate').outputs.keyVaultName.value)]"
                             },
                             "secretName": "[parameters('keyVaultSSLCertDataSecretName')]"
                         }
@@ -464,7 +528,7 @@
                     "appGatewaySSLCertificatePassword": {
                         "reference": {
                             "keyVault": {
-                                "id": "[resourceId(variables('const_currentSubscription'),  parameters('keyVaultResourceGroup'), 'Microsoft.KeyVault/vaults', parameters('keyVaultName'))]"
+                                "id": "[resourceId(variables('const_currentSubscription'),  reference('keyVaultTemplate').outputs.keyVaultResourceGroup.value, 'Microsoft.KeyVault/vaults', reference('keyVaultTemplate').outputs.keyVaultName.value)]"
                             },
                             "secretName": "[parameters('keyVaultSSLCertPasswordSecretName')]"
                         }
@@ -496,7 +560,7 @@
                 }
             },
             "dependsOn": [
-                "[resourceId('Microsoft.Resources/deployments', 'clusterLinkedTemplate')]"
+                "[resourceId('Microsoft.Resources/deployments', 'keyVaultTemplate')]"
             ]
         },
         {
@@ -778,7 +842,8 @@
                 "[resourceId('Microsoft.Resources/deployments', 'clusterLinkedTemplate')]",
                 "[resourceId('Microsoft.Resources/deployments', 'keyVaultLinkedAppGatewayTemplate')]",
                 "[resourceId('Microsoft.Resources/deployments', 'elkLinkedTemplate')]",
-                "[resourceId('Microsoft.Resources/deployments', 'coherenceTemplate')]"
+                "[resourceId('Microsoft.Resources/deployments', 'coherenceTemplate')]",
+                "[resourceId('Microsoft.Resources/deployments', 'keyVaultTemplate')]"
             ],
             "properties": {
                 "mode": "Incremental",

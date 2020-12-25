@@ -285,6 +285,68 @@
                         }
                     },
                     {
+                        "name": "certificateOption",
+                        "type": "Microsoft.Common.OptionsGroup",
+                        "label": "Select your current usage of Azure Key Vault",
+                        "defaultValue": "haveKeyVault",
+                        "toolTip": "Select your current usage of Azure Key Vault",
+                        "constraints": {
+                            "allowedValues": [
+                                {
+                                    "label": "Have a Azure Key Vault with a SSL certificate stored",
+                                    "value": "haveKeyVault"
+                                },
+                                {
+                                    "label": "Have a SSL certificate only",
+                                    "value": "haveCert"
+                                },
+                                {
+                                    "label": "Generate a certificate",
+                                    "value": "haveNoCertOrKeyVault"
+                                }
+                            ],
+                            "required": true
+                        },
+                        "visible": "[steps('section_appGateway').enableAppGateway]"
+                    },
+                    {
+                        "name": "keyVaultSSLCertData",
+                        "type": "Microsoft.Common.FileUpload",
+                        "label": "SSL certificate",
+                        "toolTip": "SSL certificate used for App Gateway",
+                        "constraints": {
+                            "required": true,
+                            "accept": ".pfx"
+                        },
+                        "options": {
+                            "multiple": false,
+                            "uploadMode": "file",
+                            "openMode": "binary"
+                        },
+                        "visible": "[equals(steps('section_appGateway').certificateOption, 'haveCert')]"
+                    },
+                    {
+                        "name": "keyVaultSSLCertPassword",
+                        "type": "Microsoft.Compute.CredentialsCombo",
+                        "label": {
+                            "password": "Password",
+                            "confirmPassword": "Confirm password"
+                        },
+                        "toolTip": {
+                            "password": "SSL certificate password"
+                        },
+                        "constraints": {
+                            "required": true,
+                            "customPasswordRegex": "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{12,}$",
+                            "customValidationMessage": "The password must be alphanumeric, contain at least 12 characters, and have at least 1 letter and 1 number."
+                        },
+                        "options": {
+                            "hideConfirmation": false
+                        },
+                        "osPlatform": "Windows",
+                        "visible": "[equals(steps('section_appGateway').certificateOption, 'haveCert')]"
+                    },
+                    {
                         "name": "keyVaultResourceGroup",
                         "type": "Microsoft.Common.TextBox",
                         "label": "Resource group name in current subscription containing the KeyVault",
@@ -295,7 +357,7 @@
                             "regex": "^[a-z0-9A-Z.\\-_()]{0,89}([a-z0-9A-Z\\-_()]{1})$",
                             "validationMessage": "[if(greater(length(steps('section_appGateway').keyVaultResourceGroup), 90),'Resource group names only allow up to 90 characters.', 'Resource group names only allow alphanumeric characters, periods, underscores, hyphens and parenthesis and cannot end in a period.')]"
                         },
-                        "visible": "[steps('section_appGateway').enableAppGateway]"
+                        "visible": "[equals(steps('section_appGateway').certificateOption, 'haveKeyVault')]"
                     },
                     {
                         "name": "keyVaultName",
@@ -308,7 +370,7 @@
                             "regex": "^(?=.{3,24}$)[a-zA-Z](([a-z0-9A-Z]*|(?:\\-[^\\-][a-z0-9A-Z]*))*)$",
                             "validationMessage": "[if(or(greater(length(steps('section_appGateway').keyVaultName), 24), less(length(steps('section_appGateway').keyVaultName), 3)),'Vault name must be between 3-24 alphanumeric characters. The name must begin with a letter, end with a letter or digit, and not contain consecutive hyphens.','Vault name must only contain alphanumeric characters and dashes and cannot start with a number')]"
                         },
-                        "visible": "[steps('section_appGateway').enableAppGateway]"
+                        "visible": "[equals(steps('section_appGateway').certificateOption, 'haveKeyVault')]"
                     },
                     {
                         "name": "keyVaultSSLCertDataSecretName",
@@ -321,7 +383,7 @@
                             "regex": "^[a-z0-9A-Z]{1,30}$",
                             "validationMessage": "The value must be 1-30 characters long and must only contain letters and numbers."
                         },
-                        "visible": "[steps('section_appGateway').enableAppGateway]"
+                        "visible": "[equals(steps('section_appGateway').certificateOption, 'haveKeyVault')]"
                     },
                     {
                         "name": "keyVaultSSLCertPasswordSecretName",
@@ -334,7 +396,7 @@
                             "regex": "^[a-z0-9A-Z]{1,30}$",
                             "validationMessage": "The value must be 1-30 characters long and must only contain letters and numbers."
                         },
-                        "visible": "[steps('section_appGateway').enableAppGateway]"
+                        "visible": "[equals(steps('section_appGateway').certificateOption, 'haveKeyVault')]"
                     }
                 ],
                 "visible": true
@@ -910,9 +972,11 @@
             "jdbcDataSourceName": "[steps('section_database').databaseConnectionInfo.jdbcDataSourceName]",
             "logsToIntegrate": "[steps('section_elk').elkInfo.logsToIntegrate]",
             "keyVaultName": "[steps('section_appGateway').keyVaultName]",
-            "keyVaultResourceGroup": "[steps('section_appGateway').keyVaultResourceGroup]",
             "keyVaultSSLCertDataSecretName": "[steps('section_appGateway').keyVaultSSLCertDataSecretName]",
             "keyVaultSSLCertPasswordSecretName": "[steps('section_appGateway').keyVaultSSLCertPasswordSecretName]",
+            "certificateOption": "[steps('section_appGateway').certificateOption]",
+            "keyVaultSSLCertData": "[steps('section_appGateway').keyVaultSSLCertData]",
+            "keyVaultSSLCertPassword": "[steps('section_appGateway').keyVaultSSLCertPassword]",
             "managedServerPrefix": "[basics('basicsOptional').managedServerPrefix]",
             "numberOfCoherenceCacheInstances": "[int(if(bool(steps('section_coherence').enableCoherence),steps('section_coherence').coherenceInfo.numberOfCoherenceCacheInstances,'1'))]",
             "numberOfInstances": "[int(basics('basicsRequired').numberOfInstances)]",
