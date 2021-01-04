@@ -391,13 +391,17 @@
 		}
 	],
 	"outputs": {
-		"appGatewayPublicIP": {
+		"appGatewayAlias": {
 			"type": "string",
-			"value": "[concat(reference(variables('ref_appGatewayPublicIP'), '${azure.apiVersion}').ipAddress)]"
+			"value": "[reference(variables('ref_appGatewayPublicIP'), '${azure.apiVersion}').dnsSettings.fqdn]"
 		},
 		"appGatewayURL": {
 			"type": "string",
 			"value": "[concat('http://',reference(variables('ref_appGatewayPublicIP'), '${azure.apiVersion}').dnsSettings.fqdn)]"
+		},
+		"appGatewaySecuredURL": {
+			"type": "string",
+			"value": "[concat('https://',reference(variables('ref_appGatewayPublicIP'), '${azure.apiVersion}').dnsSettings.fqdn)]"
 		}
 	}
 }

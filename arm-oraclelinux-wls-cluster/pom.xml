@@ -26,12 +26,12 @@
 
     <groupId>com.oracle.weblogic.azure</groupId>
     <artifactId>arm-oraclelinux-wls-cluster</artifactId>
-    <version>1.0.350000</version>
+    <version>1.0.360000</version>
     
     <parent>
         <groupId>com.microsoft.azure.iaas</groupId>
         <artifactId>azure-javaee-iaas-parent</artifactId>
-        <version>1.0.6</version>
+        <version>1.0.7</version>
         <relativePath></relativePath>
     </parent>
     
@@ -41,8 +41,8 @@
     <properties>
         <template.validation.tests.directory>${basedir}/../../arm-ttk/arm-ttk</template.validation.tests.directory>
         <test.parameters>-TestParameter '@{&quot;PasswordMinLength&quot;=6}'</test.parameters>
-        <template.pid.properties.url>https://raw.githubusercontent.com/galiacheng/arm-oraclelinux-wls/develop/src/main/resources/pid.properties</template.pid.properties.url>
-        <template.microsoft.pid.properties.url>https://raw.githubusercontent.com/galiacheng/arm-oraclelinux-wls/develop/src/main/resources/microsoft-pid.properties</template.microsoft.pid.properties.url>
+        <template.pid.properties.url>https://raw.githubusercontent.com/wls-eng/arm-oraclelinux-wls/develop/src/main/resources/pid.properties</template.pid.properties.url>
+        <template.microsoft.pid.properties.url>https://raw.githubusercontent.com/wls-eng/arm-oraclelinux-wls/develop/src/main/resources/microsoft-pid.properties</template.microsoft.pid.properties.url>
     </properties>
     
     <description>

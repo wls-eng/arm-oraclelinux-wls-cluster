@@ -277,7 +277,7 @@
                         "type": "Microsoft.Common.TextBlock",
                         "visible": "[steps('section_appGateway').enableAppGateway]",
                         "options": {
-                            "text": "App Gateway integration requires an SSL Certificate to enable SSL termination at the gateway.  End-to-end SSL encryption is not supported by the template.  The template will look for the certificate and its password in the Azure KeyVault specified here.",
+                            "text": "App Gateway integration requires a SSL certificate to enable SSL termination at the gateway.  There are three SSL certificate usages available. Upload a SSL certificate: the template will store the certificate to an Azure Key Vault and retrieve it during the gateway deployment.  Have an Azure Key Vault with a SSL certificate stored: the template will look for the certificate and its password in the Azure Key Vault specified here. Generate a self-signed certificate: the tamplate will generate a self-signed certificate and apply it during the gateway deployment.",
                             "link": {
                                 "label": "Learn more",
                                 "uri": "https://aka.ms/arm-oraclelinux-wls-cluster-app-gateway-key-vault"
@@ -287,22 +287,22 @@
                     {
                         "name": "certificateOption",
                         "type": "Microsoft.Common.OptionsGroup",
-                        "label": "Select your current usage of Azure Key Vault",
-                        "defaultValue": "haveKeyVault",
-                        "toolTip": "Select your current usage of Azure Key Vault",
+                        "label": "Select your current usage of SSL Certificate",
+                        "defaultValue": "Upload a SSL certificate",
+                        "toolTip": "Select your current usage of SSL Certificate",
                         "constraints": {
                             "allowedValues": [
                                 {
-                                    "label": "Have a Azure Key Vault with a SSL certificate stored",
-                                    "value": "haveKeyVault"
-                                },
-                                {
-                                    "label": "Have a SSL certificate only",
+                                    "label": "Upload a SSL certificate",
                                     "value": "haveCert"
                                 },
                                 {
-                                    "label": "Generate a certificate",
-                                    "value": "haveNoCertOrKeyVault"
+                                    "label": "Have an Azure Key Vault with a SSL certificate stored",
+                                    "value": "haveKeyVault"
+                                },
+                                {
+                                    "label": "Generate a self-signed certificate",
+                                    "value": "generateCert"
                                 }
                             ],
                             "required": true
@@ -312,7 +312,7 @@
                     {
                         "name": "keyVaultSSLCertData",
                         "type": "Microsoft.Common.FileUpload",
-                        "label": "SSL certificate",
+                        "label": "SSL certificate(.pfx)",
                         "toolTip": "SSL certificate used for App Gateway",
                         "constraints": {
                             "required": true,
@@ -326,24 +326,21 @@
                         "visible": "[equals(steps('section_appGateway').certificateOption, 'haveCert')]"
                     },
                     {
-                        "name": "keyVaultSSLCertPassword",
-                        "type": "Microsoft.Compute.CredentialsCombo",
+                        "name": "appGatewaySSLCertPassword",
+                        "type": "Microsoft.Common.PasswordBox",
                         "label": {
                             "password": "Password",
                             "confirmPassword": "Confirm password"
                         },
-                        "toolTip": {
-                            "password": "SSL certificate password"
-                        },
+                        "toolTip": "SSL certificate password",
                         "constraints": {
-                            "required": true,
-                            "customPasswordRegex": "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{12,}$",
-                            "customValidationMessage": "The password must be alphanumeric, contain at least 12 characters, and have at least 1 letter and 1 number."
+                            "required": "[equals(steps('section_appGateway').certificateOption, 'haveCert')]",
+                            "regex": "^((?=.*[0-9])(?=.*[a-z])|(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])|(?=.*[0-9])(?=.*[a-z])(?=.*[!@#$%^&*])|(?=.*[0-9])(?=.*[A-Z])(?=.*[!@#$%^&*])|(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])).{6,128}$",
+                            "validationMessage": "The password must contain at least 6 characters, with at least 1 uppercase letter, 1 lowercase letter and 1 number."
                         },
                         "options": {
                             "hideConfirmation": false
                         },
-                        "osPlatform": "Windows",
                         "visible": "[equals(steps('section_appGateway').certificateOption, 'haveCert')]"
                     },
                     {
@@ -397,6 +394,32 @@
                             "validationMessage": "The value must be 1-30 characters long and must only contain letters and numbers."
                         },
                         "visible": "[equals(steps('section_appGateway').certificateOption, 'haveKeyVault')]"
+                    },
+                    {
+                        "name": "infoGatewayIndentity",
+                        "type": "Microsoft.Common.InfoBox",
+                        "visible": "[and(equals(steps('section_appGateway').certificateOption, 'generateCert'), less(length(steps('section_appGateway').gatewayIdentity.userAssignedIdentities), 1))]",
+                        "options": {
+                            "icon": "Error",
+                            "text": "This option will create a self-signed SSL certificate for gateway SSL termination. We use Azure deployment scripts to create a certificate. You have to add at least one user assigned identity to access Azure resources.",
+                            "uri": "https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/deployment-script-template"
+                        }
+                    },
+                    {
+                        "name": "gatewayIdentity",
+                        "type": "Microsoft.ManagedIdentity.IdentitySelector",
+                        "label": "Managed Identity Configuration",
+                        "toolTip": {
+                            "userAssignedIdentity": "Add user assigned identities to grant the resource access to Azure resources."
+                        },
+                        "defaultValue": {
+                            "systemAssignedIdentity": "Off"
+                        },
+                        "options": {
+                            "hideSystemAssignedIdentity": true,
+                            "hideUserAssignedIdentity": false
+                        },
+                        "visible": "[equals(steps('section_appGateway').certificateOption, 'generateCert')]"
                     }
                 ],
                 "visible": true
@@ -450,7 +473,7 @@
                                 "type": "Microsoft.Common.OptionsGroup",
                                 "label": "Bring your own Azure DNS Zone",
                                 "defaultValue": "No",
-                                "toolTip": "Select 'Yes' to configure Custom DNS Alias based on your existing Azure DNS Zone, 'No' to create a Azure DNS Zone.",
+                                "toolTip": "Select 'Yes' to configure Custom DNS Alias based on your existing Azure DNS Zone, 'No' to create an Azure DNS Zone.",
                                 "constraints": {
                                     "allowedValues": [
                                         {
@@ -461,8 +484,7 @@
                                             "label": "No",
                                             "value": false
                                         }
-                                    ],
-                                    "required": false
+                                    ]
                                 }
                             },
                             {
@@ -480,7 +502,7 @@
                                 "name": "deplymentScriptInfo",
                                 "type": "Microsoft.Common.TextBlock",
                                 "options": {
-                                    "text": "Bring Azure DNS Zone option will add records to your DNS Zone to cause Application Gateway accessible. We need a user-assigned managed identity to update your resource group that has Azure DNS Zone deployed. ",
+                                    "text": "Bring Azure DNS Zone option will add records to your DNS Zone to cause Oracle WebLogic Server Administration Console and Application Gateway accessible via DNS alias. We need a user-assigned managed identity to update your resource group that has Azure DNS Zone deployed. ",
                                     "link": {
                                         "label": "Learn more",
                                         "uri": "https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/deployment-script-template"
@@ -491,43 +513,113 @@
                                 "name": "dnszoneName",
                                 "type": "Microsoft.Common.TextBox",
                                 "label": "DNS Zone Name",
-                                "defaultValue": "contoso.com",
+                                "defaultValue": "",
                                 "toolTip": "Use only letters and numbers and periods to separate Domains",
                                 "constraints": {
                                     "required": true,
-                                    "regex": "^([0-9a-zA-Z_/-]{1,63}\\.){1,33}[0-9a-zA-Z_/-]{1,63}$",
-                                    "validationMessage": "There must be between 2 and 34 labels. For example, \"contoso.com\" has 2 labels. Each label must contain between 1 and 63 characters."
+                                    "regex": "^([0-9a-zA-Z_-]{1,63}\\.){1,33}[0-9a-zA-Z_-]{1,63}$",
+                                    "validationMessage": "There must be between 2 and 34 labels. For example, \"contoso.com\" has 2 labels. Each label must contain between 1 and 63 characters. Each label must only contain letters, numbers, underscores, and dashes."
                                 }
                             },
                             {
                                 "name": "dnsZoneResourceGroup",
                                 "type": "Microsoft.Common.TextBox",
-                                "label": "Resource group name in current subscription containing the DNS Zone",
+                                "label": "Name of the resource group contains the DNS Zone in current subscription",
                                 "defaultValue": "",
-                                "toolTip": "Use only letters and numbers",
+                                "toolTip": "Name of the resource group contains the DNS Zone in current subscription",
                                 "constraints": {
                                     "required": true,
                                     "regex": "^[a-z0-9A-Z.\\-_()]{0,89}([a-z0-9A-Z\\-_()]{1})$",
                                     "validationMessage": "[if(greater(length(steps('section_dnsConfiguration').existingDNSZonesSettings.dnsZoneResourceGroup), 90),'Resource group names only allow up to 90 characters.', 'Resource group names only allow alphanumeric characters, periods, underscores, hyphens and parenthesis and cannot end in a period.')]"
                                 },
-                                "visible": "[bool(steps('section_dnsConfiguration').customDNSSettings.bringDNSZone)]"
+                                "visible": "[steps('section_dnsConfiguration').customDNSSettings.bringDNSZone]"
                             },
                             {
-                                "name": "identity",
+                                "name": "dnszoneAdminConsoleLabel",
+                                "type": "Microsoft.Common.TextBox",
+                                "label": "Label for Oracle WebLogic Administration Console",
+                                "defaultValue": "console",
+                                "toolTip": "Specify a label to generate subdomain of Oracle WebLogic Administration Console",
+                                "constraints": {
+                                    "required": true,
+                                    "validations": [
+                                        {
+                                            "regex": "^([0-9a-zA-Z_-]{1,63}\\.){0,33}[0-9a-zA-Z_-]{1,63}$",
+                                            "message": "Each label must contain between 1 and 63 characters. Each label must only contain letters, numbers, underscores, and dashes."
+                                        },
+                                        {
+                                            "isValid": "[less(sub(length(concat(steps('section_dnsConfiguration').customDNSSettings.dnszoneAdminConsoleLabel,'.',steps('section_dnsConfiguration').customDNSSettings.dnszoneName)),length(replace(concat(steps('section_dnsConfiguration').customDNSSettings.dnszoneAdminConsoleLabel,'.',steps('section_dnsConfiguration').customDNSSettings.dnszoneName), '.', ''))),34)]",
+                                            "message": "Subdomain must be between 2 and 34 labels. For example, \"applications.contoso.com\" has 3 labels."
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "name": "dnszoneGatewayLabel",
+                                "type": "Microsoft.Common.TextBox",
+                                "label": "Label for Application Gateway",
+                                "defaultValue": "applications",
+                                "toolTip": "Specify a label to generate subdomain of Application Gateway",
+                                "constraints": {
+                                    "required": true,
+                                    "validations": [
+                                        {
+                                            "regex": "^([0-9a-zA-Z_-]{1,63}\\.){0,33}[0-9a-zA-Z_-]{1,63}$",
+                                            "message": "Each label must contain between 1 and 63 characters. Each label must only contain letters, numbers, underscores, and dashes."
+                                        },
+                                        {
+                                            "isValid": "[less(sub(length(concat(if(empty(steps('section_dnsConfiguration').customDNSSettings.dnszoneGatewayLabel), '', steps('section_dnsConfiguration').customDNSSettings.dnszoneGatewayLabel),'.',steps('section_dnsConfiguration').customDNSSettings.dnszoneName)),length(replace(concat(if(empty(steps('section_dnsConfiguration').customDNSSettings.dnszoneGatewayLabel), '', steps('section_dnsConfiguration').customDNSSettings.dnszoneGatewayLabel),'.',steps('section_dnsConfiguration').customDNSSettings.dnszoneName), '.', ''))),34)]",
+                                            "message": "Subdomain must be between 2 and 34 labels. For example, \"applications.contoso.com\" has 3 labels."
+                                        }
+                                    ]
+                                },
+                                "visible": "[and(bool(steps('section_appGateway').enableAppGateway), bool(steps('section_dnsConfiguration').enableCustomDNS))]"
+                            },
+                            {
+                                "name": "reuseIdentity",
+                                "type": "Microsoft.Common.OptionsGroup",
+                                "label": "Use the Managed Identity seleted previousely?",
+                                "defaultValue": "Yes",
+                                "toolTip": "Select 'Yes' to reuse the Managed Identity seleted previousely, 'No' to input a new identity.",
+                                "constraints": {
+                                    "allowedValues": [
+                                        {
+                                            "label": "Yes",
+                                            "value": true
+                                        },
+                                        {
+                                            "label": "No",
+                                            "value": false
+                                        }
+                                    ]
+                                },
+                                "visible": "[and(greater(length(steps('section_appGateway').gatewayIdentity.userAssignedIdentities),0), bool(steps('section_dnsConfiguration').customDNSSettings.bringDNSZone))]"
+                            },
+                            {
+                                "name": "infoDNSIndentity",
+                                "type": "Microsoft.Common.InfoBox",
+                                "visible": "[and(bool(steps('section_dnsConfiguration').customDNSSettings.bringDNSZone), less(length(steps('section_appGateway').gatewayIdentity.userAssignedIdentities),1), less(length(steps('section_dnsConfiguration').customDNSSettings.dnsIdentity.userAssignedIdentities), 1))]",
+                                "options": {
+                                    "icon": "Error",
+                                    "text": "This option will use Azure deployment scripts to update records to your Azure DNS Zone. You have to add at least one user assigned identity to access Azure resources.",
+                                    "uri": "https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/deployment-script-template"
+                                }
+                            },
+                            {
+                                "name": "dnsIdentity",
                                 "type": "Microsoft.ManagedIdentity.IdentitySelector",
                                 "label": "Managed Identity Configuration",
                                 "toolTip": {
-                                    "systemAssignedIdentity": "Enable system assigned identity to grant the resource access to existing DNS Zone resources.",
-                                    "userAssignedIdentity": "Add user assigned identities to grant the resource access to existing DNS Zone resources."
+                                    "userAssignedIdentity": "Add user assigned identities to grant the resource access to Azure resources."
                                 },
                                 "defaultValue": {
                                     "systemAssignedIdentity": "Off"
                                 },
                                 "options": {
-                                    "hideSystemAssignedIdentity":true,
+                                    "hideSystemAssignedIdentity": true,
                                     "hideUserAssignedIdentity": false
                                 },
-                                "visible": "[bool(steps('section_dnsConfiguration').customDNSSettings.bringDNSZone)]"
+                                "visible": "[if(greater(length(steps('section_appGateway').gatewayIdentity.userAssignedIdentities),0),and(equals(steps('section_dnsConfiguration').customDNSSettings.reuseIdentity, false), bool(steps('section_dnsConfiguration').customDNSSettings.bringDNSZone)), bool(steps('section_dnsConfiguration').customDNSSettings.bringDNSZone))]"
                             }
                         ]
                     }
@@ -1087,10 +1179,17 @@
             "aadsServerHost": "[steps('section_aad').aadInfo.aadsServerHost]",
             "adminPasswordOrKey": "[basics('basicsRequired').adminPasswordOrKey]",
             "adminUsername": "[basics('basicsRequired').adminUsername]",
+            "appGatewayCertificateOption": "[steps('section_appGateway').certificateOption]",
+            "appGatewayIdentity": "[steps('section_appGateway').gatewayIdentity]",
+            "appGatewaySSLCertData": "[steps('section_appGateway').keyVaultSSLCertData]",
+            "appGatewaySSLCertPassword": "[steps('section_appGateway').appGatewaySSLCertPassword]",
             "databaseType": "[steps('section_database').databaseConnectionInfo.databaseType]",
             "dnsLabelPrefix": "[basics('basicsOptional').dnsLabelPrefix]",
+            "dnszoneIdentity": "[if(greater(length(steps('section_dnsConfiguration').customDNSSettings.dnsIdentity.userAssignedIdentities),0),steps('section_dnsConfiguration').customDNSSettings.dnsIdentity, steps('section_appGateway').gatewayIdentity)]",
             "dnszoneName": "[steps('section_dnsConfiguration').customDNSSettings.dnszoneName]",
             "dnszoneResourceGroup": "[steps('section_dnsConfiguration').customDNSSettings.dnsZoneResourceGroup]",
+            "dnszoneAdminConsoleLabel": "[steps('section_dnsConfiguration').customDNSSettings.dnszoneAdminConsoleLabel]",
+            "dnszoneAppGatewayLabel": "[steps('section_dnsConfiguration').customDNSSettings.dnszoneGatewayLabel]",
             "dsConnectionURL": "[steps('section_database').databaseConnectionInfo.dsConnectionURL]",
             "dbPassword": "[steps('section_database').databaseConnectionInfo.dbPassword]",
             "dbUser": "[steps('section_database').databaseConnectionInfo.dbUser]",
@@ -1104,16 +1203,13 @@
             "enableDB": "[bool(steps('section_database').enableDB)]",
             "enableDNSConfiguration": "[bool(steps('section_dnsConfiguration').enableCustomDNS)]",
             "enableELK": "[bool(steps('section_elk').enableELK)]",
-            "hasDNSZones": "[bool(steps('section_dnsConfiguration').customDNSSettings.bringDNSZone)]",
-            "identity": "[steps('section_dnsConfiguration').customDNSSettings.identity]",
+            "hasDNSZones": "[bool(if(bool(steps('section_dnsConfiguration').enableCustomDNS), steps('section_dnsConfiguration').customDNSSettings.bringDNSZone, 'false'))]",
             "jdbcDataSourceName": "[steps('section_database').databaseConnectionInfo.jdbcDataSourceName]",
             "logsToIntegrate": "[steps('section_elk').elkInfo.logsToIntegrate]",
             "keyVaultName": "[steps('section_appGateway').keyVaultName]",
+            "keyVaultResourceGroup": "[steps('section_appGateway').keyVaultResourceGroup]",
             "keyVaultSSLCertDataSecretName": "[steps('section_appGateway').keyVaultSSLCertDataSecretName]",
             "keyVaultSSLCertPasswordSecretName": "[steps('section_appGateway').keyVaultSSLCertPasswordSecretName]",
-            "certificateOption": "[steps('section_appGateway').certificateOption]",
-            "keyVaultSSLCertData": "[steps('section_appGateway').keyVaultSSLCertData]",
-            "keyVaultSSLCertPassword": "[steps('section_appGateway').keyVaultSSLCertPassword]",
             "managedServerPrefix": "[basics('basicsOptional').managedServerPrefix]",
             "numberOfCoherenceCacheInstances": "[int(if(bool(steps('section_coherence').enableCoherence),steps('section_coherence').coherenceInfo.numberOfCoherenceCacheInstances,'1'))]",
             "numberOfInstances": "[int(basics('basicsRequired').numberOfInstances)]",

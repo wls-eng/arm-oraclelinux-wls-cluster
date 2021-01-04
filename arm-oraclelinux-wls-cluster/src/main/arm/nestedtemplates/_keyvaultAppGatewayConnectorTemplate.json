@@ -22,11 +22,23 @@
                 "description": "Admin Server hosting VM name."
             }
         },
+        "appGatewayCertificateOption": {
+            "defaultValue": "haveCert",
+            "type": "string",
+            "metadata": {
+                "description": "Three scenarios we support for deploying app gateway"
+            },
+            "allowedValues": [
+                "haveKeyVault",
+                "haveCert",
+                "generateCert"
+            ]
+        },
         "domainLabelforApplicationGateway": {
             "defaultValue": "wlsgw",
             "type": "string",
             "metadata": {
-                "description": "DNS for ApplicationGateway"
+                "description": "DNS for Application Gateway"
             }
         },
         "gatewayPublicIPAddressName": {
@@ -36,65 +48,56 @@
                 "description": "Public IP Name for the Application Gateway"
             }
         },
-        "hasAppGatewaySSLCertificate": {
-            "type": "bool",
-            "defaultValue": false
-        },
-        "hasKeyVaultForAppGateway": {
-            "type": "bool",
-            "defaultValue": false
-        },
         "keyVaultName": {
             "defaultValue": "",
             "type": "string",
             "metadata": {
-                "description": "KeyVault Name"
+                "description": "Key Vault name"
             }
         },
         "keyVaultNamefromDeploymentOutput": {
             "defaultValue": "",
             "type": "string",
             "metadata": {
-                "description": "KeyVault Name that output from Key Vault linked template deployment."
+                "description": "Key Vault name that output from Key Vault linked template deployment."
             }
         },
         "keyVaultResourceGroup": {
             "defaultValue": "",
             "type": "string",
             "metadata": {
-                "description": "Resource group name in current subscription containing the KeyVault"
+                "description": "Name of resource group in current subscription containing the Key Vault"
             }
         },
         "keyVaultSSLCertDataSecretName": {
-            "defaultValue": "",
+            "defaultValue": "myCertSecretData",
             "type": "string",
             "metadata": {
-                "description": "The name of the secret in the specified KeyVault whose value is the SSL Certificate Data,"
+                "description": "The name of the secret in the specified Key Vault whose value is the SSL Certificate Data,"
             }
         },
         "keyVaultSSLCertDataSecretNamefromDeploymentOutput": {
             "defaultValue": "",
             "type": "string",
             "metadata": {
-                "description": "The name of the secret in the specified KeyVault whose value is the SSL Certificate Data, that output from Key Vault linked template deployment."
+                "description": "The name of the secret in the specified Key Vault whose value is the SSL Certificate Data, that output from Key Vault linked template deployment."
             }
         },
         "keyVaultSSLCertPasswordSecretName": {
             "defaultValue": "",
             "type": "string",
             "metadata": {
-                "description": "The name of the secret in the specified KeyVault whose value is the password for the SSL Certificate"
+                "description": "The name of the secret in the specified Key Vault whose value is the password for the SSL Certificate"
             }
         },
         "keyVaultSSLCertPasswordSecretNamefromDeploymentOutput": {
             "defaultValue": "",
             "type": "string",
             "metadata": {
-                "description": "The name of the secret in the specified KeyVault whose value is the password for the SSL Certificate, that output from Key Vault linked template deployment."
+                "description": "The name of the secret in the specified Key Vault whose value is the password for the SSL Certificate, that output from Key Vault linked template deployment."
             }
         },
         "location": {
-            "defaultValue": "[resourceGroup().location]",
             "type": "string",
             "metadata": {
                 "description": "Location for all resources."
@@ -120,24 +123,27 @@
             "defaultValue": "wlsd",
             "type": "string",
             "metadata": {
-                "description": "Provide Weblogic domain name"
+                "description": "Provide WebLogic domain name"
             }
         },
         "wlsUserName": {
             "defaultValue": "weblogic",
             "type": "string",
             "metadata": {
-                "description": "Username for your Weblogic domain name"
+                "description": "Username for your WebLogic domain name"
             }
         },
         "wlsPassword": {
             "type": "securestring",
             "metadata": {
-                "description": "Password for your Weblogic domain name"
+                "description": "Password for your WebLogic domain name"
             }
         }
     },
     "variables": {
+        "const_appGatewaySSLCertOptionGenerateCert": "generateCert",
+        "const_appGatewaySSLCertOptionHaveCert": "haveCert",
+        "const_appGatewaySSLCertOptionHaveKeyVault": "haveKeyVault",
         "const_currentSubscription": "[subscription().subscriptionId]",
         "name_appGatewayLinkedTemplate": "appGatewayNestedTemplate.json"
     },
@@ -146,7 +152,7 @@
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "${azure.apiVersion}",
             "name": "appGatewaywithExistingKeyVaultTemplate",
-            "condition": "[parameters('hasKeyVaultForAppGateway')]",
+            "condition": "[equals(parameters('appGatewayCertificateOption'), variables('const_appGatewaySSLCertOptionHaveKeyVault'))]",
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
@@ -210,7 +216,7 @@
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "${azure.apiVersion}",
             "name": "appGatewaywithExistingSSLCertTemplate",
-            "condition": "[and(not(parameters('hasKeyVaultForAppGateway')), parameters('hasAppGatewaySSLCertificate'))]",
+            "condition": "[equals(parameters('appGatewayCertificateOption'), variables('const_appGatewaySSLCertOptionHaveCert'))]",
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
@@ -274,7 +280,7 @@
             "type": "Microsoft.Resources/deployments",
             "apiVersion": "${azure.apiVersion}",
             "name": "appGatewaywithSelfSignedSSLCertTemplate",
-            "condition": "[and(not(parameters('hasKeyVaultForAppGateway')), not(parameters('hasAppGatewaySSLCertificate')))]",
+            "condition": "[equals(parameters('appGatewayCertificateOption'), variables('const_appGatewaySSLCertOptionGenerateCert'))]",
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
@@ -331,13 +337,22 @@
         }
     ],
     "outputs": {
-        "appGatewayPublicIP": {
+        "appGatewayAlias": {
             "type": "string",
-            "value": "[if(parameters('hasKeyVaultForAppGateway'),reference('appGatewaywithExistingKeyVaultTemplate', '${azure.apiVersion}').outputs.appGatewayPublicIP.value, if(parameters('hasAppGatewaySSLCertificate'),reference('appGatewaywithExistingSSLCertTemplate', '${azure.apiVersion}').outputs.appGatewayPublicIP.value, reference('appGatewaywithSelfSignedSSLCertTemplate', '${azure.apiVersion}').outputs.appGatewayPublicIP.value))]"
+            "value": "[if(equals(parameters('appGatewayCertificateOption'), variables('const_appGatewaySSLCertOptionHaveKeyVault')),
+                reference('appGatewaywithExistingKeyVaultTemplate', '${azure.apiVersion}').outputs.appGatewayAlias.value, 
+                if(equals(parameters('appGatewayCertificateOption'),variables('const_appGatewaySSLCertOptionHaveCert')),
+                reference('appGatewaywithExistingSSLCertTemplate', '${azure.apiVersion}').outputs.appGatewayAlias.value, 
+                reference('appGatewaywithSelfSignedSSLCertTemplate', '${azure.apiVersion}').outputs.appGatewayAlias.value))]"
         },
         "appGatewayURL": {
             "type": "string",
-            "value": "[if(parameters('hasKeyVaultForAppGateway'),reference('appGatewaywithExistingKeyVaultTemplate', '${azure.apiVersion}').outputs.appGatewayURL.value, if(parameters('hasAppGatewaySSLCertificate'),reference('appGatewaywithExistingSSLCertTemplate', '${azure.apiVersion}').outputs.appGatewayURL.value, reference('appGatewaywithSelfSignedSSLCertTemplate', '${azure.apiVersion}').outputs.appGatewayURL.value))]"
-        }
+            "value": "[if(equals(parameters('appGatewayCertificateOption'), variables('const_appGatewaySSLCertOptionHaveKeyVault')),reference('appGatewaywithExistingKeyVaultTemplate', '${azure.apiVersion}').outputs.appGatewayURL.value, if(equals(parameters('appGatewayCertificateOption'),variables('const_appGatewaySSLCertOptionHaveCert')),reference('appGatewaywithExistingSSLCertTemplate', '${azure.apiVersion}').outputs.appGatewayURL.value, reference('appGatewaywithSelfSignedSSLCertTemplate', '${azure.apiVersion}').outputs.appGatewayURL.value))]"
+        },
+        "appGatewaySecuredURL": {
+			"type": "string",
+            "value": "[if(equals(parameters('appGatewayCertificateOption'), variables('const_appGatewaySSLCertOptionHaveKeyVault')),reference('appGatewaywithExistingKeyVaultTemplate', '${azure.apiVersion}').outputs.appGatewaySecuredURL.value, if(equals(parameters('appGatewayCertificateOption'),variables('const_appGatewaySSLCertOptionHaveCert')),reference('appGatewaywithExistingSSLCertTemplate', '${azure.apiVersion}').outputs.appGatewaySecuredURL.value, reference('appGatewaywithSelfSignedSSLCertTemplate', '${azure.apiVersion}').outputs.appGatewaySecuredURL.value))]"
+		}
     }
 }
+
