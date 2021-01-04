@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - develop
-      - 20201202-hotfix
   schedule:
     - cron: "0 7 * * *"
   repository_dispatch:
@@ -25,7 +24,7 @@ env:
   nsg: wls-nsg
   numberOfInstances: 2
   refArmttk: 8e08a92dbb0a22b8560ec854a60e9a8a7b71c68f
-  refJavaee: 6807e2ae3e8a8492edf211b9f4f0b7ed3a2a29e7
+  refJavaee: 0f04aab7fc41be640bd22191d7a16054863cfe91
   repoName: arm-oraclelinux-wls-cluster
   resourceGroupForDependency: wlsd-${{ github.run_id }}-${{ github.run_number }}
   resourceGroupPrefix: ${{ github.run_id }}-${{ github.run_number }}

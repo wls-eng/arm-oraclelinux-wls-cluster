@@ -42,6 +42,13 @@
                 "description": "Used to name the new certificate resource."
             }
         },
+        "sku": {
+            "type": "string",
+            "metadata": {
+                "description": "Price tier for Key Vault."
+            },
+            "defaultValue": "Standard"
+        },
         "subjectName": {
             "type": "string",
             "metadata": {
@@ -83,12 +90,12 @@
             "properties": {
                 "sku": {
                     "family": "A",
-                    "name": "Standard"
+                    "name": "[parameters('sku')]"
                 },
                 "tenantId": "[subscription().tenantId]",
                 "accessPolicies": [
                     {
-                        "objectId": "[reference(string(identity.getId(parameters('identity'))), '2018-11-30').principalId]",
+                        "objectId": "[reference(string(identity.getId(parameters('identity'))), '${azure.apiVersionForIndentity}').principalId]",
                         "tenantId": "[subscription().tenantId]",
                         "permissions": "[parameters('permission')]"
                     }
@@ -102,7 +109,7 @@
         {
             "type": "Microsoft.Resources/deploymentScripts",
             "apiVersion": "${azure.apiVersionForDeploymentScript}",
-            "name": "createAddCertificate",
+            "name": "script-createAddCertificate",
             "location": "[parameters('location')]",
             "dependsOn": [
                 "[resourceId('Microsoft.KeyVault/vaults', parameters('keyvaultName'))]"

@@ -8,13 +8,6 @@
                 "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
             }
         },
-        "_artifactsLocationDNSZonesTemplate": {
-            "defaultValue": "[if(contains(parameters('_artifactsLocation'), 'githubusercontent'), parameters('_artifactsLocation'), deployment().properties.templateLink.uri)]",
-            "type": "string",
-            "metadata": {
-                "description": "If we are deploying from the command line, use the passed in _artifactsLocation, otherwise use the default."
-            }
-        },
         "_artifactsLocationSasToken": {
             "defaultValue": "",
             "type": "securestring",
@@ -29,11 +22,32 @@
                 "description": "An array of A record names. Used to create A records."
             }
         },
+        "dnszonesCNAMEAlias": {
+            "type": "array",
+            "metadata": {
+                "description": "An array of CNAME record alias. Used to create CNAME records."
+            },
+            "defaultValue": []
+        },
+        "dnszonesCNAMERecordSetNames": {
+            "type": "array",
+            "metadata": {
+                "description": "An array of CNAME record names. Used to create CNAME record set."
+            },
+            "defaultValue": []
+        },
         "dnszoneName": {
             "defaultValue": "contoso.xyz",
             "type": "string",
             "metadata": {
                 "description": "Azure DNS Zone name."
+            }
+        },
+        "dnszoneLocation": {
+            "defaultValue": "global",
+            "type": "string",
+            "metadata": {
+                "description": "Location used to create Azure DNS Zone."
             }
         },
         "hasDNSZones": {
@@ -59,14 +73,14 @@
             "type": "string",
             "defaultValue": "[resourceGroup()]",
             "metadata": {
-                "description": "The resource group name that has an Azure DNS Zone deployed."
+                "description": "Name of the resource group that has an Azure DNS Zone deployed."
             }
         },
         "targetResources": {
             "type": "array",
             "defaultValue": [],
             "metadata": {
-                "description": "References to azure resources from where the dns resource value is taken. Each item is corresponding to values of dnszonesARecordSetNames."
+                "description": "References to Azure resources from where the DNS resource value is taken. Each item is corresponding to values of dnszonesARecordSetNames."
             }
         },
         "ttl": {
@@ -85,8 +99,9 @@
         }
     },
     "variables": {
-        "name_createDNSZoneLinkedTemplateName": "createDNSZonesTemplate.json",
-        "name_updateDNSZoneLinkedTemplateName": "updateDNSZonesTemplate.json"
+        "name_createDNSZoneLinkedTemplateName": "_createDNSZonesTemplate.json",
+        "name_dnszoneTempaltesFolder": "_dnszones",
+        "name_updateDNSZoneLinkedTemplateName": "_updateDNSZonesTemplate.json"
     },
     "resources": [
         {
@@ -111,18 +126,24 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/dnszones/', variables('name_createDNSZoneLinkedTemplateName')))]",
+                    "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/',variables('name_dnszoneTempaltesFolder'),'/', variables('name_createDNSZoneLinkedTemplateName')))]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
                     "dnszonesARecordSetNames": {
                         "value": "[parameters('dnszonesARecordSetNames')]"
                     },
+                    "dnszonesCNAMEAlias": {
+                        "value": "[parameters('dnszonesCNAMEAlias')]"
+                    },
+                    "dnszonesCNAMERecordSetNames": {
+                        "value": "[parameters('dnszonesCNAMERecordSetNames')]"
+                    },
                     "dnszoneName": {
                         "value": "[parameters('dnszoneName')]"
                     },
                     "location": {
-                        "value": "[parameters('location')]"
+                        "value": "[parameters('dnszoneLocation')]"
                     },
                     "targetResources": {
                         "value": "[parameters('targetResources')]"
@@ -141,18 +162,24 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/dnszones/', variables('name_updateDNSZoneLinkedTemplateName')))]",
+                    "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/',variables('name_dnszoneTempaltesFolder'),'/', variables('name_updateDNSZoneLinkedTemplateName')))]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
                     "_artifactsLocation": {
-                        "value": "[parameters('_artifactsLocationDNSZonesTemplate')]"
+                        "value": "[parameters('_artifactsLocation')]"
                     },
                     "_artifactsLocationSasToken": {
                         "value": "[parameters('_artifactsLocationSasToken')]"
                     },
                     "dnszonesARecordSetNames": {
                         "value": "[parameters('dnszonesARecordSetNames')]"
+                    },
+                    "dnszonesCNAMEAlias": {
+                        "value": "[parameters('dnszonesCNAMEAlias')]"
+                    },
+                    "dnszonesCNAMERecordSetNames": {
+                        "value": "[parameters('dnszonesCNAMERecordSetNames')]"
                     },
                     "dnszoneName": {
                         "value": "[parameters('dnszoneName')]"

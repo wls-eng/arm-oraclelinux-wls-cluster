@@ -2,22 +2,28 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
-        "name": {
+        "certificateDataName": {
             "type": "string",
             "metadata": {
-                "description": "Name of the vault"
+                "description": "Secret name of certificate data."
             }
         },
-        "location": {
+        "certificateDataValue": {
             "type": "string",
             "metadata": {
-                "description": "The supported Azure location where the key vault should be created."
+                "description": "Certificate data to store in the secret"
             }
         },
-        "sku": {
+        "certificatePasswordName": {
             "type": "string",
             "metadata": {
-                "description": "Price tier for Key Vault."
+                "description": "Secret name of certificate password."
+            }
+        },
+        "certificatePasswordValue": {
+            "type": "string",
+            "metadata": {
+                "description": "Certificate password to store in the secret"
             }
         },
         "enabledForTemplateDeployment": {
@@ -27,49 +33,29 @@
             },
             "defaultValue": true
         },
-        "certificateDataName": {
+        "location": {
             "type": "string",
             "metadata": {
-                "description": "Secret name of self-signed certificate data."
+                "description": "The supported Azure location where the key vault should be created."
             }
         },
-        "certificateDataValue": {
+        "name": {
             "type": "string",
             "metadata": {
-                "description": "Self-signed certificate data to store in the secret"
+                "description": "Name of the vault"
             }
         },
-        "certificatePasswordName": {
+        "sku": {
             "type": "string",
             "metadata": {
-                "description": "Secret name of self-signed certificate password."
-            }
-        },
-        "certificatePasswordValue": {
-            "type": "string",
-            "metadata": {
-                "description": "Self-signed certificate password to store in the secret"
+                "description": "Price tier for Key Vault."
             }
         }
     },
     "variables": {},
     "resources": [
         {
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2019-09-01",
-            "name": "${cluster.appgateway.keyvault.start}",
-            "properties": {
-                "mode": "Incremental",
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "resources": [
-                    ]
-                }
-            }
-        },
-        {
-            "apiVersion": "2019-09-01",
+            "apiVersion": "${azure.apiVersionForKeyVault}",
             "name": "[parameters('name')]",
             "location": "[parameters('location')]",
             "type": "Microsoft.KeyVault/vaults",
@@ -85,7 +71,7 @@
         },
         {
             "type": "Microsoft.KeyVault/vaults/secrets",
-            "apiVersion": "2019-09-01",
+            "apiVersion": "${azure.apiVersionForKeyVault}",
             "name": "[concat(parameters('name'), '/', parameters('certificateDataName'))]",
             "location": "[parameters('location')]",
             "dependsOn": [
@@ -97,7 +83,7 @@
         },
         {
             "type": "Microsoft.KeyVault/vaults/secrets",
-            "apiVersion": "2019-09-01",
+            "apiVersion": "${azure.apiVersionForKeyVault}",
             "name": "[concat(parameters('name'), '/', parameters('certificatePasswordName'))]",
             "location": "[parameters('location')]",
             "dependsOn": [
@@ -106,20 +92,6 @@
             "properties": {
                 "value": "[parameters('certificatePasswordValue')]"
             }
-        },
-        {
-            "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2019-09-01",
-            "name": "${cluster.appgateway.keyvault.end}",
-            "properties": {
-                "mode": "Incremental",
-                "template": {
-                    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-                    "contentVersion": "1.0.0.0",
-                    "resources": [
-                    ]
-                }
-            }
         }
     ],
     "outputs": {
@@ -127,9 +99,13 @@
             "type": "string",
             "value": "[parameters('name')]"
         },
-        "keyVaultResourceGroup": {
+        "sslCertDataSecretName": {
             "type": "string",
-            "value": "[resourceGroup().name]"
+            "value": "[parameters('certificateDataName')]"
+        },
+        "sslCertPwdSecretName": {
+            "type": "string",
+            "value": "[parameters('certificatePasswordName')]"
         }
     }
 }
