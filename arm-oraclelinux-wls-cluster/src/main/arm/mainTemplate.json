@@ -142,11 +142,31 @@
         },
         "dnszoneName": {
             "defaultValue": "contoso.xyz",
-            "type": "string"
+            "type": "string",
+            "metadata": {
+                "description": "Azure DNS Zone name."
+            }
         },
         "dnszoneResourceGroup": {
             "type": "string",
-            "defaultValue": "[resourceGroup().name]"
+            "defaultValue": "[resourceGroup().name]",
+            "metadata": {
+                "description": "Name of the resource group containing the Azure DNS Zone."
+            }
+        },
+        "dnszoneAdminConsoleLabel": {
+            "type": "string",
+            "defaultValue": "console",
+            "metadata": {
+                "description": "Specify a label used to generate subdomain of Oracle WebLogic Administration Console. The final subdomain name will be label.dnszoneName, e.g. console.contoso.xyz"
+            }
+        },
+        "dnszoneAppGatewayLabel": {
+            "type": "string",
+            "defaultValue": "applications",
+            "metadata": {
+                "description": "Specify a label used to generate subdomain of Application Gateway. The final subdomain name will be label.dnszoneName, e.g. applications.contoso.xyz"
+            }
         },
         "elasticsearchEndpoint": {
             "type": "string",
@@ -920,11 +940,16 @@
                     "_artifactsLocationSasToken": {
                         "value": "[parameters('_artifactsLocationSasToken')]"
                     },
+                    "dnszonesARecordSetNames": {
+                        "value": [
+                            "[parameters('dnszoneAdminConsoleLabel')]"
+                        ]
+                    },
                     "dnszonesCNAMEAlias": {
                         "value": "[createArray(if(parameters('enableAppGateway'), reference('keyVaultLinkedAppGatewayTemplate', '${azure.apiVersion}').outputs.appGatewayAlias.value, createArray()))]"
                     },
                     "dnszonesCNAMERecordSetNames": {
-                        "value": "[createArray(if(parameters('enableAppGateway'), parameters('dnsNameforApplicationGateway'), createArray()))]"
+                        "value": "[createArray(if(parameters('enableAppGateway'), parameters('dnszoneAppGatewayLabel'), createArray()))]"
                     },
                     "dnszoneName": {
                         "value": "[parameters('dnszoneName')]"
@@ -940,6 +965,11 @@
                     },
                     "resourceGroup": {
                         "value": "[parameters('dnszoneResourceGroup')]"
+                    },
+                    "targetResources": {
+                        "value": [
+                            "[reference('clusterLinkedTemplate', '${azure.apiVersion}').outputs._adminPublicIPId.value]"
+                        ]
                     }
                 }
 
@@ -950,9 +980,10 @@
             "name": "${cluster.end}",
             "type": "Microsoft.Resources/deployments",
             "dependsOn": [
-                "[resourceId('Microsoft.Resources/deployments', 'aadLinkedTemplate')]",
                 "[resourceId('Microsoft.Resources/deployments', 'clusterLinkedTemplate')]",
                 "[resourceId('Microsoft.Resources/deployments', 'keyVaultLinkedAppGatewayTemplate')]",
+                "[resourceId('Microsoft.Resources/deployments', 'keyVaultLinkedTemplate')]",
+                "[resourceId('Microsoft.Resources/deployments', 'aadLinkedTemplate')]",
                 "[resourceId('Microsoft.Resources/deployments', 'elkLinkedTemplate')]",
                 "[resourceId('Microsoft.Resources/deployments', 'coherenceTemplate')]",
                 "[resourceId('Microsoft.Resources/deployments', 'dnszonesLinkedTemplate')]"
@@ -979,15 +1010,15 @@
         },
         "adminConsole": {
             "type": "string",
-            "value": "[reference('clusterLinkedTemplate', '${azure.apiVersion}').outputs.adminConsole.value]"
+            "value": "[if(parameters('enableDNSConfiguration'), format('http://{0}.{1}:7001/console', parameters('dnszoneAdminConsoleLabel'), parameters('dnszoneName')),reference('clusterLinkedTemplate', '${azure.apiVersion}').outputs.adminConsole.value)]"
         },
         "adminSecuredConsole": {
             "type": "string",
-            "value": "[reference('clusterLinkedTemplate', '${azure.apiVersion}').outputs.adminSecuredConsole.value]"
+            "value": "[if(parameters('enableDNSConfiguration'), format('https://{0}.{1}:7002/console', parameters('dnszoneAdminConsoleLabel'), parameters('dnszoneName')),reference('clusterLinkedTemplate', '${azure.apiVersion}').outputs.adminSecuredConsole.value)]"
         },
         "appGatewayURL": {
             "type": "string",
-            "value": "[if(parameters('enableAppGateway'), if(parameters('enableDNSConfiguration'), format('{0}.{1}', parameters('dnsNameforApplicationGateway'),parameters('dnszoneName')), reference('keyVaultLinkedAppGatewayTemplate', '${azure.apiVersion}').outputs.appGatewayURL.value),'')]"
+            "value": "[if(parameters('enableAppGateway'), if(parameters('enableDNSConfiguration'), format('{0}.{1}', parameters('dnszoneAppGatewayLabel'),parameters('dnszoneName')), reference('keyVaultLinkedAppGatewayTemplate', '${azure.apiVersion}').outputs.appGatewayURL.value),'')]"
         },
         "logIndex": {
             "type": "string",

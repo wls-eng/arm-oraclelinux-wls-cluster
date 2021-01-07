@@ -517,8 +517,8 @@
                                 "toolTip": "Use only letters and numbers and periods to separate Domains",
                                 "constraints": {
                                     "required": true,
-                                    "regex": "^([0-9a-zA-Z_/-]{1,63}\\.){1,33}[0-9a-zA-Z_/-]{1,63}$",
-                                    "validationMessage": "There must be between 2 and 34 labels. For example, \"contoso.com\" has 2 labels. Each label must contain between 1 and 63 characters."
+                                    "regex": "^([0-9a-zA-Z_-]{1,63}\\.){1,33}[0-9a-zA-Z_-]{1,63}$",
+                                    "validationMessage": "There must be between 2 and 34 labels. For example, \"contoso.com\" has 2 labels. Each label must contain between 1 and 63 characters. Each label must only contain letters, numbers, underscores, and dashes."
                                 }
                             },
                             {
@@ -533,6 +533,39 @@
                                     "validationMessage": "[if(greater(length(steps('section_dnsConfiguration').existingDNSZonesSettings.dnsZoneResourceGroup), 90),'Resource group names only allow up to 90 characters.', 'Resource group names only allow alphanumeric characters, periods, underscores, hyphens and parenthesis and cannot end in a period.')]"
                                 },
                                 "visible": "[bool(steps('section_dnsConfiguration').customDNSSettings.bringDNSZone)]"
+                            },
+                            {
+                                "name": "dnszoneAdminConsoleLabel",
+                                "type": "Microsoft.Common.TextBox",
+                                "label": "Label for Oracle WebLogic Administration Console",
+                                "defaultValue": "console",
+                                "toolTip": "Specify a label to generate subdomain of Oracle WebLogic Administration Console",
+                                "constraints": {
+                                    "required": true,
+                                    "validations": [
+                                        {
+                                            "regex": "[concat('^([0-9a-zA-Z_-]{1,63}\\.){0,', string(sub(32,sub(length(steps('section_dnsConfiguration').customDNSSettings.dnszoneName), length(replace(steps('section_dnsConfiguration').customDNSSettings.dnszoneName, '.', ''))))),'}[0-9a-zA-Z_-]{1,63}$')]",
+                                            "message": "Subdomain must be between 2 and 34 labels. For example, \"console.contoso.com\" has 3 labels. Each label must contain between 1 and 63 characters. Each label must only contain letters, numbers, underscores, and dashes."
+                                        }
+                                    ]
+                                }
+                            },
+                            {
+                                "name": "dnszoneGatewayLabel",
+                                "type": "Microsoft.Common.TextBox",
+                                "label": "Label for Oracle WebLogic Administration Console",
+                                "defaultValue": "applications",
+                                "toolTip": "Specify a label to generate subdomain of Application Gateway",
+                                "constraints": {
+                                    "required": true,
+                                    "validations": [
+                                        {
+                                            "regex": "[concat('^([0-9a-zA-Z_-]{1,63}\\.){0,', string(sub(32,sub(length(steps('section_dnsConfiguration').customDNSSettings.dnszoneName), length(replace(steps('section_dnsConfiguration').customDNSSettings.dnszoneName, '.', ''))))),'}[0-9a-zA-Z_-]{1,63}$')]",
+                                            "message": "Subdomain must be between 2 and 34 labels. For example, \"applications.contoso.com\" has 3 labels. Each label must contain between 1 and 63 characters. Each label must only contain letters, numbers, underscores, and dashes."
+                                        }
+                                    ]
+                                },
+                                "visible": "[and(bool(steps('section_appGateway').enableAppGateway), bool(steps('section_dnsConfiguration').enableCustomDNS))]"
                             },
 							{
                                 "name": "reuseIdentity",
@@ -1147,6 +1180,8 @@
             "dnszoneIdentity":"[if(greater(length(steps('section_dnsConfiguration').customDNSSettings.dnsIdentity.userAssignedIdentities),0),steps('section_dnsConfiguration').customDNSSettings.dnsIdentity, steps('section_appGateway').gatewayIdentity)]",
             "dnszoneName": "[steps('section_dnsConfiguration').customDNSSettings.dnszoneName]",
             "dnszoneResourceGroup": "[steps('section_dnsConfiguration').customDNSSettings.dnsZoneResourceGroup]",
+            "dnszoneAdminConsoleLabel": "[steps('section_dnsConfiguration').customDNSSettings.dnszoneAdminConsoleLabel]",
+            "dnszoneAppGatewayLabel": "[steps('section_dnsConfiguration').customDNSSettings.dnszoneGatewayLabel]",
             "dsConnectionURL": "[steps('section_database').databaseConnectionInfo.dsConnectionURL]",
             "dbPassword": "[steps('section_database').databaseConnectionInfo.dbPassword]",
             "dbUser": "[steps('section_database').databaseConnectionInfo.dbUser]",
