@@ -416,7 +416,7 @@
                             "systemAssignedIdentity": "Off"
                         },
                         "options": {
-                            "hideSystemAssignedIdentity":true,
+                            "hideSystemAssignedIdentity": true,
                             "hideUserAssignedIdentity": false
                         },
                         "visible": "[equals(steps('section_appGateway').certificateOption, 'generateCert')]"
@@ -513,7 +513,7 @@
                                 "name": "dnszoneName",
                                 "type": "Microsoft.Common.TextBox",
                                 "label": "DNS Zone Name",
-                                "defaultValue": "",
+                                "defaultValue": "  ",
                                 "toolTip": "Use only letters and numbers and periods to separate Domains",
                                 "constraints": {
                                     "required": true,
@@ -526,13 +526,13 @@
                                 "type": "Microsoft.Common.TextBox",
                                 "label": "Resource group name in current subscription containing the DNS Zone",
                                 "defaultValue": "",
-                                "toolTip": "Use only letters and numbers",
+                                "toolTip": "Resource group name in current subscription containing the DNS Zone",
                                 "constraints": {
                                     "required": true,
                                     "regex": "^[a-z0-9A-Z.\\-_()]{0,89}([a-z0-9A-Z\\-_()]{1})$",
                                     "validationMessage": "[if(greater(length(steps('section_dnsConfiguration').existingDNSZonesSettings.dnsZoneResourceGroup), 90),'Resource group names only allow up to 90 characters.', 'Resource group names only allow alphanumeric characters, periods, underscores, hyphens and parenthesis and cannot end in a period.')]"
                                 },
-                                "visible": "[bool(steps('section_dnsConfiguration').customDNSSettings.bringDNSZone)]"
+                                "visible": "[steps('section_dnsConfiguration').customDNSSettings.bringDNSZone]"
                             },
                             {
                                 "name": "dnszoneAdminConsoleLabel",
@@ -544,8 +544,12 @@
                                     "required": true,
                                     "validations": [
                                         {
-                                            "regex": "[concat('^([0-9a-zA-Z_-]{1,63}\\.){0,', string(sub(32,sub(length(steps('section_dnsConfiguration').customDNSSettings.dnszoneName), length(replace(steps('section_dnsConfiguration').customDNSSettings.dnszoneName, '.', ''))))),'}[0-9a-zA-Z_-]{1,63}$')]",
-                                            "message": "Subdomain must be between 2 and 34 labels. For example, \"console.contoso.com\" has 3 labels. Each label must contain between 1 and 63 characters. Each label must only contain letters, numbers, underscores, and dashes."
+                                            "regex": "^([0-9a-zA-Z_-]{1,63}\\.){0,33}[0-9a-zA-Z_-]{1,63}$",
+                                            "message": "Each label must contain between 1 and 63 characters. Each label must only contain letters, numbers, underscores, and dashes."
+                                        },
+                                        {
+                                            "isValid": "[less(sub(length(concat(steps('section_dnsConfiguration').customDNSSettings.dnszoneAdminConsoleLabel,'.',steps('section_dnsConfiguration').customDNSSettings.dnszoneName)),length(replace(concat(steps('section_dnsConfiguration').customDNSSettings.dnszoneAdminConsoleLabel,'.',steps('section_dnsConfiguration').customDNSSettings.dnszoneName), '.', ''))),34)]",
+                                            "message": "Subdomain must be between 2 and 34 labels. For example, \"applications.contoso.com\" has 3 labels."
                                         }
                                     ]
                                 }
@@ -560,14 +564,18 @@
                                     "required": true,
                                     "validations": [
                                         {
-                                            "regex": "[concat('^([0-9a-zA-Z_-]{1,63}\\.){0,', string(sub(32,sub(length(steps('section_dnsConfiguration').customDNSSettings.dnszoneName), length(replace(steps('section_dnsConfiguration').customDNSSettings.dnszoneName, '.', ''))))),'}[0-9a-zA-Z_-]{1,63}$')]",
-                                            "message": "Subdomain must be between 2 and 34 labels. For example, \"applications.contoso.com\" has 3 labels. Each label must contain between 1 and 63 characters. Each label must only contain letters, numbers, underscores, and dashes."
+                                            "regex": "^([0-9a-zA-Z_-]{1,63}\\.){0,33}[0-9a-zA-Z_-]{1,63}$",
+                                            "message": "Each label must contain between 1 and 63 characters. Each label must only contain letters, numbers, underscores, and dashes."
+                                        },
+                                        {
+                                            "isValid": "[less(sub(length(concat(if(empty(steps('section_dnsConfiguration').customDNSSettings.dnszoneGatewayLabel), '', steps('section_dnsConfiguration').customDNSSettings.dnszoneGatewayLabel),'.',steps('section_dnsConfiguration').customDNSSettings.dnszoneName)),length(replace(concat(if(empty(steps('section_dnsConfiguration').customDNSSettings.dnszoneGatewayLabel), '', steps('section_dnsConfiguration').customDNSSettings.dnszoneGatewayLabel),'.',steps('section_dnsConfiguration').customDNSSettings.dnszoneName), '.', ''))),34)]",
+                                            "message": "Subdomain must be between 2 and 34 labels. For example, \"applications.contoso.com\" has 3 labels."
                                         }
                                     ]
                                 },
                                 "visible": "[and(bool(steps('section_appGateway').enableAppGateway), bool(steps('section_dnsConfiguration').enableCustomDNS))]"
                             },
-							{
+                            {
                                 "name": "reuseIdentity",
                                 "type": "Microsoft.Common.OptionsGroup",
                                 "label": "Use the Managed Identity seleted previousely?",
@@ -585,7 +593,7 @@
                                         }
                                     ]
                                 },
-								"visible": "[and(greater(length(steps('section_appGateway').gatewayIdentity.userAssignedIdentities),0), bool(steps('section_dnsConfiguration').customDNSSettings.bringDNSZone))]"
+                                "visible": "[and(greater(length(steps('section_appGateway').gatewayIdentity.userAssignedIdentities),0), bool(steps('section_dnsConfiguration').customDNSSettings.bringDNSZone))]"
                             },
                             {
                                 "name": "infoDNSIndentity",
@@ -608,7 +616,7 @@
                                     "systemAssignedIdentity": "Off"
                                 },
                                 "options": {
-                                    "hideSystemAssignedIdentity":true,
+                                    "hideSystemAssignedIdentity": true,
                                     "hideUserAssignedIdentity": false
                                 },
                                 "visible": "[if(greater(length(steps('section_appGateway').gatewayIdentity.userAssignedIdentities),0),and(equals(steps('section_dnsConfiguration').customDNSSettings.reuseIdentity, false), bool(steps('section_dnsConfiguration').customDNSSettings.bringDNSZone)), bool(steps('section_dnsConfiguration').customDNSSettings.bringDNSZone))]"
@@ -1172,12 +1180,12 @@
             "adminPasswordOrKey": "[basics('basicsRequired').adminPasswordOrKey]",
             "adminUsername": "[basics('basicsRequired').adminUsername]",
             "appGatewayCertificateOption": "[steps('section_appGateway').certificateOption]",
-            "appGatewayIdentity":"[steps('section_appGateway').gatewayIdentity]",
+            "appGatewayIdentity": "[steps('section_appGateway').gatewayIdentity]",
             "appGatewaySSLCertData": "[steps('section_appGateway').keyVaultSSLCertData]",
             "appGatewaySSLCertPassword": "[steps('section_appGateway').appGatewaySSLCertPassword]",
             "databaseType": "[steps('section_database').databaseConnectionInfo.databaseType]",
             "dnsLabelPrefix": "[basics('basicsOptional').dnsLabelPrefix]",
-            "dnszoneIdentity":"[if(greater(length(steps('section_dnsConfiguration').customDNSSettings.dnsIdentity.userAssignedIdentities),0),steps('section_dnsConfiguration').customDNSSettings.dnsIdentity, steps('section_appGateway').gatewayIdentity)]",
+            "dnszoneIdentity": "[if(greater(length(steps('section_dnsConfiguration').customDNSSettings.dnsIdentity.userAssignedIdentities),0),steps('section_dnsConfiguration').customDNSSettings.dnsIdentity, steps('section_appGateway').gatewayIdentity)]",
             "dnszoneName": "[steps('section_dnsConfiguration').customDNSSettings.dnszoneName]",
             "dnszoneResourceGroup": "[steps('section_dnsConfiguration').customDNSSettings.dnsZoneResourceGroup]",
             "dnszoneAdminConsoleLabel": "[steps('section_dnsConfiguration').customDNSSettings.dnszoneAdminConsoleLabel]",
