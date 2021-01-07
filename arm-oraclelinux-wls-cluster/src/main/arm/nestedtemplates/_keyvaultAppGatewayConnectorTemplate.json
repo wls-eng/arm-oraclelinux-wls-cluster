@@ -348,6 +348,10 @@
         "appGatewayURL": {
             "type": "string",
             "value": "[if(equals(parameters('appGatewayCertificateOption'), variables('const_appGatewaySSLCertOptionHaveKeyVault')),reference('appGatewaywithExistingKeyVaultTemplate', '${azure.apiVersion}').outputs.appGatewayURL.value, if(equals(parameters('appGatewayCertificateOption'),variables('const_appGatewaySSLCertOptionHaveCert')),reference('appGatewaywithExistingSSLCertTemplate', '${azure.apiVersion}').outputs.appGatewayURL.value, reference('appGatewaywithSelfSignedSSLCertTemplate', '${azure.apiVersion}').outputs.appGatewayURL.value))]"
-        }
+        },
+        "appGatewaySecuredURL": {
+			"type": "string",
+            "value": "[if(equals(parameters('appGatewayCertificateOption'), variables('const_appGatewaySSLCertOptionHaveKeyVault')),reference('appGatewaywithExistingKeyVaultTemplate', '${azure.apiVersion}').outputs.appGatewaySecuredURL.value, if(equals(parameters('appGatewayCertificateOption'),variables('const_appGatewaySSLCertOptionHaveCert')),reference('appGatewaywithExistingSSLCertTemplate', '${azure.apiVersion}').outputs.appGatewaySecuredURL.value, reference('appGatewaywithSelfSignedSSLCertTemplate', '${azure.apiVersion}').outputs.appGatewaySecuredURL.value))]"
+		}
     }
 }
