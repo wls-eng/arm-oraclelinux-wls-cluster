@@ -103,8 +103,7 @@
                 "TTL": "[parameters('ttl')]",
                 "CNAMERecord": {
                     "cname": "[parameters('dnszonesCNAMEAlias')[copyIndex()]]"
-                },
-                "targetResource": {}
+                }
             }
         }
     ],
