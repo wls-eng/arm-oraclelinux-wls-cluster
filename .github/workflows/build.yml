@@ -3,8 +3,6 @@ on:
   push:
     branches:
       - develop
-      - 20201202-hotfix
-      - zhengchang-cert-only
   schedule:
     - cron: "0 7 * * *"
   repository_dispatch:
@@ -27,7 +25,7 @@ env:
   numberOfInstances: 2
   refArmttk: 8e08a92dbb0a22b8560ec854a60e9a8a7b71c68f
   refJavaee: update-for-weblogic-cluster
-  repoName: arm-oraclelinux-wls-cluster
+  repoName: galiacheng/arm-oraclelinux-wls-cluster
   resourceGroupForDependency: wlsd-${{ github.run_id }}-${{ github.run_number }}
   resourceGroupPrefix: ${{ github.run_id }}-${{ github.run_number }}
   testbranchName: cicd-${{ github.run_id }}-${{ github.run_number }}
