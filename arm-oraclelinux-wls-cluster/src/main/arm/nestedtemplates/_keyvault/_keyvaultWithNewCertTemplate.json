@@ -95,7 +95,7 @@
                 "tenantId": "[subscription().tenantId]",
                 "accessPolicies": [
                     {
-                        "objectId": "[reference(string(identity.getId(parameters('identity'))), '2018-11-30').principalId]",
+                        "objectId": "[reference(string(identity.getId(parameters('identity'))), '${azure.apiVersionForKeyVault}').principalId]",
                         "tenantId": "[subscription().tenantId]",
                         "permissions": "[parameters('permission')]"
                     }

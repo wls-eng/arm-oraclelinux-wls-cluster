@@ -459,9 +459,6 @@
                     }
                 }
             },
-            "identity": {
-                "type": "SystemAssigned"
-            },
             "plan": {
                 "name": "[variables('name_linuxImageOfferSKU')]",
                 "publisher": "[variables('const_imagePublisher')]",

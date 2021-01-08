@@ -79,7 +79,7 @@
             "defaultValue": "",
             "type": "string",
             "metadata": {
-                "description": "The value of the SSL Certificate Data"
+                "description": "The one-line, base64 string of the SSL certificate data."
             }
         },
         "appGatewaySSLCertPassword": {
@@ -247,7 +247,10 @@
         },
         "hasDNSZones": {
             "type": "bool",
-            "defaultValue": false
+            "defaultValue": false,
+            "metadata": {
+                "description": "If true, the template will update records to the existing DNS Zone. If false, the template will create a new DNS Zone."
+            }
         },
         "jdbcDataSourceName": {
             "defaultValue": "",

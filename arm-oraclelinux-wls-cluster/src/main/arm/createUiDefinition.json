@@ -277,7 +277,7 @@
                         "type": "Microsoft.Common.TextBlock",
                         "visible": "[steps('section_appGateway').enableAppGateway]",
                         "options": {
-                            "text": "App Gateway integration requires a SSL certificate to enable SSL termination at the gateway.  There are three SSL certificate usage available. Upload a SSL certificate: the template will store the certificate to an Azure Key Vault and retrieve it during the gateway deployment.  Have a Azure Key Vault with a SSL certificate stored: the template will look for the certificate and its password in the Azure KeyVault specified here. Generate a self-signed certificate: the tamplate will generate a self signed certificate and apply it during the gateway deployment.",
+                            "text": "App Gateway integration requires a SSL certificate to enable SSL termination at the gateway.  There are three SSL certificate usages available. Upload a SSL certificate: the template will store the certificate to an Azure Key Vault and retrieve it during the gateway deployment.  Have an Azure Key Vault with a SSL certificate stored: the template will look for the certificate and its password in the Azure Key Vault specified here. Generate a self-signed certificate: the tamplate will generate a self-signed certificate and apply it during the gateway deployment.",
                             "link": {
                                 "label": "Learn more",
                                 "uri": "https://aka.ms/arm-oraclelinux-wls-cluster-app-gateway-key-vault"
@@ -297,7 +297,7 @@
                                     "value": "haveCert"
                                 },
                                 {
-                                    "label": "Have a Azure Key Vault with a SSL certificate stored",
+                                    "label": "Have an Azure Key Vault with a SSL certificate stored",
                                     "value": "haveKeyVault"
                                 },
                                 {
@@ -312,7 +312,7 @@
                     {
                         "name": "keyVaultSSLCertData",
                         "type": "Microsoft.Common.FileUpload",
-                        "label": "SSL certificate",
+                        "label": "SSL certificate(.pfx)",
                         "toolTip": "SSL certificate used for App Gateway",
                         "constraints": {
                             "required": true,
@@ -401,7 +401,7 @@
                         "visible": "[and(equals(steps('section_appGateway').certificateOption, 'generateCert'), less(length(steps('section_appGateway').gatewayIdentity.userAssignedIdentities), 1))]",
                         "options": {
                             "icon": "Error",
-                            "text": "This option will create a self signed SSL certificate for gateway SSL termination. We use Azure deployment scripts to create a certificate. You have to add at least one user assigned identity to access Azure resources.",
+                            "text": "This option will create a self-signed SSL certificate for gateway SSL termination. We use Azure deployment scripts to create a certificate. You have to add at least one user assigned identity to access Azure resources.",
                             "uri": "https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/deployment-script-template"
                         }
                     },
@@ -473,7 +473,7 @@
                                 "type": "Microsoft.Common.OptionsGroup",
                                 "label": "Bring your own Azure DNS Zone",
                                 "defaultValue": "No",
-                                "toolTip": "Select 'Yes' to configure Custom DNS Alias based on your existing Azure DNS Zone, 'No' to create a Azure DNS Zone.",
+                                "toolTip": "Select 'Yes' to configure Custom DNS Alias based on your existing Azure DNS Zone, 'No' to create an Azure DNS Zone.",
                                 "constraints": {
                                     "allowedValues": [
                                         {
@@ -502,7 +502,7 @@
                                 "name": "deplymentScriptInfo",
                                 "type": "Microsoft.Common.TextBlock",
                                 "options": {
-                                    "text": "Bring Azure DNS Zone option will add records to your DNS Zone to cause Application Gateway accessible. We need a user-assigned managed identity to update your resource group that has Azure DNS Zone deployed. ",
+                                    "text": "Bring Azure DNS Zone option will add records to your DNS Zone to cause Oracle WebLogic Server Administration Console and Application Gateway accessible via DNS alias. We need a user-assigned managed identity to update your resource group that has Azure DNS Zone deployed. ",
                                     "link": {
                                         "label": "Learn more",
                                         "uri": "https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/deployment-script-template"
@@ -524,9 +524,9 @@
                             {
                                 "name": "dnsZoneResourceGroup",
                                 "type": "Microsoft.Common.TextBox",
-                                "label": "Resource group name in current subscription containing the DNS Zone",
+                                "label": "Name of the resource group contains the DNS Zone in current subscription",
                                 "defaultValue": "",
-                                "toolTip": "Resource group name in current subscription containing the DNS Zone",
+                                "toolTip": "Name of the resource group contains the DNS Zone in current subscription",
                                 "constraints": {
                                     "required": true,
                                     "regex": "^[a-z0-9A-Z.\\-_()]{0,89}([a-z0-9A-Z\\-_()]{1})$",
@@ -557,7 +557,7 @@
                             {
                                 "name": "dnszoneGatewayLabel",
                                 "type": "Microsoft.Common.TextBox",
-                                "label": "Label for Oracle WebLogic Administration Console",
+                                "label": "Label for Application Gateway",
                                 "defaultValue": "applications",
                                 "toolTip": "Specify a label to generate subdomain of Application Gateway",
                                 "constraints": {

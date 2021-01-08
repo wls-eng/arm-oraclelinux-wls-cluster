@@ -23,7 +23,7 @@
             }
         },
         "appGatewayCertificateOption": {
-            "defaultValue": "",
+            "defaultValue": "haveCert",
             "type": "string",
             "metadata": {
                 "description": "Three scenarios we support for deploying app gateway"
@@ -38,7 +38,7 @@
             "defaultValue": "wlsgw",
             "type": "string",
             "metadata": {
-                "description": "DNS for ApplicationGateway"
+                "description": "DNS for Application Gateway"
             }
         },
         "gatewayPublicIPAddressName": {
@@ -52,49 +52,49 @@
             "defaultValue": "",
             "type": "string",
             "metadata": {
-                "description": "KeyVault Name"
+                "description": "Key Vault name"
             }
         },
         "keyVaultNamefromDeploymentOutput": {
             "defaultValue": "",
             "type": "string",
             "metadata": {
-                "description": "KeyVault Name that output from Key Vault linked template deployment."
+                "description": "Key Vault name that output from Key Vault linked template deployment."
             }
         },
         "keyVaultResourceGroup": {
             "defaultValue": "",
             "type": "string",
             "metadata": {
-                "description": "Resource group name in current subscription containing the KeyVault"
+                "description": "Name of resource group in current subscription containing the Key Vault"
             }
         },
         "keyVaultSSLCertDataSecretName": {
             "defaultValue": "myCertSecretData",
             "type": "string",
             "metadata": {
-                "description": "The name of the secret in the specified KeyVault whose value is the SSL Certificate Data,"
+                "description": "The name of the secret in the specified Key Vault whose value is the SSL Certificate Data,"
             }
         },
         "keyVaultSSLCertDataSecretNamefromDeploymentOutput": {
             "defaultValue": "",
             "type": "string",
             "metadata": {
-                "description": "The name of the secret in the specified KeyVault whose value is the SSL Certificate Data, that output from Key Vault linked template deployment."
+                "description": "The name of the secret in the specified Key Vault whose value is the SSL Certificate Data, that output from Key Vault linked template deployment."
             }
         },
         "keyVaultSSLCertPasswordSecretName": {
             "defaultValue": "",
             "type": "string",
             "metadata": {
-                "description": "The name of the secret in the specified KeyVault whose value is the password for the SSL Certificate"
+                "description": "The name of the secret in the specified Key Vault whose value is the password for the SSL Certificate"
             }
         },
         "keyVaultSSLCertPasswordSecretNamefromDeploymentOutput": {
             "defaultValue": "",
             "type": "string",
             "metadata": {
-                "description": "The name of the secret in the specified KeyVault whose value is the password for the SSL Certificate, that output from Key Vault linked template deployment."
+                "description": "The name of the secret in the specified Key Vault whose value is the password for the SSL Certificate, that output from Key Vault linked template deployment."
             }
         },
         "location": {
@@ -123,20 +123,20 @@
             "defaultValue": "wlsd",
             "type": "string",
             "metadata": {
-                "description": "Provide Weblogic domain name"
+                "description": "Provide WebLogic domain name"
             }
         },
         "wlsUserName": {
             "defaultValue": "weblogic",
             "type": "string",
             "metadata": {
-                "description": "Username for your Weblogic domain name"
+                "description": "Username for your WebLogic domain name"
             }
         },
         "wlsPassword": {
             "type": "securestring",
             "metadata": {
-                "description": "Password for your Weblogic domain name"
+                "description": "Password for your WebLogic domain name"
             }
         }
     },
@@ -355,3 +355,4 @@
 		}
     }
 }
+

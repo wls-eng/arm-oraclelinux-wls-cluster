@@ -32,7 +32,7 @@
         "dnszonesCNAMERecordSetNames": {
             "type": "array",
             "metadata": {
-                "description": "An array of A record names. Used to create CNAME record set."
+                "description": "An array of CNAME record names. Used to create CNAME record set."
             },
             "defaultValue": []
         },
@@ -73,14 +73,14 @@
             "type": "string",
             "defaultValue": "[resourceGroup()]",
             "metadata": {
-                "description": "The resource group name that has an Azure DNS Zone deployed."
+                "description": "Name of the resource group that has an Azure DNS Zone deployed."
             }
         },
         "targetResources": {
             "type": "array",
             "defaultValue": [],
             "metadata": {
-                "description": "References to azure resources from where the dns resource value is taken. Each item is corresponding to values of dnszonesARecordSetNames."
+                "description": "References to Azure resources from where the DNS resource value is taken. Each item is corresponding to values of dnszonesARecordSetNames."
             }
         },
         "ttl": {
