@@ -25,7 +25,7 @@ env:
   numberOfInstances: 2
   refArmttk: 8e08a92dbb0a22b8560ec854a60e9a8a7b71c68f
   refJavaee: update-for-weblogic-cluster
-  repoName: galiacheng/arm-oraclelinux-wls-cluster
+  repoName: arm-oraclelinux-wls-cluster
   resourceGroupForDependency: wlsd-${{ github.run_id }}-${{ github.run_number }}
   resourceGroupPrefix: ${{ github.run_id }}-${{ github.run_number }}
   testbranchName: cicd-${{ github.run_id }}-${{ github.run_number }}
