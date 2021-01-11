@@ -513,7 +513,7 @@
                                 "name": "dnszoneName",
                                 "type": "Microsoft.Common.TextBox",
                                 "label": "DNS Zone Name",
-                                "defaultValue": "  ",
+                                "defaultValue": "",
                                 "toolTip": "Use only letters and numbers and periods to separate Domains",
                                 "constraints": {
                                     "required": true,
