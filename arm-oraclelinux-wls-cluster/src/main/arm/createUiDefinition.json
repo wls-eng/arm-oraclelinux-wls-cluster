@@ -273,11 +273,35 @@
                         }
                     },
                     {
-                        "name": "keyVaultText",
+                        "name": "keyVaultText00",
                         "type": "Microsoft.Common.TextBlock",
                         "visible": "[steps('section_appGateway').enableAppGateway]",
                         "options": {
-                            "text": "App Gateway integration requires a SSL certificate to enable SSL termination at the gateway.  There are three SSL certificate usages available. Upload a SSL certificate: the template will store the certificate to an Azure Key Vault and retrieve it during the gateway deployment.  Have an Azure Key Vault with a SSL certificate stored: the template will look for the certificate and its password in the Azure Key Vault specified here. Generate a self-signed certificate: the tamplate will generate a self-signed certificate and apply it during the gateway deployment.",
+                            "text": "App Gateway integration requires an SSL certificate to enable SSL termination at the gateway. Select how you want to provide the certificate."
+                        }
+                    },
+                    {
+                        "name": "keyVaultText01",
+                        "type": "Microsoft.Common.TextBlock",
+                        "visible": "[steps('section_appGateway').enableAppGateway]",
+                        "options": {
+                            "text": "    ⁃ Upload an SSL certificate: Upload the pre-signed certificate now."
+                        }
+                    },
+                    {
+                        "name": "keyVaultText02",
+                        "type": "Microsoft.Common.TextBlock",
+                        "visible": "[steps('section_appGateway').enableAppGateway]",
+                        "options": {
+                            "text": "    ⁃ Identify an Azure Key Vault that already has the certificate stored."
+                        }
+                    },
+                    {
+                        "name": "keyVaultText03",
+                        "type": "Microsoft.Common.TextBlock",
+                        "visible": "[steps('section_appGateway').enableAppGateway]",
+                        "options": {
+                            "text": "    ⁃ Generate a self-signed certificate: generate a self-signed certificate and apply it during deployment.",
                             "link": {
                                 "label": "Learn more",
                                 "uri": "https://aka.ms/arm-oraclelinux-wls-cluster-app-gateway-key-vault"
