@@ -277,7 +277,7 @@
                         "type": "Microsoft.Common.TextBlock",
                         "visible": "[steps('section_appGateway').enableAppGateway]",
                         "options": {
-                            "text": "App Gateway integration requires an SSL certificate to enable SSL termination at the gateway. Select how you want to provide the certificate."
+                            "text": "App Gateway integration requires an SSL certificate to enable SSL termination at the gateway. Choose an options for how you will provide the certificate:"
                         }
                     },
                     {
@@ -293,7 +293,7 @@
                         "type": "Microsoft.Common.TextBlock",
                         "visible": "[steps('section_appGateway').enableAppGateway]",
                         "options": {
-                            "text": "    ⁃ Identify an Azure Key Vault that already has the certificate stored."
+                            "text": "    ⁃ Identify an Azure Key Vault: The Key Vault must already have the certificate and its password stored as secrets."
                         }
                     },
                     {
@@ -312,16 +312,16 @@
                         "name": "certificateOption",
                         "type": "Microsoft.Common.OptionsGroup",
                         "label": "Select your current usage of SSL Certificate",
-                        "defaultValue": "Upload a SSL certificate",
+                        "defaultValue": "Upload an SSL certificate",
                         "toolTip": "Select your current usage of SSL Certificate",
                         "constraints": {
                             "allowedValues": [
                                 {
-                                    "label": "Upload a SSL certificate",
+                                    "label": "Upload an SSL certificate",
                                     "value": "haveCert"
                                 },
                                 {
-                                    "label": "Have an Azure Key Vault with a SSL certificate stored",
+                                    "label": "Identify an Azure Key Vault that already has the certificate stored",
                                     "value": "haveKeyVault"
                                 },
                                 {
@@ -425,7 +425,7 @@
                         "visible": "[and(equals(steps('section_appGateway').certificateOption, 'generateCert'), less(length(steps('section_appGateway').gatewayIdentity.userAssignedIdentities), 1))]",
                         "options": {
                             "icon": "Error",
-                            "text": "This option will create a self-signed SSL certificate for gateway SSL termination. We use Azure deployment scripts to create a certificate. You have to add at least one user assigned identity to access Azure resources.",
+                            "text": "This option will create a self-signed SSL certificate for gateway SSL termination. This option requires at least one user assigned identity to access Azure resources.",
                             "uri": "https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/deployment-script-template"
                         }
                     },
@@ -434,7 +434,7 @@
                         "type": "Microsoft.ManagedIdentity.IdentitySelector",
                         "label": "Managed Identity Configuration",
                         "toolTip": {
-                            "userAssignedIdentity": "Add user assigned identities to grant the resource access to Azure resources."
+                            "userAssignedIdentity": "Add user assigned identities to enable creation of SSL certificate."
                         },
                         "defaultValue": {
                             "systemAssignedIdentity": "Off"
@@ -495,9 +495,9 @@
                             {
                                 "name": "bringDNSZone",
                                 "type": "Microsoft.Common.OptionsGroup",
-                                "label": "Bring your own Azure DNS Zone",
+                                "label": "Use an existing Azure DNS Zone",
                                 "defaultValue": "No",
-                                "toolTip": "Select 'Yes' to configure Custom DNS Alias based on your existing Azure DNS Zone, 'No' to create an Azure DNS Zone.",
+                                "toolTip": "Select 'Yes' to configure Custom DNS Alias based on an existing Azure DNS Zone. Select 'No' to create an Azure DNS Zone and Custom DNS Alias.",
                                 "constraints": {
                                     "allowedValues": [
                                         {
@@ -513,13 +513,12 @@
                             },
                             {
                                 "name": "createDNSZoneText",
-                                "type": "Microsoft.Common.TextBlock",
+                                "type": "Microsoft.Common.InfoBox",
+                                "visible": "[not(bool(steps('section_dnsConfiguration').customDNSSettings.bringDNSZone))]",
                                 "options": {
-                                    "text": "If you don't bring an Azure DNS Zone, creating DNS Zone will require you to perform DNS Domain Delegation at your DNS Registry.",
-                                    "link": {
-                                        "label": "Learn more",
-                                        "uri": "https://aka.ms/dns-domain-delegation"
-                                    }
+                                    "icon": "Info",
+                                    "text": "You must perform DNS Domain Delegation at your DNS Registry after deployment.",
+                                    "uri": "https://aka.ms/dns-domain-delegation"
                                 }
                             },
                             {
