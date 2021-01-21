@@ -9,7 +9,7 @@ function echo_stderr ()
 #Function to display usage message
 function usage()
 {
-  echo_stderr "./addnode.sh <wlsDomainName> <wlsUserName> <wlsPassword> <managedServerPrefix> <serverIndex> <wlsAdminURL> <oracleHome> <wlsDomainPath> <storageAccountName> <storageAccountKey> <mountpointPath> <wlsADSSLCer> <wlsLDAPPublicIP> <adServerHost> <vituralMachinePassword> <appGWHostName> <enableELK> <elasticURI> <elasticUserName> <elasticPassword> <logsToIntegrate> <logIndex> <enableCoherence>"
+  echo_stderr "./addnode.sh <wlsDomainName> <wlsUserName> <wlsPassword> <managedServerPrefix> <serverIndex> <wlsAdminURL> <oracleHome> <wlsDomainPath> <storageAccountName> <storageAccountKey> <mountpointPath> <wlsADSSLCer> <wlsLDAPPublicIP> <adServerHost> <appGWHostName> <enableELK> <elasticURI> <elasticUserName> <elasticPassword> <logsToIntegrate> <logIndex> <enableCoherence>"
 }
 
 function installUtilities()
@@ -98,11 +98,6 @@ function validateInput()
     if [[ "$wlsADSSLCer" != "null" && "$wlsLDAPPublicIP" != "null" && "$adServerHost" != "null" ]]
     then 
         enableAAD="true"
-    fi
-
-    if [ -z "$vituralMachinePassword" ];
-    then
-        echo_stderr "mountpointPath is required. "
     fi
 
     if [ -z "$appGWHostName" ];
@@ -530,9 +525,7 @@ function getSerializedSystemIniFileFromShare()
 function mapLDAPHostWithPublicIP()
 {
     echo "map LDAP host with pubilc IP"
-    # change to superuser
-    echo "${vituralMachinePassword}"
-    sudo -S su -
+    
     # remove existing ip address for the same host
     sudo sed -i '/${adServerHost}/d' /etc/hosts
     sudo echo "${wlsLDAPPublicIP}  ${adServerHost}" >> /etc/hosts
@@ -598,7 +591,7 @@ for (( i=0;i<$ELEMENTS;i++)); do
     echo "ARG[${args[${i}]}]"
 done
 
-if [ $# -ne 23 ]
+if [ $# -ne 22 ]
 then
     usage
     exit 1
@@ -618,15 +611,14 @@ export mountpointPath=${11}
 export wlsADSSLCer="${12}"
 export wlsLDAPPublicIP="${13}"
 export adServerHost="${14}"
-export vituralMachinePassword="${15}"
-export appGWHostName=${16}
-export enableELK=${17}
-export elasticURI=${18}
-export elasticUserName=${19}
-export elasticPassword=${20}
-export logsToIntegrate=${21}
-export logIndex=${22}
-export enableCoherence=${23}
+export appGWHostName=${15}
+export enableELK=${16}
+export elasticURI=${17}
+export elasticUserName=${18}
+export elasticPassword=${19}
+export logsToIntegrate=${20}
+export logIndex=${21}
+export enableCoherence=${22}
 
 export coherenceListenPort=7574
 export coherenceLocalport=42000
