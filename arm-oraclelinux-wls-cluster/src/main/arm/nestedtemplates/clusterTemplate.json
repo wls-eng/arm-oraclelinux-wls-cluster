@@ -246,7 +246,7 @@
                         }
                     },
                     {
-                        "name": "WebLogiManagedChannelPortsDenied",
+                        "name": "WebLogicManagedChannelPortsDenied",
                         "properties": {
                             "protocol": "*",
                             "sourcePortRange": "*",
