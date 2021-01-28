@@ -12,6 +12,8 @@ on:
         default: 'refs/heads/develop'
 env:
   tagbranch: "tagbranch"
+  refArmttk: 8e08a92dbb0a22b8560ec854a60e9a8a7b71c68f
+  refJavaee: 0f04aab7fc41be640bd22191d7a16054863cfe91
   gitToken: ${{ secrets.GIT_TOKEN }}
   repoName: "arm-oraclelinux-wls-cluster"
   userEmail: ${{ secrets.USER_EMAIL }}
