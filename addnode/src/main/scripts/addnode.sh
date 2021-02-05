@@ -621,27 +621,45 @@ function importAADCertificate()
     sudo ${JAVA_HOME}/bin/keytool -noprompt -import -alias aadtrust -file ${addsCertificate} -keystore ${java_cacerts_path} -storepass changeit
 }
 
+function importAADCertificateIntoWLSCustomTrustKeyStore()
+{
+    if [ "${isCustomSSLEnabled,,}" == "true" ];
+    then
+        # set java home
+        . $oracleHome/oracle_common/common/bin/setWlstEnv.sh
+
+        # For SSL enabled causes AAD failure #225
+        # ISSUE: https://github.com/wls-eng/arm-oraclelinux-wls/issues/225
+
+        echo "Importing AAD Certificate into WLS Custom Trust Key Store: "
+
+        sudo ${JAVA_HOME}/bin/keytool -noprompt -import -trustcacerts -keystore {KEYSTORE_PATH}/trust.keystore -storepass ${customTrustKeyStorePassPhrase} -alias aadtrust -file ${addsCertificate} -storetype ${customTrustKeyStoreType}
+    else
+        echo "customSSL not enabled. Not required to configure AAD for WebLogic Custom SSL"
+    fi
+}
+
 function parseAndSaveCustomSSLKeyStoreData()
 {
     echo "create key stores for custom ssl settings"
 
-    mkdir -p $wlsDomainPath/$wlsDomainName/keystore
-    touch $wlsDomainPath/$wlsDomainName/keystore/identityKeyStoreCerBase64String.txt
+    mkdir -p ${KEYSTORE_PATH}
+    touch ${KEYSTORE_PATH}/identityKeyStoreCerBase64String.txt
 
-    echo "$customIdentityKeyStoreBase64String" > $wlsDomainPath/$wlsDomainName/keystore/identityKeyStoreCerBase64String.txt
-    cat $wlsDomainPath/$wlsDomainName/keystore/identityKeyStoreCerBase64String.txt | base64 -d > $wlsDomainPath/$wlsDomainName/keystore/identity.keystore
-    export customSSLIdentityKeyStoreFile=$wlsDomainPath/$wlsDomainName/keystore/identity.keystore
+    echo "$customIdentityKeyStoreBase64String" > ${KEYSTORE_PATH}/identityKeyStoreCerBase64String.txt
+    cat ${KEYSTORE_PATH}/identityKeyStoreCerBase64String.txt | base64 -d > ${KEYSTORE_PATH}/identity.keystore
+    export customSSLIdentityKeyStoreFile=${KEYSTORE_PATH}/identity.keystore
 
-    rm -rf $wlsDomainPath/$wlsDomainName/keystore/identityKeyStoreCerBase64String.txt
+    rm -rf ${KEYSTORE_PATH}/identityKeyStoreCerBase64String.txt
 
-    mkdir -p $wlsDomainPath/$wlsDomainName/keystore
-    touch $wlsDomainPath/$wlsDomainName/keystore/trustKeyStoreCerBase64String.txt
+    mkdir -p ${KEYSTORE_PATH}
+    touch ${KEYSTORE_PATH}/trustKeyStoreCerBase64String.txt
 
-    echo "$customTrustKeyStoreBase64String" > $wlsDomainPath/$wlsDomainName/keystore/trustKeyStoreCerBase64String.txt
-    cat $wlsDomainPath/$wlsDomainName/keystore/trustKeyStoreCerBase64String.txt | base64 -d > $wlsDomainPath/$wlsDomainName/keystore/trust.keystore
-    export customSSLTrustKeyStoreFile=$wlsDomainPath/$wlsDomainName/keystore/trust.keystore
+    echo "$customTrustKeyStoreBase64String" > ${KEYSTORE_PATH}/trustKeyStoreCerBase64String.txt
+    cat ${KEYSTORE_PATH}/trustKeyStoreCerBase64String.txt | base64 -d > ${KEYSTORE_PATH}/trust.keystore
+    export customSSLTrustKeyStoreFile=${KEYSTORE_PATH}/trust.keystore
 
-    rm -rf $wlsDomainPath/$wlsDomainName/keystore/trustKeyStoreCerBase64String.txt
+    rm -rf ${KEYSTORE_PATH}/trustKeyStoreCerBase64String.txt
 }
 
 
@@ -718,6 +736,8 @@ export WEBLOGIC_DEPLOY_TOOL=https://github.com/oracle/weblogic-deploy-tooling/re
 export username="oracle"
 export groupname="oracle"
 
+export KEYSTORE_PATH="$wlsDomainPath/$wlsDomainName/keystores"
+
 chmod ugo+x ${SCRIPT_PWD}/elkIntegration.sh
 
 validateInput
@@ -725,14 +745,16 @@ cleanup
 installUtilities
 mountFileShare
 updateNetworkRules "managed"
+
+if [ "$isCustomSSLEnabled" == "true" ];then
+    parseAndSaveCustomSSLKeyStoreData
+fi
+
 if [ "$enableAAD" == "true" ];then
     mapLDAPHostWithPublicIP
     parseLDAPCertificate
     importAADCertificate
-fi
-
-if [ "$isCustomSSLEnabled" == "true" ];then
-    parseAndSaveCustomSSLKeyStoreData
+    importAADCertificateIntoWLSCustomTrustKeyStore
 fi
 
 create_managedSetup

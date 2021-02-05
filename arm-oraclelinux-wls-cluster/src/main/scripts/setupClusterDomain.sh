@@ -783,7 +783,7 @@ export stopWebLogicScript="${DOMAIN_PATH}/${wlsDomainName}/bin/customStopWebLogi
 export wlsAdminURL="$wlsAdminHost:$wlsAdminT3ChannelPort"
 export SERVER_START_URL="http://$wlsAdminURL"
 
-export KEYSTORE_PATH="${DOMAIN_PATH}/${wlsDomainName}/keystore"
+export KEYSTORE_PATH="${DOMAIN_PATH}/${wlsDomainName}/keystores"
 
 if [ "${isCustomSSLEnabled}" == "true" ];
 then
