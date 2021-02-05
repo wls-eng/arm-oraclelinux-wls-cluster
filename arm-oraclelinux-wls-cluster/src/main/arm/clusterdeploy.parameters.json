@@ -40,6 +40,12 @@
     },
     "adminVMName": {
       "value": "GEN-UNIQUE"        
+    },
+    "denyPublicTrafficForAdminServer": {
+      "value": false
+    },
+    "enableCustomSSL": {
+      "value": false
     }
   }
 }
