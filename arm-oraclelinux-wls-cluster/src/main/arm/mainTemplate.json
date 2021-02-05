@@ -550,8 +550,8 @@
         "const_guidValue": "[guid(resourceGroup().id, deployment().name)]",
         "name_aadLinkedTemplateName": "aadNestedTemplate.json",
         "name_appGatewayConnector": "_keyvaultAppGatewayConnectorTemplate.json",
-        "name_clusterTemplateName": "clusterTemplate.json",
-        "name_clusterCustomSSLTemplateName": "clusterCustomSSLTemplate.json",
+        "name_clusterLinkedTemplateName": "clusterTemplate.json",
+        "name_clusterCustomSSLLinkedTemplateName": "clusterCustomSSLTemplate.json",
         "name_coherenceTemplateName": "coherenceTemplate.json",
         "name_dbLinkedTemplateName": "dbTemplate.json",
         "name_dnsNameforApplicationGateway": "[concat(parameters('dnsNameforApplicationGateway'), take(replace(variables('const_guidValue'),'-',''),6))]",
@@ -560,9 +560,9 @@
         "name_elkLinkedTemplateName": "elkNestedTemplate.json",
         "name_keyVaultLinkedTemplateName": "_keyvaultAdapterTemplate.json",
         "name_nsgLinkedTemplateName": "nsgNestedTemplate.json",
-        "clusterTemplateRef": "[concat('cluster',if(parameters('enableCustomSSL'),'CustomSSL',''),'Template')]",
-        "name_clusterTemplate": "clusterTemplate",
-        "name_clusterCustomSSLTemplate": "clusterCustomSSLTemplate"
+        "clusterTemplateRef": "[concat('cluster',if(parameters('enableCustomSSL'),'CustomSSL',''),'LinkedTemplate')]",
+        "name_clusterTemplate": "clusterLinkedTemplate",
+        "name_clusterCustomSSLTemplate": "clusterCustomSSLLinkedTemplate"
     },
     "resources": [
         {
@@ -587,7 +587,7 @@
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/', variables('name_clusterTemplateName')))]",
+                    "uri": "[uri(parameters('_artifactsLocation'), concat('nestedtemplates/', variables('name_clusterLinkedTemplateName')))]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
