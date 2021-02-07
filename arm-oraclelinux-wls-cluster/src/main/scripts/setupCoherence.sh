@@ -537,8 +537,8 @@ export logsToIntegrate=${15}
 export logIndex=${16}
 export managedServerPrefix=${17}
 export serverIndex=${18}
-
-export wlsAdminURL="${adminVMName}:7001"
+export wlsAdminT3ChannelPort=7005
+export wlsAdminURL="${adminVMName}:${wlsAdminT3ChannelPort}"
 export coherenceClusterName="myCoherence"
 export coherenceListenPort=7574
 export coherenceLocalport=42000
