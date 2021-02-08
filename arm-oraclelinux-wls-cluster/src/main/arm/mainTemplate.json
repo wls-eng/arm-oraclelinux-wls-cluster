@@ -1204,7 +1204,8 @@
             "name": "elkLinkedTemplate",
             "type": "Microsoft.Resources/deployments",
             "dependsOn": [
-                "[resourceId('Microsoft.Resources/deployments', 'aadLinkedTemplate')]"
+                "[resourceId('Microsoft.Resources/deployments', 'aadLinkedTemplate')]",
+                "[resourceId('Microsoft.Resources/deployments', 'aadLinkedTemplateWithCustomSSL')]"
             ],
             "apiVersion": "${azure.apiVersion}",
             "condition": "[parameters('enableELK')]",
@@ -1358,6 +1359,7 @@
                 "[resourceId('Microsoft.Resources/deployments', 'dnszonesLinkedTemplate')]",
                 "[resourceId('Microsoft.Resources/deployments', 'dbLinkedTemplate')]",
                 "[resourceId('Microsoft.Resources/deployments', 'aadLinkedTemplate')]",
+                "[resourceId('Microsoft.Resources/deployments', 'aadLinkedTemplateWithCustomSSL')]",
                 "[resourceId('Microsoft.Resources/deployments', 'elkLinkedTemplate')]",
                 "[resourceId('Microsoft.Resources/deployments', 'coherenceTemplate')]"
             ],
