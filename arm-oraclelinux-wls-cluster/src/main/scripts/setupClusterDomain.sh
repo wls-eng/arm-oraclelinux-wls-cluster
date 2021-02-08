@@ -9,7 +9,7 @@ function echo_stderr ()
 #Function to display usage message
 function usage()
 {
-  echo_stderr "./setupClusterDomain.sh <wlsDomainName> <wlsUserName> <wlsPassword> <wlsServerName> <wlsAdminHost> <storageAccountName> <storageAccountKey> <mountpointPath> <denyPublicTrafficForAdminServer> <isCustomSSLEnabled> [<customIdentityKeyStoreData> <customIdentityKeyStorePassPhrase> <customIdentityKeyStoreType> <customTrustKeyStoreData> <customTrustKeyStorePassPhrase> <customTrustKeyStoreType> <serverPrivateKeyAlias <serverPrivateKeyPassPhrase>]"
+  echo_stderr "./setupClusterDomain.sh <wlsDomainName> <wlsUserName> <wlsPassword> <wlsServerName> <wlsAdminHost> <storageAccountName> <storageAccountKey> <mountpointPath> <enableHTTPAdminListenPort> <isCustomSSLEnabled> [<customIdentityKeyStoreData> <customIdentityKeyStorePassPhrase> <customIdentityKeyStoreType> <customTrustKeyStoreData> <customTrustKeyStorePassPhrase> <customTrustKeyStoreType> <serverPrivateKeyAlias <serverPrivateKeyPassPhrase>]"
 }
 
 function installUtilities()
@@ -735,17 +735,8 @@ export storageAccountName=${7}
 export storageAccountKey=${8}
 export mountpointPath=${9}
 
-export denyPublicTrafficForAdminServer="${10}"
-denyPublicTrafficForAdminServer="${denyPublicTrafficForAdminServer,,}"
-
-export isHTTPAdminListenPortEnabled="true"
-
-if [ "${denyPublicTrafficForAdminServer}" == "true" ];
-then
-    isHTTPAdminListenPortEnabled="false"
-else
-    isHTTPAdminListenPortEnabled="true"
-fi
+export isHTTPAdminListenPortEnabled="${10}"
+isHTTPAdminListenPortEnabled="${isHTTPAdminListenPortEnabled,,}"
 
 export isCustomSSLEnabled="${11}"
 isCustomSSLEnabled="${isCustomSSLEnabled,,}"
