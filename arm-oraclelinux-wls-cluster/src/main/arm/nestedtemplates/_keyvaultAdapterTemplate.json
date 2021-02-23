@@ -74,16 +74,15 @@
                 "description": "If false, will create a certificate."
             }
         },
-        "utcNow": {
+        "keyVaultName": {
             "type": "string",
-            "defaultValue": "[utcNow()]",
+            "defaultValue": "GEN_UNIQUE",
             "metadata": {
-                "description": "Returns the current (UTC) datetime value in the ISO 8601 format."
+                "description": "Current deployment time. Used as a tag in deployment script."
             }
         }
     },
     "variables": {
-        "const_keyVaultName": "[take(concat('wls-kv', parameters('utcNow'), uniqueString(resourceGroup().id, deployment().name)), 24)]",
         "name_kvWithExistingCertTemplateName": "_keyvaultWithExistingCertTemplate.json",
         "name_kvWithNewCertTemplateName": "_keyvaultWithNewCertTemplate.json",
         "name_kvTempaltesFolder": "_keyvault",
@@ -121,7 +120,7 @@
                         "value": "[parameters('identity')]"
                     },
                     "keyvaultName": {
-                        "value": "[variables('const_keyVaultName')]"
+                        "value": "[parameters('keyVaultName')]"
                     },
                     "location": {
                         "value": "[parameters('location')]"
@@ -169,7 +168,7 @@
                         "value": "[parameters('location')]"
                     },
                     "name": {
-                        "value": "[variables('const_keyVaultName')]"
+                        "value": "[parameters('keyVaultName')]"
                     },
                     "sku": {
                         "value": "[parameters('sku')]"
