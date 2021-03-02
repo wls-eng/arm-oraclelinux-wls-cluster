@@ -264,6 +264,10 @@
                 "description": "Public IP Name for the Application Gateway"
             }
         },
+        "guidValue": {
+			"type": "string",
+			"defaultValue": "[newGuid()]"
+		},
         "hasDNSZones": {
             "type": "bool",
             "defaultValue": false,
@@ -637,7 +641,7 @@
         "const_sslConfigurationAccessOptionUploadConfig": "uploadConfig",
         "const_sslConfigurationAccessOptionKeyVaultStoredConfig": "keyVaultStoredConfig",
         "const_azureSubjectName": "[format('{0}.{1}.{2}', variables('name_domainLabelforApplicationGateway'), parameters('location'),'.cloudapp.azure.com')]",
-        "const_guidValue": "[guid(resourceGroup().id, deployment().name)]",
+        "const_guidValue": "[parameters('guidValue')]",
         "name_aadLinkedTemplateName": "aadNestedTemplate.json",
         "name_appGatewayConnector": "_keyvaultAppGatewayConnectorTemplate.json",
         "name_clusterLinkedTemplateName": "clusterTemplate.json",
@@ -646,7 +650,7 @@
         "name_dbLinkedTemplateName": "dbTemplate.json",
         "name_dnsNameforApplicationGateway": "[concat(parameters('dnsNameforApplicationGateway'), take(replace(variables('const_guidValue'),'-',''),6))]",
         "name_dnszonesLinkedTemplateName": "dnszonesTemplate.json",
-        "name_domainLabelforApplicationGateway": "[concat(variables('name_dnsNameforApplicationGateway'),'-',toLower(resourceGroup().name),'-',toLower(parameters('wlsDomainName')))]",
+        "name_domainLabelforApplicationGateway": "[take(concat(variables('name_dnsNameforApplicationGateway'),'-',toLower(resourceGroup().name),'-',toLower(parameters('wlsDomainName'))),63)]",
         "name_elkLinkedTemplateName": "elkNestedTemplate.json",
         "name_keyVaultLinkedTemplateName": "_keyvaultAdapterTemplate.json",
         "name_nsgLinkedTemplateName": "nsgNestedTemplate.json",
