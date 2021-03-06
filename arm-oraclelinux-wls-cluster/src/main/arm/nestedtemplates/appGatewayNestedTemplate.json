@@ -43,7 +43,7 @@
 			}
 		},
 		"dnsNameforApplicationGateway": {
-			"defaultValue": "[format('{0}{1}-{2}-{3}', 'wlsgw',take(replace(parameters('guidValue'),'-',''),6), toLower(resourceGroup().name),toLower(parameters('wlsDomainName')))]",
+			"defaultValue": "[take(format('{0}{1}-{2}-{3}', 'wlsgw',take(replace(parameters('guidValue'),'-',''),6), toLower(resourceGroup().name),toLower(parameters('wlsDomainName'))),63)]",
 			"type": "string",
 			"metadata": {
 				"description": "DNS for ApplicationGateway"

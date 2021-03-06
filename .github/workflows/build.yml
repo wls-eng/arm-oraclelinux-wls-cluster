@@ -922,16 +922,18 @@ jobs:
           git push https://$gitToken@github.com/$userName/${{ env.repoName }}.git -f --delete $testbranchName
 
   cleanup-az-resource:
-    if: ${{!(github.event_name == 'schedule' && github.repository_owner != 'wls-eng')}}
+    if: always()
     needs: deploy-weblogic-cluster
     runs-on: ubuntu-latest
     steps:
       - uses: azure/login@v1
         id: azure-login
+        if: ${{!(github.event_name == 'schedule' && github.repository_owner != 'wls-eng')}}
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
       - name: Delete DB Resource Group
         id: delete-db-resource-group
+        if: ${{!(github.event_name == 'schedule' && github.repository_owner != 'wls-eng')}}
         uses: azure/CLI@v1
         with:
           azcliversion: ${{ env.azCliVersion }}
@@ -941,10 +943,11 @@ jobs:
             
   summary:
     needs: deploy-weblogic-cluster
-    if: ${{!(github.event_name == 'schedule' && github.repository_owner != 'wls-eng')}}
+    if: always()
     runs-on: ubuntu-latest
     steps:
       - name: summarize jobs
+        if: ${{!(github.event_name == 'schedule' && github.repository_owner != 'wls-eng')}}
         run: |
             workflow_jobs=$(curl -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/wls-eng/arm-oraclelinux-wls-cluster/actions/runs/${{ github.run_id }}/jobs)
             critical_job_num=$(echo $workflow_jobs | jq '.jobs | map(select(.name|test("^deploy-weblogic-cluster."))) | length')
