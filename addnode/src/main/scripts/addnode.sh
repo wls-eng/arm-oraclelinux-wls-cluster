@@ -639,6 +639,29 @@ function importAADCertificateIntoWLSCustomTrustKeyStore()
     fi
 }
 
+function validateSSLKeyStores()
+{
+   sudo chown -R $username:$groupname $KEYSTORE_PATH
+
+   #validate identity keystore
+   runuser -l oracle -c ". $oracleHome/oracle_common/common/bin/setWlstEnv.sh; keytool -list -v -keystore $customSSLIdentityKeyStoreFile -storepass $customIdentityKeyStorePassPhrase -storetype $customIdentityKeyStoreType | grep 'Entry type:' | grep 'PrivateKeyEntry'"
+
+   if [[ $? != 0 ]]; then
+       echo "Error : Identity Keystore Validation Failed !!"
+       exit 1
+   fi
+
+   #validate Trust keystore
+   runuser -l oracle -c ". $oracleHome/oracle_common/common/bin/setWlstEnv.sh; keytool -list -v -keystore $customSSLTrustKeyStoreFile -storepass $customTrustKeyStorePassPhrase -storetype $customTrustKeyStoreType | grep 'Entry type:' | grep 'trustedCertEntry'"
+
+   if [[ $? != 0 ]]; then
+       echo "Error : Trust Keystore Validation Failed !!"
+       exit 1
+   fi
+
+   echo "ValidateSSLKeyStores Successfull !!"
+}
+
 function parseAndSaveCustomSSLKeyStoreData()
 {
     echo "create key stores for custom ssl settings"
@@ -660,6 +683,8 @@ function parseAndSaveCustomSSLKeyStoreData()
     export customSSLTrustKeyStoreFile=${KEYSTORE_PATH}/trust.keystore
 
     rm -rf ${KEYSTORE_PATH}/trustKeyStoreCerBase64String.txt
+
+    validateSSLKeyStores
 }
 
 
@@ -710,14 +735,17 @@ export enableCoherence=${22}
 export isCustomSSLEnabled="${23}"
 isCustomSSLEnabled="${isCustomSSLEnabled,,}"
 
-export customIdentityKeyStoreBase64String="${24}"
-export customIdentityKeyStorePassPhrase="${25}"
-export customIdentityKeyStoreType="${26}"
-export customTrustKeyStoreBase64String="${27}"
-export customTrustKeyStorePassPhrase="${28}"
-export customTrustKeyStoreType="${29}"
-export privateKeyAlias="${30}"
-export privateKeyPassPhrase="${31}"
+if [ "${isCustomSSLEnabled,,}" == "true" ];
+then
+    export customIdentityKeyStoreBase64String="${24}"
+    export customIdentityKeyStorePassPhrase="${25}"
+    export customIdentityKeyStoreType="${26}"
+    export customTrustKeyStoreBase64String="${27}"
+    export customTrustKeyStorePassPhrase="${28}"
+    export customTrustKeyStoreType="${29}"
+    export privateKeyAlias="${30}"
+    export privateKeyPassPhrase="${31}"
+fi
 
 export coherenceListenPort=7574
 export coherenceLocalport=42000
