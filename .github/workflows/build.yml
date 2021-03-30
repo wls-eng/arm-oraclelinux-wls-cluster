@@ -84,16 +84,10 @@ jobs:
           git config --global core.longpaths true
           git config --global user.email $userEmail
           git config --global user.name $userName
-          echo "debug: edburns: grep pid $current/${{ env.repoName }}/${{ env.repoName }}/target/arm/nestedtemplates/clusterTemplate.json"
-          grep pid $current/${{ env.repoName }}/${{ env.repoName }}/target/arm/nestedtemplates/clusterTemplate.json
           echo "create branch $testbranchName"
           git checkout -b $testbranchName
           rm -r -f $current/${{ env.repoName }}-dev/${{ env.repoName }}/src/main/arm/nestedtemplates/*
           cp -r -f $current/${{ env.repoName }}/${{ env.repoName }}/target/arm/nestedtemplates/* $current/${{ env.repoName }}-dev/${{ env.repoName }}/src/main/arm/nestedtemplates/
-          echo "debug: edburns: grep pid $current/${{ env.repoName }}-dev/${{ env.repoName }}/src/main/arm/nestedtemplates/clusterTemplate.json"
-          grep pid $current/${{ env.repoName }}-dev/${{ env.repoName }}/src/main/arm/nestedtemplates/clusterTemplate.json
-          echo "debug: edburns: pwd $PWD"
-          pwd
           git status
           git commit -a -m "hard code pids"
           git push https://$gitToken@github.com/$userName/${{ env.repoName }}.git -f
