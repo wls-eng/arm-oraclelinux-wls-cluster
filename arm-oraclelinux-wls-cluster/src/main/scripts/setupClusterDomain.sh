@@ -106,8 +106,6 @@ function cleanup()
 
     rm -rf $DOMAIN_PATH/admin-domain.yaml
     rm -rf $DOMAIN_PATH/managed-domain.yaml
-    rm -rf $DOMAIN_PATH/weblogic-deploy.zip
-    rm -rf $DOMAIN_PATH/weblogic-deploy
     rm -rf $DOMAIN_PATH/deploy-app.yaml
     rm -rf $DOMAIN_PATH/shoppingcart.zip
     rm -rf $DOMAIN_PATH/*.py
@@ -322,18 +320,18 @@ function create_adminSetup()
 {
     echo "Creating Admin Setup"
     echo "Creating domain path $DOMAIN_PATH"
-    echo "Downloading weblogic-deploy-tool"
  
     sudo mkdir -p $DOMAIN_PATH 
-    sudo rm -rf $DOMAIN_PATH/*
 
     cd $DOMAIN_PATH
-    wget -q $WEBLOGIC_DEPLOY_TOOL
-    if [[ $? != 0 ]]; then
-       echo "Error : Downloading weblogic-deploy-tool failed"
-       exit 1
+
+	# WebLogic base images are already having weblogic-deploy, hence no need to download
+    if [ ! -d "$DOMAIN_PATH/weblogic-deploy" ];
+    then
+        echo "weblogic-deploy tool not found in path $DOMAIN_PATH"
+        exit 1
     fi
-    sudo unzip -o weblogic-deploy.zip -d $DOMAIN_PATH
+
     storeCustomSSLCerts
     create_admin_model
     sudo chown -R $username:$groupname $DOMAIN_PATH
@@ -491,22 +489,21 @@ fi
 # Create managed server setup
 function create_managedSetup(){
     echo "Creating Managed Server Setup"
-    echo "Downloading weblogic-deploy-tool"
 
     DOMAIN_PATH="/u01/domains" 
     sudo mkdir -p $DOMAIN_PATH 
-    sudo rm -rf $DOMAIN_PATH/*
 
     cd $DOMAIN_PATH
-    wget -q $WEBLOGIC_DEPLOY_TOOL
-    if [[ $? != 0 ]]; then
-       echo "Error : Downloading weblogic-deploy-tool failed"
-       exit 1
+	
+	# WebLogic base images are already having weblogic-deploy, hence no need to download
+    if [ ! -d "$DOMAIN_PATH/weblogic-deploy" ];
+    then
+        echo "weblogic-deploy tool not found in path $DOMAIN_PATH"
+        exit 1
     fi
 
     storeCustomSSLCerts
 
-    sudo unzip -o weblogic-deploy.zip -d $DOMAIN_PATH
     echo "Creating managed server model files"
     create_managed_model
     create_machine_model
@@ -816,8 +813,6 @@ export adminWlstURL="t3://$wlsAdminURL"
 export wlsClusterName="cluster1"
 export nmHost=`hostname`
 export nmPort=5556
-export WEBLOGIC_DEPLOY_TOOL=https://github.com/oracle/weblogic-deploy-tooling/releases/download/weblogic-deploy-tooling-1.8.1/weblogic-deploy.zip
-
 export SCRIPT_PWD=`pwd`
 export username="oracle"
 export groupname="oracle"
