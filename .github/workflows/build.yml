@@ -1,16 +1,15 @@
 name: Build and Test
 on:
-  push:
-    branches:
-      - develop
-  schedule:
-    - cron: "0 7 * * *"
   workflow_dispatch:
     inputs:
       enableELK:
         description: 'Specify whether to enable ELK depoyment or not.'
         required: true
         default: 'false'
+  # Allows you to run this workflow using GitHub APIs
+  # PERSONAL_ACCESS_TOKEN=<GITHUB_PERSONAL_ACCESS_TOKEN>
+  # REPO_NAME=wls-eng/arm-oraclelinux-wls-cluster
+  # curl --verbose -XPOST -u "wls-eng:${PERSONAL_ACCESS_TOKEN}" -H "Accept: application/vnd.github.everest-preview+json" -H "Content-Type: application/json" https://api.github.com/repos/${REPO_NAME}/dispatches --data '{"event_type": "production-deploy"}'
   repository_dispatch:
 
 env:
@@ -359,7 +358,7 @@ jobs:
                            --resource-group $resourceGroup \
                            --access Allow \
                            --destination-address-prefixes "*" \
-                           --destination-port-ranges 22 43 \
+                           --destination-port-ranges 22 43 ${adminConsolePort} \
                            --direction Inbound \
                            --protocol Tcp \
                            --source-address-prefixes $myIP
@@ -623,11 +622,36 @@ jobs:
         with:
           azcliversion: ${{ env.azCliVersion }}
           inlineScript: |
+            echo "query existing source address prefixes"
+            attempt=0
+            toCreateRule105=false
+            while [[ -z `az network nsg show -g $resourceGroup -n ${nsg} | grep "NRMS-Rule-105"` && $attempt -le 5 ]]
+            do
+              if [ $attempt -eq 5 ]; then
+                toCreateRule105=true
+              fi
+              echo "network security group rule NRMS-Rule-105 is not ready"
+              sleep 1m
+              attempt=$((attempt + 1))
+            done
+            if [ $toCreateRule105 == true ]; then
+              az network nsg rule create --name NRMS-Rule-105 \
+                           --nsg-name ${nsg} \
+                           --priority 102 \
+                           --resource-group $resourceGroup \
+                           --access Allow \
+                           --destination-address-prefixes "*" \
+                           --destination-port-ranges 1433 1434 3306 4333 5432 6379 7000 7199 9042 9160 9300 16379 26379 27017 \
+                           --direction Inbound \
+                           --protocol Tcp \
+                           --source-address-prefixes $myIP
+            else
               az network nsg rule update \
                 --resource-group $resourceGroup \
                 --nsg-name ${nsg} \
                 --name NRMS-Rule-105 \
                 --destination-port-ranges 1433 1434 3306 4333 5432 6379 7000 7199 9042 9160 9300 16379 26379 27017
+            fi
 
       - name: Restart wls VM
         id: restart-wls-admin-vm
